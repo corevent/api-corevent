@@ -1,0 +1,173 @@
+---
+alwaysApply: true
+---
+
+You are working on a NestJS project using TypeScript.
+
+Follow ALL rules below strictly.
+
+# Core Principles
+
+- Follow SOLID principles:
+  - Single Responsibility Principle (SRP)
+  - Open/Closed Principle (OCP)
+  - Dependency Inversion Principle (DIP)
+- Apply DRY (Don't Repeat Yourself)
+- Apply KISS (Keep It Simple)
+- Apply YAGNI (You Aren’t Gonna Need It)
+- Prefer readability over cleverness
+- Code must be self-explanatory
+
+# Architecture
+
+- Use modular architecture (feature-based)
+- Organize code by domain, NOT by technical type
+- Each module must represent a business domain
+
+Example structure:
+src/
+  modules/
+    users/
+      users.module.ts
+      users.controller.ts
+      users.service.ts
+      dto/
+      entities/
+  common/
+  config/
+  utils/
+
+- Avoid large modules (split when needed)
+- Business rules MUST NOT depend on NestJS framework
+
+# Layers
+
+- Controllers:
+  - Handle only HTTP request/response
+  - No business logic allowed
+
+- Services:
+  - Contain business logic
+
+- Repositories/Providers:
+  - Handle data access
+
+- DTOs:
+  - Handle validation and typing
+
+# Dependency Injection
+
+- Always use NestJS DI
+- NEVER instantiate dependencies manually using "new"
+- Use constructor injection
+
+# TypeScript Rules
+
+- Enable strict mode
+- NEVER use "any"
+- Always type:
+  - variables
+  - parameters
+  - return values
+
+- Prefer utility types:
+  - Partial
+  - Pick
+  - Omit
+
+# Clean Code
+
+- Functions:
+  - Max ~20 lines
+  - Single responsibility
+  - Use early returns
+
+- Classes:
+  - Max ~200 lines
+  - Max ~10 public methods
+
+# Naming Conventions
+
+- Classes: PascalCase
+- Variables/Functions: camelCase
+- Files: kebab-case
+- Environment variables: UPPER_CASE
+- Booleans: prefix with is/has/can
+
+# DTO and Validation
+
+- Always use class-validator
+- Never trust external input
+- Always validate incoming data
+
+# Imports (IMPORTANT)
+
+- ALWAYS use project aliases (e.g. "~/", "@/")
+- NEVER use relative paths like "../../"
+
+Correct:
+import { UsersService } from '~/modules/users/users.service';
+
+Incorrect:
+import { UsersService } from '../../../users/users.service';
+
+# Business Logic
+
+- Must be:
+  - isolated
+  - testable
+  - framework-independent
+
+- NEVER put business logic in:
+  - controllers
+  - decorators
+  - interceptors
+
+# Configuration
+
+- Use @nestjs/config
+- NEVER access process.env directly
+- Centralize configuration
+
+# Reusability
+
+- Use common/ for shared components:
+  - guards
+  - interceptors
+  - pipes
+  - filters
+
+- Avoid code duplication
+
+# Testing
+
+- Use Jest
+- Follow Arrange / Act / Assert pattern
+
+- Required:
+  - Unit tests (services)
+  - E2E tests (controllers)
+
+# Best Practices
+
+- Use interceptors for:
+  - logging
+  - response transformation
+
+- Use pipes for validation
+- Implement health check endpoint (/health)
+- Use structured logging
+
+# Anti-Patterns (FORBIDDEN)
+
+- Business logic inside controllers
+- Huge services
+- Circular dependencies
+- Usage of "any"
+- Manual dependency instantiation
+- Code duplication
+- Disorganized global modules
+
+# Golden Rule
+
+If code is hard to test, it is probably badly structured.
