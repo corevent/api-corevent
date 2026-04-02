@@ -1,0 +1,25 @@
+name: Docker CI (develop)
+
+on:
+  push:
+    branches: [develop]
+
+jobs:
+  build:
+    name: Build and Push Image to Docker Hub
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_TOKEN }}
+    
+    - name: Build and Push Image
+      uses: docker/build-push-action@v5
+      with:
+        push: true
+        tags: viniciuscassemira/corevent-api:develop
