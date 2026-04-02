@@ -96,3 +96,11 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## Docker
+```bash
+  # Create API image
+  docker build -t corevent-api .
+```
+
+**Notes**: To run the Dockerized API, it is recommended to use Docker Compose. Access [this repository](https://github.com/corevent/infra/tree/main/docker) and follow the step-by-step instructions to configure it.
