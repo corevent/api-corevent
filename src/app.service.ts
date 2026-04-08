@@ -14,7 +14,7 @@ export class AppService {
       const result: { ping: number }[] = await this.dataSource.query<{ ping: number }[]>('SELECT 1 AS ping')
       return result[0]?.ping === 1 ? 'OK' : 'KO'
     } catch (error) {
-      throw new InternalServerErrorException('Erro ao verificar a saúde do banco de dados', {
+      throw new InternalServerErrorException('Error checking database health', {
         cause: error,
       })
     }
