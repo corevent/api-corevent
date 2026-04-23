@@ -1,6 +1,7 @@
-import { Body, Controller, Get, InternalServerErrorException, Param, Post, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, InternalServerErrorException, Param, Post, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
+import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
 import { CreateUserDto, UserResponseDto } from '~/users/dto/users.dto'
 import { UsersService } from '~/users/users.service'
 
@@ -17,6 +18,15 @@ export class UsersController {
   @ApiResponse({ status: 500, type: InternalServerErrorException })
   async create(@Body() body: CreateUserDto): Promise<UserResponseDto> {
     return this.usersService.create(body)
+  }
+
+  // same endpoint as /users/:id, but with the current user's ID
+  @Get('me')
+  @ApiOperation({ summary: 'Get the profile of the current user' })
+  @ApiResponse({ status: 200, type: UserResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getProfile(@Req() req: AuthenticatedRequest): Promise<UserResponseDto> {
+    return this.usersService.findById(req.user.id)
   }
 
   @Get(':id')

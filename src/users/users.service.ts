@@ -1,10 +1,10 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
+import * as bcrypt from 'bcrypt'
 import { plainToInstance } from 'class-transformer'
 import { Repository } from 'typeorm'
 import { CreateUserDto, UserDataDto, UserResponseDto } from '~/users/dto/users.dto'
 import { Users } from '~/users/users.entity'
-import * as bcrypt from 'bcrypt'
 
 //@UseGuards()
 @Injectable()
@@ -15,14 +15,10 @@ export class UsersService {
   ) {}
 
   async create(body: CreateUserDto): Promise<UserResponseDto> {
-    try {
-      const passwordHash = await this.hashPassword(body.password)
-      const user = this.usersRepository.create({ ...body, passwordHash })
-      const res = await this.usersRepository.save(user)
-      return { data: plainToInstance(UserDataDto, res, { excludeExtraneousValues: true }) }
-    } catch (error) {
-      throw new InternalServerErrorException('Error creating user', { cause: error })
-    }
+    const passwordHash = await this.hashPassword(body.password)
+    const user = this.usersRepository.create({ ...body, passwordHash })
+    const res = await this.usersRepository.save(user)
+    return { data: plainToInstance(UserDataDto, res, { excludeExtraneousValues: true }) }
   }
 
   // used for authentication
