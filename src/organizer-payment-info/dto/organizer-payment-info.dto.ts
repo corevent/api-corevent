@@ -18,47 +18,47 @@ export class CreateOrganizerPaymentInfoDto {
   @Expose()
   description: string
 
-  @ApiProperty({ description: 'Bank branch number', example: '1234' })
+  @ApiProperty({ description: 'Bank branch number', example: '1234', required: false })
   @IsNumberString()
   @Length(4, 4)
   @IsOptional()
   @Expose()
   branchNumber?: string
 
-  @ApiProperty({ description: 'Bank branch digit', example: '5' })
+  @ApiProperty({ description: 'Bank branch digit', example: '5', required: false })
   @IsNumberString()
   @Length(1, 1)
   @IsOptional()
   @Expose()
   branchDigit?: string
 
-  @ApiProperty({ description: 'Bank account number', example: '1234567890' })
+  @ApiProperty({ description: 'Bank account number', example: '1234567890', required: false })
   @IsNumberString()
   @Length(5, 10)
   @IsOptional()
   @Expose()
   accountNumber?: string
 
-  @ApiProperty({ description: 'Bank account digit', example: '5' })
+  @ApiProperty({ description: 'Bank account digit', example: '5', required: false })
   @IsNumberString()
   @Length(1, 1)
   @IsOptional()
   @Expose()
   accountDigit?: string
 
-  @ApiProperty({ description: 'Pix key', example: '1234567890' })
+  @ApiProperty({ description: 'Pix key', example: '1234567890', required: false })
   @IsString()
   @IsOptional()
   @Expose()
   pixKey?: string
 
-  @ApiProperty({ description: 'Pix type', example: 'cpf', enum: PixType })
+  @ApiProperty({ description: 'Pix type', example: 'cpf', enum: PixType, required: false })
   @IsEnum(PixType)
   @IsOptional()
   @Expose()
   pixType?: PixType
 
-  @ApiProperty({ description: 'Bank code', example: '260' })
+  @ApiProperty({ description: 'Bank code', example: '260', required: false })
   @IsNumberString()
   @Length(3, 3)
   @IsOptional()

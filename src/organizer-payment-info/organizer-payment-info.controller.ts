@@ -17,7 +17,13 @@ export class OrganizerPaymentInfoController {
   constructor(private readonly organizerPaymentInfoService: OrganizerPaymentInfoService) {}
 
   @Post(':id/organizer-payment-info')
-  @ApiOperation({ summary: 'Create organizer payment info' })
+  @ApiOperation({
+    summary: 'Create organizer payment info',
+    description: `Note: All fields are optional because the user may choose, for example, only PIX. 
+    Therefore, it is not possible to send all values as null. 
+    \nAdditionally, if the user provides one field of a type and leaves the others null, 
+    a 403 error will be returned (e.g., "pixType": "cpf" and "pixKey": null).`,
+  })
   @ApiResponse({
     status: 201,
     description: 'Organizer payment info created successfully',
