@@ -7,7 +7,7 @@ import { RefreshTokens } from '~/auth/refresh-tokens.entity'
 import { AuthService } from '~/auth/auth.service'
 import { JwtStrategy } from '~/auth/strategies/jwt.strategy'
 import { TypeOrmModule } from '@nestjs/typeorm'
-import { UsersModule } from '~/users/users.module'
+import { UsersModule } from '~/modules/users/users.module'
 
 @Module({
   imports: [

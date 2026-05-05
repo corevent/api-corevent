@@ -16,8 +16,8 @@ import {
   OrganizerPaymentInfoPageDto,
   PixType,
   ResOrganizerPaymentInfoDto,
-} from '~/organizer-payment-info/dto/organizer-payment-info.dto'
-import { OrganizerPaymentInfo } from '~/organizer-payment-info/organizer-payment-info.entity'
+} from '~/modules/organizer-payment-info/dto/organizer-payment-info.dto'
+import { OrganizerPaymentInfo } from '~/modules/organizer-payment-info/organizer-payment-info.entity'
 
 @Injectable()
 export class OrganizerPaymentInfoService {

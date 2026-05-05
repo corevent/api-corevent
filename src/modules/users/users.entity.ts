@@ -1,6 +1,8 @@
 import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 import { RefreshTokens } from '~/auth/refresh-tokens.entity'
-import { OrganizerPaymentInfo } from '~/organizer-payment-info/organizer-payment-info.entity'
+import { EventChanges } from '~/modules/event-changes/event-changes.entity'
+import { Events } from '~/modules/events-module/events.entity'
+import { OrganizerPaymentInfo } from '~/modules/organizer-payment-info/organizer-payment-info.entity'
 
 @Entity()
 export class Users {
@@ -33,4 +35,10 @@ export class Users {
 
   @OneToMany(() => OrganizerPaymentInfo, (organizerPaymentInfo) => organizerPaymentInfo.user)
   organizerPaymentInfo: OrganizerPaymentInfo[]
+
+  @OneToMany(() => Events, (event) => event.organizer)
+  events: Events[]
+
+  @OneToMany(() => EventChanges, (eventChange) => eventChange.changedByUser)
+  eventChanges: EventChanges[]
 }

@@ -5,7 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { AuthTokensDto, LoginDto, RefreshTokenDto } from '~/auth/dto/auth.dto'
 import { RefreshTokens } from '~/auth/refresh-tokens.entity'
-import { UsersService } from '~/users/users.service'
+import { UsersService } from '~/modules/users/users.service'
 import * as bcrypt from 'bcrypt'
 import { randomUUID } from 'crypto'
 

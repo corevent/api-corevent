@@ -2,8 +2,8 @@ import { Body, Controller, Get, InternalServerErrorException, Param, Post, Req, 
 import { AuthGuard } from '@nestjs/passport'
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
-import { CreateUserDto, UserResponseDto } from '~/users/dto/users.dto'
-import { UsersService } from '~/users/users.service'
+import { CreateUserDto, UserResponseDto } from '~/modules/users/dto/users.dto'
+import { UsersService } from '~/modules/users/users.service'
 
 @ApiTags('Users')
 @UseGuards(AuthGuard('jwt'))

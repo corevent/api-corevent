@@ -1,10 +1,13 @@
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Users } from '~/users/users.entity'
+import { Users } from '~/modules/users/users.entity'
 
 @Entity()
 export class OrganizerPaymentInfo {
   @PrimaryGeneratedColumn('uuid')
   id: string
+
+  @Column({ name: 'user_id' })
+  userId: string
 
   @Column({ type: 'text', nullable: false })
   description: string
@@ -29,9 +32,6 @@ export class OrganizerPaymentInfo {
 
   @Column({ type: 'varchar', length: 10, nullable: true })
   bankCode?: string
-
-  @Column({ name: 'user_id' })
-  userId: string
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date

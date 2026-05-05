@@ -1,5 +1,5 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Users } from '~/users/users.entity'
+import { Users } from '~/modules/users/users.entity'
 
 @Entity()
 export class RefreshTokens {

@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
-import { OrganizerPaymentInfoController } from '~/organizer-payment-info/organizer-payment-info.controller'
-import { OrganizerPaymentInfo } from '~/organizer-payment-info/organizer-payment-info.entity'
-import { OrganizerPaymentInfoService } from '~/organizer-payment-info/organizer-payment-info.service'
+import { OrganizerPaymentInfoController } from '~/modules/organizer-payment-info/organizer-payment-info.controller'
+import { OrganizerPaymentInfo } from '~/modules/organizer-payment-info/organizer-payment-info.entity'
+import { OrganizerPaymentInfoService } from '~/modules/organizer-payment-info/organizer-payment-info.service'
 
 @Module({
   imports: [TypeOrmModule.forFeature([OrganizerPaymentInfo])],

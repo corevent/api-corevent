@@ -7,8 +7,8 @@ import {
   CreateOrganizerPaymentInfoDto,
   OrganizerPaymentInfoPageDto,
   ResOrganizerPaymentInfoDto,
-} from '~/organizer-payment-info/dto/organizer-payment-info.dto'
-import { OrganizerPaymentInfoService } from '~/organizer-payment-info/organizer-payment-info.service'
+} from '~/modules/organizer-payment-info/dto/organizer-payment-info.dto'
+import { OrganizerPaymentInfoService } from '~/modules/organizer-payment-info/organizer-payment-info.service'
 
 @ApiTags('Organizer Payment Info')
 @UseGuards(AuthGuard('jwt'))
