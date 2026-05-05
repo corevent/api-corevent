@@ -60,7 +60,7 @@ export class EventsService {
 
   private checkDates(startDate: Date, endDate: Date): void {
     if (new Date() >= startDate) {
-      //throw new BadRequestException('Start date must be after today')
+      throw new BadRequestException('Start date must be after today')
     }
 
     if (startDate > endDate) {
