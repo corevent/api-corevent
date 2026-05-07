@@ -6,7 +6,6 @@ import { CreateUserDto, UserResponseDto } from '~/modules/users/dto/users.dto'
 import { UsersService } from '~/modules/users/users.service'
 
 @ApiTags('Users')
-@UseGuards(AuthGuard('jwt'))
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -22,6 +21,7 @@ export class UsersController {
 
   // same endpoint as /users/:id, but with the current user's ID
   @Get('me')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get the profile of the current user' })
   @ApiResponse({ status: 200, type: UserResponseDto })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -30,6 +30,7 @@ export class UsersController {
   }
 
   @Get(':id')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get a user by ID' })
   @ApiResponse({ status: 200, type: UserResponseDto })
   @ApiResponse({ status: 404, description: 'User not found' })

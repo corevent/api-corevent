@@ -1,8 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Req, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
-import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
-import { CreateEventDto, ResponseEventDto, UpdateEventDto } from '~/modules/events-module/dto/events.dto'
+import {
+  CreateEventDto,
+  FilterEventsDto,
+  PaginateEventsDto,
+  ResponseEventDto,
+  UpdateEventDto,
+} from '~/modules/events-module/dto/events.dto'
 import { EventsService } from '~/modules/events-module/events.service'
 
 @ApiTags('Events')
@@ -39,6 +45,14 @@ export class EventsController {
   @ApiResponse({ status: 404, description: 'Event not found.' })
   async update(@Param('id') id: string, @Body() body: UpdateEventDto): Promise<ResponseEventDto> {
     return this.eventsService.update(id, body)
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get all events' })
+  @ApiQuery({ type: FilterEventsDto })
+  @ApiResponse({ status: 200, description: 'The events have been successfully retrieved.' })
+  async getAll(@Query() query: FilterEventsDto): Promise<PaginateEventsDto> {
+    return this.eventsService.getAll(query)
   }
 
   @Get(':id')

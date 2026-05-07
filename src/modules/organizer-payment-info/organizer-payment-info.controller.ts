@@ -1,8 +1,7 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
-import { PaginationPipe } from '~/common/pipes/pagination.pipe'
-import type { Pagination } from '~/common/pagination/pagination.interface'
+import { QueryPaginationDto } from '~/common/pagination/pagination.dto'
 import {
   CreateOrganizerPaymentInfoDto,
   OrganizerPaymentInfoPageDto,
@@ -68,13 +67,12 @@ export class OrganizerPaymentInfoController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   @ApiParam({ name: 'id', description: 'User ID' })
-  @ApiQuery({ name: 'currentPage' })
-  @ApiQuery({ name: 'itemsPerPage' })
+  @ApiQuery({ type: QueryPaginationDto })
   async getOrganizerPaymentInfosByUserId(
     @Param('id') id: string,
-    @Query(PaginationPipe) pagination: Pagination,
+    @Query() query: QueryPaginationDto,
   ): Promise<OrganizerPaymentInfoPageDto> {
-    return this.organizerPaymentInfoService.listByUserId(id, pagination)
+    return this.organizerPaymentInfoService.listByUserId(id, query)
   }
 
   @Get('organizer-payment-info/:id')

@@ -2,9 +2,23 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
 import { Repository } from 'typeorm'
+import { SelectQueryBuilder } from 'typeorm/browser'
+import { createPaginationMeta } from '~/common/pagination/pagination-meta.factory'
+import { getOffset } from '~/common/utils/get-offset.util'
+import { hasValue } from '~/common/utils/has-value.util'
 import { EventChangesService } from '~/modules/event-changes/event-changes.service'
-import { CreateEventDto, DataEventDto, ResponseEventDto, UpdateEventDto } from '~/modules/events-module/dto/events.dto'
-import { Events, EventStatus } from '~/modules/events-module/events.entity'
+import {
+  CreateEventDto,
+  DataEventDto,
+  FilterEventsDto,
+  ListEventsDto,
+  PaginateEventsDto,
+  ResponseEventDto,
+  UpdateEventDto,
+} from '~/modules/events-module/dto/events.dto'
+import { EventLocationType, Events, EventStatus } from '~/modules/events-module/events.entity'
+
+const relevantAddressFields = ['cityId', 'zipCode', 'neighborhood', 'street', 'number', 'locationName']
 
 @Injectable()
 export class EventsService {
@@ -16,6 +30,7 @@ export class EventsService {
 
   async create(organizerId: string, body: CreateEventDto): Promise<ResponseEventDto> {
     this.checkDates(body.startDate, body.endDate)
+    this.checkIfHasPhysicalAddress(body)
     const instance = this.eventsRepository.create({ ...body, organizerId })
     const event = await this.eventsRepository.save(instance)
     return { data: plainToInstance(DataEventDto, event) }
@@ -25,6 +40,37 @@ export class EventsService {
     await this.validateBeforeUpdate(id, body)
     await this.eventsRepository.update(id, body)
     return this.getById(id)
+  }
+
+  async getAll(queryParams: FilterEventsDto): Promise<PaginateEventsDto> {
+    const { page, limit } = queryParams
+    const query = this.eventsRepository
+      .createQueryBuilder('e')
+      .select([
+        'e.id',
+        'e.title',
+        'e.maxParticipants',
+        'c.name as cityName',
+        's.acronym as stateAcronym',
+        'e.locationName',
+        'e.startDate',
+        'e.endDate',
+        'e.category',
+        'e.isAdultOnly',
+        'e.status',
+      ])
+      .leftJoin('e.city', 'c')
+      .leftJoin('c.state', 's')
+      .limit(limit)
+      .offset(getOffset(page, limit))
+      .where('e.status = :status', { status: EventStatus.OPENED })
+    this.applyFilters(query, queryParams)
+
+    const [list, total] = await query.getManyAndCount()
+    return {
+      data: plainToInstance(ListEventsDto, list),
+      meta: createPaginationMeta(page, limit, total),
+    }
   }
 
   async getById(id: string): Promise<ResponseEventDto> {
@@ -45,8 +91,13 @@ export class EventsService {
 
   async cancel(id: string): Promise<void> {
     const { data: event } = await this.getById(id)
-    if (event.status === EventStatus.PUBLISHED || event.status === EventStatus.GOING) {
+    if (event.status === EventStatus.OPENED || event.status === EventStatus.GOING) {
       await this.eventsRepository.update(id, { status: EventStatus.CANCELED })
+      await this.eventChangesService.create(event.organizerId, id, {
+        changedFields: ['status'],
+        oldValue: { status: event.status },
+        newValue: { status: EventStatus.CANCELED },
+      })
       // TODO: refund payments
     } else {
       const statusMessage = {
@@ -82,9 +133,7 @@ export class EventsService {
   }
 
   private async dealWithRelevantChanges(data: DataEventDto, body: UpdateEventDto): Promise<void> {
-    const addressFields = ['cityId', 'zipCode', 'neighborhood', 'street', 'number', 'complement']
-
-    const relevantFields = new Set(['title', 'startDate', 'endDate', 'maxParticipants', ...addressFields])
+    const relevantFields = new Set(['title', 'startDate', 'endDate', 'maxParticipants', ...relevantAddressFields])
 
     const relevantChangedFields = Object.keys(body).filter((key) => {
       if (!relevantFields.has(key)) return false
@@ -120,12 +169,54 @@ export class EventsService {
       throw new BadRequestException(`Event cannot be updated because it has already ${statusMessage}`)
     }
 
-    if (event.status === EventStatus.PUBLISHED && body.status === EventStatus.DRAFT) {
+    if (event.status === EventStatus.OPENED && body.status === EventStatus.DRAFT) {
       throw new BadRequestException('Event cannot be updated to draft because it is published')
     }
 
-    if (event.status === EventStatus.PUBLISHED) {
+    if (event.status === EventStatus.OPENED) {
       await this.dealWithRelevantChanges(event, body)
+    }
+
+    this.checkIfHasPhysicalAddress(body, event.locationType)
+  }
+
+  private applyFilters(query: SelectQueryBuilder<Events>, filters: FilterEventsDto): SelectQueryBuilder<Events> {
+    if (filters.stateId) {
+      query.andWhere('e.cityId = :cityId', { cityId: filters.stateId })
+    }
+    if (filters.cityId) {
+      query.andWhere('e.cityId = :cityId', { cityId: filters.cityId })
+    }
+    if (filters.startDate) {
+      query.andWhere('e.startDate >= :startDate', { startDate: filters.startDate })
+    }
+    if (filters.category) {
+      query.andWhere('e.category = :category', { category: filters.category })
+    }
+    if (filters.isAdultOnly) {
+      query.andWhere('e.isAdultOnly = :isAdultOnly', { isAdultOnly: filters.isAdultOnly })
+    }
+    return query
+  }
+
+  private checkIfHasPhysicalAddress(body: CreateEventDto | UpdateEventDto, oldLocationType?: EventLocationType): void {
+    const onlineStatus = EventLocationType.ONLINE
+
+    // UPDATE validations
+    if (body instanceof UpdateEventDto) {
+      if (!body.locationType) return
+
+      if (oldLocationType !== onlineStatus && body.locationType === onlineStatus) {
+        throw new BadRequestException('Online events cannot be updated to physical address')
+      }
+    }
+
+    // CREATE validations
+    if (body instanceof CreateEventDto && body.locationType === onlineStatus) return
+
+    const emptyFields = relevantAddressFields.filter((field) => !hasValue(body[field]))
+    if (emptyFields.length > 0) {
+      throw new BadRequestException(`Address fields are required for ${body.locationType}: ${emptyFields.join(', ')}`)
     }
   }
 }

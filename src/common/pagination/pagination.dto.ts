@@ -1,20 +1,23 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { Type } from 'class-transformer'
+import { IsInt, Max, Min } from 'class-validator'
 
-export class PaginationMetaDto {
-  @ApiProperty({ description: 'Current page', example: 1 })
-  @Type(() => Number)
-  currentPage: number
+export class QueryPaginationDto {
+  @ApiProperty({ description: 'Page number', example: 1, required: true })
+  @IsInt()
+  @Min(1)
+  page: number
 
-  @ApiProperty({ description: 'Items per page', example: 20 })
-  @Type(() => Number)
-  itemsPerPage: number
+  @ApiProperty({ description: 'Limit of items per page', example: 10, required: true })
+  @IsInt()
+  @Min(10)
+  @Max(100)
+  limit: number
+}
 
-  @ApiProperty({ description: 'Total of items', example: 1000 })
-  @Type(() => Number)
+export class PaginationMetaDto extends QueryPaginationDto {
+  @ApiProperty({ description: 'Total of items', example: 1000, required: true })
   totalItems: number
 
-  @ApiProperty({ description: 'Total of pages', example: 50 })
-  @Type(() => Number)
+  @ApiProperty({ description: 'Total of pages', example: 50, required: true })
   totalPages: number
 }

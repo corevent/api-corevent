@@ -19,7 +19,7 @@ export class EventsCronService {
     await this.eventsRepository.update(
       {
         startDate: LessThan(now),
-        status: EventStatus.PUBLISHED,
+        status: EventStatus.OPENED,
       },
       {
         status: EventStatus.GOING,

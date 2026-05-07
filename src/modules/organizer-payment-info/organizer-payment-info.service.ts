@@ -3,8 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
 import { Repository } from 'typeorm'
 import { createPaginationMeta } from '~/common/pagination/pagination-meta.factory'
-import { Pagination } from '~/common/pagination/pagination.interface'
+import { QueryPaginationDto } from '~/common/pagination/pagination.dto'
 import { isValidCnpj, isValidCpf } from '~/common/utils/cpf-cnpj.util'
+import { getOffset } from '~/common/utils/get-offset.util'
 import { hasValue } from '~/common/utils/has-value.util'
 import { validateCelphone } from '~/common/utils/validate-celphone'
 import { validateEmail } from '~/common/utils/validate-email.utils'
@@ -39,19 +40,19 @@ export class OrganizerPaymentInfoService {
     return this.getById(id)
   }
 
-  async listByUserId(userId: string, pagination: Pagination): Promise<OrganizerPaymentInfoPageDto> {
-    const offset = (pagination.currentPage - 1) * pagination.itemsPerPage
+  async listByUserId(userId: string, query: QueryPaginationDto): Promise<OrganizerPaymentInfoPageDto> {
+    const { page, limit } = query
     const [data, total] = await this.organizerPaymentInfoRepository.findAndCount({
       select: ['id', 'description'],
       where: { userId },
-      skip: offset,
-      take: pagination.itemsPerPage,
+      skip: getOffset(page, limit),
+      take: limit,
       order: { createdAt: 'DESC' },
     })
 
     return {
       data: plainToInstance(ListOrganizerPaymentInfoDto, data),
-      meta: createPaginationMeta(pagination.currentPage, pagination.itemsPerPage, total),
+      meta: createPaginationMeta(page, limit, total),
     }
   }
 

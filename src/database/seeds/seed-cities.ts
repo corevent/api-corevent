@@ -18,9 +18,9 @@ export async function seedCities(dataSource: DataSource) {
   const stateRepo = dataSource.getRepository(States)
   const cityRepo = dataSource.getRepository(Cities)
 
-  console.log('🌱 Iniciando seed de estados e cidades...')
+  console.log('Initializing states and cities seed...')
 
-  // Buscar estados
+  // Get states
   const statesResponse = await axios.get<State[]>('https://servicodados.ibge.gov.br/api/v1/localidades/estados')
 
   const states = statesResponse.data

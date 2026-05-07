@@ -1,14 +1,37 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 import { Cities } from '~/modules/cities/cities.entity'
 import { EventChanges } from '~/modules/event-changes/event-changes.entity'
 import { Users } from '~/modules/users/users.entity'
 
 export enum EventStatus {
   DRAFT = 'draft',
-  PUBLISHED = 'published',
+  OPENED = 'opened',
   GOING = 'going',
   CANCELED = 'canceled',
   FINISHED = 'finished',
+}
+
+export enum EventCategory {
+  MUSIC = 'music',
+  SPORTS = 'sports',
+  TECH = 'tech',
+  BUSINESS = 'business',
+  EDUCATION = 'education',
+  ART_CULTURE = 'art_culture',
+  GASTRONOMY = 'gastronomy',
+  HEALTH_WELLNESS = 'health_wellness',
+  FAMILY_KIDS = 'family_kids',
+  RELIGIOUS_SPIRITUAL = 'religious_spiritual',
+  GAMES = 'games',
+  COMMUNITY_SOCIAL = 'community_social',
+  FASHION_BEAUTY = 'fashion_beauty',
+  OTHER = 'other',
+}
+
+export enum EventLocationType {
+  ONLINE = 'online',
+  IN_PERSON = 'in_person',
+  HYBRID = 'hybrid',
 }
 
 @Entity()
@@ -27,6 +50,12 @@ export class Events {
 
   @Column({ type: 'int', nullable: true })
   maxParticipants: number
+
+  @Column({ type: 'enum', enum: EventLocationType })
+  locationType: EventLocationType
+
+  @Column({ type: 'text', nullable: true })
+  locationName?: string
 
   @Column({ name: 'city_id', nullable: true })
   cityId?: number
@@ -52,6 +81,9 @@ export class Events {
   @Column({ type: 'timestamp with time zone' })
   endDate: Date
 
+  @Column({ type: 'enum', enum: EventCategory })
+  category: EventCategory
+
   @Column({ type: 'text', nullable: true })
   bannerUrl?: string
 
@@ -67,6 +99,9 @@ export class Events {
 
   @Column({ type: 'enum', enum: EventStatus })
   status: EventStatus
+
+  @CreateDateColumn({ type: 'timestamp with time zone' })
+  createdAt: Date
 
   @ManyToOne(() => Users, (user) => user.events)
   @JoinColumn({ name: 'organizer_id' })
