@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import * as bcrypt from 'bcrypt'
+import * as bcrypt from 'bcryptjs'
 import { plainToInstance } from 'class-transformer'
 import { Repository } from 'typeorm'
 import { CreateUserDto, UserDataDto, UserResponseDto } from '~/modules/users/dto/users.dto'
