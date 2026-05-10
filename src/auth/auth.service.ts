@@ -6,7 +6,7 @@ import { Repository } from 'typeorm'
 import { AuthTokensDto, LoginDto, RefreshTokenDto } from '~/auth/dto/auth.dto'
 import { RefreshTokens } from '~/auth/refresh-tokens.entity'
 import { UsersService } from '~/modules/users/users.service'
-import * as bcrypt from 'bcrypt'
+import * as bcrypt from 'bcryptjs'
 import { randomUUID } from 'crypto'
 
 interface AccessTokenPayload {
