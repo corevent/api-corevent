@@ -1,9 +1,9 @@
 services:
-  app:
+  api:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: corevent-app
+    container_name: corevent-api
     ports:
       - "3000:3000"
     env_file:

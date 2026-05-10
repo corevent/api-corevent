@@ -1,28 +1,25 @@
-FROM node:22-slim AS builder
+FROM node:22-slim AS build
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable && corepack prepare pnpm@11.0.8 --activate
+
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@11.0.8 --activate
-COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml ./  
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 COPY . .
+RUN pnpm --filter=api-corevent build:standalone
 
-RUN pnpm build
-RUN pnpm prune --prod
+FROM gcr.io/distroless/nodejs22-debian12 AS runner
 
-FROM node:22-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-RUN corepack enable && corepack prepare pnpm@11.0.8 --activate
+COPY --from=build /app/dist/index.js ./index.js
 
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-
-USER node
-
+USER 65532
 EXPOSE 3000
 
-CMD ["node", "dist/main"]
+CMD ["index.js"]
