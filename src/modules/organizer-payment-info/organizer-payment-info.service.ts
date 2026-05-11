@@ -73,6 +73,14 @@ export class OrganizerPaymentInfoService {
     }
   }
 
+  // used to check if user is a organizer
+  async getByUserId(userId: string): Promise<void> {
+    const organizerPaymentInfo = await this.organizerPaymentInfoRepository.findOne({ where: { userId } })
+    if (!organizerPaymentInfo) {
+      throw new NotFoundException('User is not a organizer')
+    }
+  }
+
   // helpers
   private validateAllOrNone(groupName: string, fields: Record<string, unknown>): boolean {
     const entries = Object.entries(fields)

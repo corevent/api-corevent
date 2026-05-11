@@ -124,7 +124,12 @@ export class ResponseEventDto {
   data: DataEventDto
 }
 
-export class FilterEventsDto extends QueryPaginationDto {
+export class QueryEventsDto extends QueryPaginationDto {
+  @ApiProperty({ description: 'Search by title' })
+  @IsString()
+  @IsOptional()
+  search?: string
+
   @ApiProperty({ description: 'Filter by state ID', example: 35, required: false })
   @IsInt()
   @IsOptional()
@@ -156,6 +161,9 @@ export class FilterEventsDto extends QueryPaginationDto {
 }
 
 export class ListEventsDto {
+  @ApiProperty({ description: 'Event ID', example: '123e4567-e89b-12d3-a456-426614174432' })
+  id: string
+
   @ApiProperty({ description: 'Event title', example: 'Event Title' })
   title: string
 

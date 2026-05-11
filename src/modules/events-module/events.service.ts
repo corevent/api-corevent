@@ -10,13 +10,14 @@ import { EventChangesService } from '~/modules/event-changes/event-changes.servi
 import {
   CreateEventDto,
   DataEventDto,
-  FilterEventsDto,
+  QueryEventsDto,
   ListEventsDto,
   PaginateEventsDto,
   ResponseEventDto,
   UpdateEventDto,
 } from '~/modules/events-module/dto/events.dto'
 import { EventLocationType, Events, EventStatus } from '~/modules/events-module/events.entity'
+import { OrganizerPaymentInfoService } from '~/modules/organizer-payment-info/organizer-payment-info.service'
 
 const relevantAddressFields = ['cityId', 'zipCode', 'neighborhood', 'street', 'number', 'locationName']
 
@@ -26,9 +27,11 @@ export class EventsService {
     @InjectRepository(Events)
     private readonly eventsRepository: Repository<Events>,
     private readonly eventChangesService: EventChangesService,
+    private readonly organizerPaymentInfoService: OrganizerPaymentInfoService,
   ) {}
 
   async create(organizerId: string, body: CreateEventDto): Promise<ResponseEventDto> {
+    await this.organizerPaymentInfoService.getByUserId(organizerId)
     this.checkDates(body.startDate, body.endDate)
     this.checkIfHasPhysicalAddress(body)
     const instance = this.eventsRepository.create({ ...body, organizerId })
@@ -36,14 +39,14 @@ export class EventsService {
     return { data: plainToInstance(DataEventDto, event) }
   }
 
-  async update(id: string, body: UpdateEventDto): Promise<ResponseEventDto> {
-    await this.validateBeforeUpdate(id, body)
+  async update(organizerId: string, id: string, body: UpdateEventDto): Promise<ResponseEventDto> {
+    await this.validateBeforeUpdate(organizerId, id, body)
     await this.eventsRepository.update(id, body)
     return this.getById(id)
   }
 
-  async getAll(queryParams: FilterEventsDto): Promise<PaginateEventsDto> {
-    const { page, limit } = queryParams
+  async getAll(queryParams: QueryEventsDto): Promise<PaginateEventsDto> {
+    const { page, limit, status } = queryParams
     const query = this.eventsRepository
       .createQueryBuilder('e')
       .select([
@@ -63,8 +66,9 @@ export class EventsService {
       .leftJoin('c.state', 's')
       .limit(limit)
       .offset(getOffset(page, limit))
-      .where('e.status = :status', { status: EventStatus.OPENED })
+      .where('e.status = :status', { status })
     this.applyFilters(query, queryParams)
+    this.applySearch(query, queryParams.search)
 
     const [list, total] = await query.getManyAndCount()
     return {
@@ -83,6 +87,7 @@ export class EventsService {
 
   async delete(id: string): Promise<void> {
     const { data: event } = await this.getById(id)
+    this.validateOrganizer(event.organizerId, event)
     if (event.status !== EventStatus.DRAFT) {
       throw new BadRequestException('Event cannot be deleted because it is not draft')
     }
@@ -91,6 +96,7 @@ export class EventsService {
 
   async cancel(id: string): Promise<void> {
     const { data: event } = await this.getById(id)
+    this.validateOrganizer(event.organizerId, event)
     if (event.status === EventStatus.OPENED || event.status === EventStatus.GOING) {
       await this.eventsRepository.update(id, { status: EventStatus.CANCELED })
       await this.eventChangesService.create(event.organizerId, id, {
@@ -156,13 +162,15 @@ export class EventsService {
     // TODO: deal with relevant changes (refund, send email, notification, etc.)
   }
 
-  private async validateBeforeUpdate(id: string, body: UpdateEventDto): Promise<void> {
+  private async validateBeforeUpdate(organizerId: string, id: string, body: UpdateEventDto): Promise<void> {
+    const { data: event } = await this.getById(id)
+    this.validateOrganizer(organizerId, event)
+
     if (body.startDate && body.endDate) {
       this.checkDates(body.startDate, body.endDate)
     }
 
     const statusToBlock = [EventStatus.GOING, EventStatus.FINISHED, EventStatus.CANCELED]
-    const { data: event } = await this.getById(id)
 
     if (new Date() > event.startDate && statusToBlock.includes(event.status)) {
       const statusMessage = event.status === EventStatus.GOING ? 'started' : event.status
@@ -180,7 +188,13 @@ export class EventsService {
     this.checkIfHasPhysicalAddress(body, event.locationType)
   }
 
-  private applyFilters(query: SelectQueryBuilder<Events>, filters: FilterEventsDto): SelectQueryBuilder<Events> {
+  private applySearch(query: SelectQueryBuilder<Events>, search?: string): void {
+    if (search) {
+      query.andWhere('unaccent(e.title) ILIKE unaccent(:search)', { search: `%${search}%` })
+    }
+  }
+
+  private applyFilters(query: SelectQueryBuilder<Events>, filters: QueryEventsDto): void {
     if (filters.stateId) {
       query.andWhere('e.cityId = :cityId', { cityId: filters.stateId })
     }
@@ -196,13 +210,12 @@ export class EventsService {
     if (filters.isAdultOnly) {
       query.andWhere('e.isAdultOnly = :isAdultOnly', { isAdultOnly: filters.isAdultOnly })
     }
-    return query
   }
 
   private checkIfHasPhysicalAddress(body: CreateEventDto | UpdateEventDto, oldLocationType?: EventLocationType): void {
     const onlineStatus = EventLocationType.ONLINE
 
-    // UPDATE validations
+    // validations for UPDATE
     if (body instanceof UpdateEventDto) {
       if (!body.locationType) return
 
@@ -211,12 +224,18 @@ export class EventsService {
       }
     }
 
-    // CREATE validations
+    // validations for CREATE
     if (body instanceof CreateEventDto && body.locationType === onlineStatus) return
 
     const emptyFields = relevantAddressFields.filter((field) => !hasValue(body[field]))
     if (emptyFields.length > 0) {
       throw new BadRequestException(`Address fields are required for ${body.locationType}: ${emptyFields.join(', ')}`)
+    }
+  }
+
+  private validateOrganizer(organizerId: string, event: DataEventDto): void {
+    if (event.organizerId !== organizerId) {
+      throw new BadRequestException('You are not the organizer of this event')
     }
   }
 }

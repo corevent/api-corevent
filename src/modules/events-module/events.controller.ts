@@ -4,7 +4,7 @@ import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from 
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
 import {
   CreateEventDto,
-  FilterEventsDto,
+  QueryEventsDto,
   PaginateEventsDto,
   ResponseEventDto,
   UpdateEventDto,
@@ -43,15 +43,19 @@ export class EventsController {
   @ApiResponse({ status: 200, description: 'The event has been successfully updated.' })
   @ApiResponse({ status: 400, description: 'Bad request.' })
   @ApiResponse({ status: 404, description: 'Event not found.' })
-  async update(@Param('id') id: string, @Body() body: UpdateEventDto): Promise<ResponseEventDto> {
-    return this.eventsService.update(id, body)
+  async update(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() body: UpdateEventDto,
+  ): Promise<ResponseEventDto> {
+    return this.eventsService.update(req.user.id, id, body)
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all events' })
-  @ApiQuery({ type: FilterEventsDto })
+  @ApiQuery({ type: QueryEventsDto })
   @ApiResponse({ status: 200, description: 'The events have been successfully retrieved.' })
-  async getAll(@Query() query: FilterEventsDto): Promise<PaginateEventsDto> {
+  async getAll(@Query() query: QueryEventsDto): Promise<PaginateEventsDto> {
     return this.eventsService.getAll(query)
   }
 
