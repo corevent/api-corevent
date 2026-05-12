@@ -1,4 +1,3 @@
-import './paths-register'
 import 'reflect-metadata'
 import { join } from 'path'
 import { config } from 'dotenv'
