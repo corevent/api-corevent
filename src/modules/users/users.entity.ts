@@ -19,7 +19,7 @@ export class Users {
   cpf: string
 
   @Column({ type: 'date' })
-  birthDate: Date
+  birthDate: string
 
   @Column({ type: 'text' })
   passwordHash: string

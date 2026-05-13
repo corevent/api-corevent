@@ -102,7 +102,7 @@ export class CreateEventDto {
 
 export class UpdateEventDto extends PartialType(CreateEventDto) {}
 
-export class DataEventDto extends CreateEventDto {
+export class EventDataDto extends CreateEventDto {
   @ApiProperty({ description: 'Event ID', example: '123e4567-e89b-12d3-a456-426614174432' })
   id: string
 
@@ -119,9 +119,9 @@ export class DataEventDto extends CreateEventDto {
   createdAt: Date
 }
 
-export class ResponseEventDto {
-  @ApiProperty({ description: 'Data of the event', example: DataEventDto })
-  data: DataEventDto
+export class EventResponseDto {
+  @ApiProperty({ description: 'Data of the event', example: EventDataDto })
+  data: EventDataDto
 }
 
 export class QueryEventsDto extends QueryPaginationDto {

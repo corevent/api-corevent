@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger'
 
-export class DataStateDto {
+export class StateDataDto {
   @ApiProperty({ description: 'The ID of the state based on the IBGE code', example: 35 })
   id: number
 
@@ -11,7 +11,7 @@ export class DataStateDto {
   uf: string
 }
 
-export class ResponseStateDto {
-  @ApiProperty({ description: 'The list of states', type: [DataStateDto] })
-  data: DataStateDto[]
+export class StateResponseDto {
+  @ApiProperty({ description: 'The list of states', type: [StateDataDto] })
+  data: StateDataDto[]
 }

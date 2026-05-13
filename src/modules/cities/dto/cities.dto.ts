@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger'
 
-export class DataCityDto {
+export class CityDataDto {
   @ApiProperty({ description: 'The ID of the city based on the IBGE code', example: 3525300 })
   id: number
 
@@ -11,7 +11,7 @@ export class DataCityDto {
   stateId: number
 }
 
-export class ResponseCityDto {
-  @ApiProperty({ description: 'The list of cities', type: [DataCityDto] })
-  data: DataCityDto[]
+export class CityResponseDto {
+  @ApiProperty({ description: 'The list of cities', type: [CityDataDto] })
+  data: CityDataDto[]
 }

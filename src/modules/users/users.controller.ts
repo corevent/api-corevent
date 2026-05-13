@@ -1,8 +1,8 @@
-import { Body, Controller, Get, InternalServerErrorException, Param, Post, Req, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, InternalServerErrorException, Param, Patch, Post, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
-import { CreateUserDto, UserResponseDto } from '~/modules/users/dto/users.dto'
+import { CreateUserDto, UpdateUserDto, UserResponseDto } from '~/modules/users/dto/users.dto'
 import { UsersService } from '~/modules/users/users.service'
 
 @ApiTags('Users')
@@ -19,6 +19,18 @@ export class UsersController {
     return this.usersService.create(body)
   }
 
+  @Patch()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Update a user' })
+  @ApiBody({ type: UpdateUserDto })
+  @ApiResponse({ status: 200, type: UserResponseDto })
+  @ApiResponse({ status: 500, type: InternalServerErrorException })
+  async update(@Req() req: AuthenticatedRequest, @Body() body: UpdateUserDto): Promise<UserResponseDto> {
+    return this.usersService.update(req.user.id, body)
+  }
+
+  // TODO: update user password
+
   // same endpoint as /users/:id, but with the current user's ID
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
@@ -26,7 +38,7 @@ export class UsersController {
   @ApiResponse({ status: 200, type: UserResponseDto })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getProfile(@Req() req: AuthenticatedRequest): Promise<UserResponseDto> {
-    return this.usersService.findById(req.user.id)
+    return this.usersService.getById(req.user.id)
   }
 
   @Get(':id')
@@ -35,6 +47,6 @@ export class UsersController {
   @ApiResponse({ status: 200, type: UserResponseDto })
   @ApiResponse({ status: 404, description: 'User not found' })
   async findById(@Param('id') id: string): Promise<UserResponseDto> {
-    return this.usersService.findById(id)
+    return this.usersService.getById(id)
   }
 }

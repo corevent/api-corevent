@@ -1,11 +1,12 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
 import { QueryPaginationDto } from '~/common/pagination/pagination.dto'
 import {
   CreateOrganizerPaymentInfoDto,
   OrganizerPaymentInfoPageDto,
-  ResOrganizerPaymentInfoDto,
+  OrganizerPaymentInfoResDto,
+  UpdateOrganizerPaymentInfoDto,
 } from '~/modules/organizer-payment-info/dto/organizer-payment-info.dto'
 import { OrganizerPaymentInfoService } from '~/modules/organizer-payment-info/organizer-payment-info.service'
 
@@ -23,42 +24,44 @@ export class OrganizerPaymentInfoController {
     \nAdditionally, if the user provides one field of a type and leaves the others null, 
     a 403 error will be returned (e.g., "pixType": "cpf" and "pixKey": null).`,
   })
+  @ApiParam({ name: 'id', description: 'User ID' })
+  @ApiBody({ type: CreateOrganizerPaymentInfoDto })
   @ApiResponse({
     status: 201,
     description: 'Organizer payment info created successfully',
-    type: ResOrganizerPaymentInfoDto,
+    type: OrganizerPaymentInfoResDto,
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  @ApiParam({ name: 'id', description: 'User ID' })
-  @ApiBody({ type: CreateOrganizerPaymentInfoDto })
   async createOrganizerPaymentInfo(
     @Param('id') id: string,
     @Body() body: CreateOrganizerPaymentInfoDto,
-  ): Promise<ResOrganizerPaymentInfoDto> {
+  ): Promise<OrganizerPaymentInfoResDto> {
     return this.organizerPaymentInfoService.create(id, body)
   }
 
-  @Put('organizer-payment-info/:id')
+  @Patch('organizer-payment-info/:id')
   @ApiOperation({ summary: 'Update organizer payment info' })
+  @ApiParam({ name: 'id', description: 'Organizer payment info ID' })
+  @ApiBody({ type: UpdateOrganizerPaymentInfoDto })
   @ApiResponse({
     status: 200,
     description: 'Organizer payment info updated successfully',
-    type: ResOrganizerPaymentInfoDto,
+    type: OrganizerPaymentInfoResDto,
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  @ApiParam({ name: 'id', description: 'Organizer payment info ID' })
-  @ApiBody({ type: CreateOrganizerPaymentInfoDto })
   async updateOrganizerPaymentInfo(
     @Param('id') id: string,
-    @Body() body: CreateOrganizerPaymentInfoDto,
-  ): Promise<ResOrganizerPaymentInfoDto> {
+    @Body() body: UpdateOrganizerPaymentInfoDto,
+  ): Promise<OrganizerPaymentInfoResDto> {
     return this.organizerPaymentInfoService.update(id, body)
   }
 
   @Get(':id/organizer-payment-info')
   @ApiOperation({ summary: 'Get all organizer payment infos by user ID' })
+  @ApiParam({ name: 'id', description: 'User ID' })
+  @ApiQuery({ type: QueryPaginationDto })
   @ApiResponse({
     status: 200,
     description: 'Organizer payment infos retrieved successfully',
@@ -66,8 +69,6 @@ export class OrganizerPaymentInfoController {
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  @ApiParam({ name: 'id', description: 'User ID' })
-  @ApiQuery({ type: QueryPaginationDto })
   async getOrganizerPaymentInfosByUserId(
     @Param('id') id: string,
     @Query() query: QueryPaginationDto,
@@ -77,25 +78,25 @@ export class OrganizerPaymentInfoController {
 
   @Get('organizer-payment-info/:id')
   @ApiOperation({ summary: 'Get organizer payment info by ID' })
+  @ApiParam({ name: 'id', description: 'Organizer payment info ID' })
   @ApiResponse({
     status: 200,
     description: 'Organizer payment info retrieved successfully',
-    type: ResOrganizerPaymentInfoDto,
+    type: OrganizerPaymentInfoResDto,
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  @ApiParam({ name: 'id', description: 'Organizer payment info ID' })
-  async getOrganizerPaymentInfoById(@Param('id') id: string): Promise<ResOrganizerPaymentInfoDto> {
+  async getOrganizerPaymentInfoById(@Param('id') id: string): Promise<OrganizerPaymentInfoResDto> {
     return this.organizerPaymentInfoService.getById(id)
   }
 
   @Delete('organizer-payment-info/:id')
   @HttpCode(204)
+  @ApiParam({ name: 'id', description: 'Organizer payment info ID' })
   @ApiOperation({ summary: 'Delete organizer payment info by ID' })
   @ApiResponse({ status: 200, description: 'Organizer payment info deleted successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  @ApiParam({ name: 'id', description: 'Organizer payment info ID' })
   async deleteOrganizerPaymentInfoById(@Param('id') id: string): Promise<void> {
     return this.organizerPaymentInfoService.delete(id)
   }

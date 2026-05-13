@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
 import { Repository } from 'typeorm'
 import { Cities } from '~/modules/cities/cities.entity'
-import { DataCityDto, ResponseCityDto } from '~/modules/cities/dto/cities.dto'
+import { CityDataDto, CityResponseDto } from '~/modules/cities/dto/cities.dto'
 
 @Injectable()
 export class CitiesService {
@@ -12,11 +12,11 @@ export class CitiesService {
     private citiesRepository: Repository<Cities>,
   ) {}
 
-  async getAllByStateId(stateId: number): Promise<ResponseCityDto> {
+  async getAllByStateId(stateId: number): Promise<CityResponseDto> {
     const cities = await this.citiesRepository.find({ where: { stateId }, order: { name: 'ASC' } })
     if (cities.length === 0) {
       throw new BadRequestException('Wrong state ID')
     }
-    return { data: plainToInstance(DataCityDto, cities) }
+    return { data: plainToInstance(CityDataDto, cities) }
   }
 }

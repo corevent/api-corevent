@@ -1,12 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
 import {
   CreateEventDto,
-  QueryEventsDto,
+  EventResponseDto,
   PaginateEventsDto,
-  ResponseEventDto,
+  QueryEventsDto,
   UpdateEventDto,
 } from '~/modules/events-module/dto/events.dto'
 import { EventsService } from '~/modules/events-module/events.service'
@@ -22,7 +22,7 @@ export class EventsController {
   @ApiBody({ type: CreateEventDto })
   @ApiResponse({ status: 201, description: 'The event has been successfully created.' })
   @ApiResponse({ status: 400, description: 'Bad request.' })
-  async create(@Req() req: AuthenticatedRequest, @Body() body: CreateEventDto): Promise<ResponseEventDto> {
+  async create(@Req() req: AuthenticatedRequest, @Body() body: CreateEventDto): Promise<EventResponseDto> {
     return this.eventsService.create(req.user.id, body)
   }
 
@@ -36,7 +36,7 @@ export class EventsController {
     return this.eventsService.cancel(id)
   }
 
-  @Put(':id')
+  @Patch(':id')
   @ApiOperation({ summary: 'Update an event' })
   @ApiParam({ name: 'id', description: 'The ID of the event' })
   @ApiBody({ type: UpdateEventDto })
@@ -47,7 +47,7 @@ export class EventsController {
     @Req() req: AuthenticatedRequest,
     @Param('id') id: string,
     @Body() body: UpdateEventDto,
-  ): Promise<ResponseEventDto> {
+  ): Promise<EventResponseDto> {
     return this.eventsService.update(req.user.id, id, body)
   }
 
@@ -64,7 +64,7 @@ export class EventsController {
   @ApiParam({ name: 'id', description: 'The ID of the event' })
   @ApiResponse({ status: 200, description: 'The event has been successfully retrieved.' })
   @ApiResponse({ status: 404, description: 'Event not found.' })
-  async getById(@Param('id') id: string): Promise<ResponseEventDto> {
+  async getById(@Param('id') id: string): Promise<EventResponseDto> {
     return this.eventsService.getById(id)
   }
 

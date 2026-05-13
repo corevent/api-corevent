@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger'
+import { ApiProperty, PartialType } from '@nestjs/swagger'
 import { Expose } from 'class-transformer'
 import { IsEnum, IsNotEmpty, IsNumberString, IsOptional, IsString, Length } from 'class-validator'
 import { PaginationMetaDto } from '~/common/pagination/pagination.dto'
@@ -66,7 +66,9 @@ export class CreateOrganizerPaymentInfoDto {
   bankCode?: string
 }
 
-export class DataOrganizerPaymentInfoDto extends CreateOrganizerPaymentInfoDto {
+export class UpdateOrganizerPaymentInfoDto extends PartialType(CreateOrganizerPaymentInfoDto) {}
+
+export class OrganizerPaymentInfoDataDto extends CreateOrganizerPaymentInfoDto {
   @ApiProperty({ description: 'Organizer payment info ID', example: '123e4567-e89b-12d3-a456-426614174000' })
   @Expose()
   id: string
@@ -76,9 +78,9 @@ export class DataOrganizerPaymentInfoDto extends CreateOrganizerPaymentInfoDto {
   userId: string
 }
 
-export class ResOrganizerPaymentInfoDto {
-  @ApiProperty({ description: 'Organizer payment info', type: DataOrganizerPaymentInfoDto })
-  data: DataOrganizerPaymentInfoDto
+export class OrganizerPaymentInfoResDto {
+  @ApiProperty({ description: 'Organizer payment info', type: OrganizerPaymentInfoDataDto })
+  data: OrganizerPaymentInfoDataDto
 }
 
 export class ListOrganizerPaymentInfoDto {

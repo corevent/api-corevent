@@ -12,30 +12,34 @@ import { validateEmail } from '~/common/utils/validate-email.utils'
 import { validateRandomKey } from '~/common/utils/validate-random-key.util'
 import {
   CreateOrganizerPaymentInfoDto,
-  DataOrganizerPaymentInfoDto,
+  OrganizerPaymentInfoDataDto,
   ListOrganizerPaymentInfoDto,
   OrganizerPaymentInfoPageDto,
   PixType,
-  ResOrganizerPaymentInfoDto,
+  OrganizerPaymentInfoResDto,
+  UpdateOrganizerPaymentInfoDto,
 } from '~/modules/organizer-payment-info/dto/organizer-payment-info.dto'
 import { OrganizerPaymentInfo } from '~/modules/organizer-payment-info/organizer-payment-info.entity'
+import { UsersService } from '~/modules/users/users.service'
 
 @Injectable()
 export class OrganizerPaymentInfoService {
   constructor(
     @InjectRepository(OrganizerPaymentInfo)
     private organizerPaymentInfoRepository: Repository<OrganizerPaymentInfo>,
+    private usersService: UsersService,
   ) {}
 
-  async create(userId: string, body: CreateOrganizerPaymentInfoDto): Promise<ResOrganizerPaymentInfoDto> {
-    this.validateDto(body)
+  async create(userId: string, body: CreateOrganizerPaymentInfoDto): Promise<OrganizerPaymentInfoResDto> {
+    await this.validateBody(body, userId)
     const organizerPaymentInfo = this.organizerPaymentInfoRepository.create({ ...body, userId })
     const data = await this.organizerPaymentInfoRepository.save(organizerPaymentInfo)
-    return { data: plainToInstance(DataOrganizerPaymentInfoDto, data) }
+    return { data: plainToInstance(OrganizerPaymentInfoDataDto, data) }
   }
 
-  async update(id: string, body: CreateOrganizerPaymentInfoDto): Promise<ResOrganizerPaymentInfoDto> {
-    this.validateDto(body)
+  async update(id: string, body: UpdateOrganizerPaymentInfoDto): Promise<OrganizerPaymentInfoResDto> {
+    const current = await this.getById(id)
+    await this.validateBody({ ...current.data, ...body })
     await this.organizerPaymentInfoRepository.update(id, body)
     return this.getById(id)
   }
@@ -56,13 +60,13 @@ export class OrganizerPaymentInfoService {
     }
   }
 
-  async getById(id: string): Promise<ResOrganizerPaymentInfoDto> {
+  async getById(id: string): Promise<OrganizerPaymentInfoResDto> {
     const organizerPaymentInfo = await this.organizerPaymentInfoRepository.findOne({ where: { id } })
     if (!organizerPaymentInfo) {
       throw new NotFoundException('Organizer payment info not found')
     }
     return {
-      data: plainToInstance(DataOrganizerPaymentInfoDto, organizerPaymentInfo, { excludeExtraneousValues: true }),
+      data: plainToInstance(OrganizerPaymentInfoDataDto, organizerPaymentInfo, { excludeExtraneousValues: true }),
     }
   }
 
@@ -93,7 +97,27 @@ export class OrganizerPaymentInfoService {
     return filled.length === total
   }
 
-  private validateDto(body: CreateOrganizerPaymentInfoDto): void {
+  private async validateUserAge(userId: string): Promise<void> {
+    const { data: user } = await this.usersService.getById(userId)
+    const today = new Date()
+    const birthDate = new Date(user.birthDate)
+
+    const eighteenYearsLater = new Date(birthDate)
+    eighteenYearsLater.setFullYear(birthDate.getFullYear() + 18)
+
+    if (today < eighteenYearsLater) {
+      throw new BadRequestException('User must be at least 18 years old')
+    }
+  }
+
+  private async validateBody(
+    body: CreateOrganizerPaymentInfoDto | UpdateOrganizerPaymentInfoDto,
+    userId?: string,
+  ): Promise<void> {
+    if (userId) {
+      await this.validateUserAge(userId)
+    }
+
     const hasCompleteBank = this.validateAllOrNone('Bank data', {
       branchNumber: body.branchNumber,
       branchDigit: body.branchDigit,

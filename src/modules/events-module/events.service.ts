@@ -9,11 +9,11 @@ import { hasValue } from '~/common/utils/has-value.util'
 import { EventChangesService } from '~/modules/event-changes/event-changes.service'
 import {
   CreateEventDto,
-  DataEventDto,
+  EventDataDto,
   QueryEventsDto,
   ListEventsDto,
   PaginateEventsDto,
-  ResponseEventDto,
+  EventResponseDto,
   UpdateEventDto,
 } from '~/modules/events-module/dto/events.dto'
 import { EventLocationType, Events, EventStatus } from '~/modules/events-module/events.entity'
@@ -30,16 +30,16 @@ export class EventsService {
     private readonly organizerPaymentInfoService: OrganizerPaymentInfoService,
   ) {}
 
-  async create(organizerId: string, body: CreateEventDto): Promise<ResponseEventDto> {
+  async create(organizerId: string, body: CreateEventDto): Promise<EventResponseDto> {
     await this.organizerPaymentInfoService.getByUserId(organizerId)
     this.checkDates(body.startDate, body.endDate)
     this.checkIfHasPhysicalAddress(body)
     const instance = this.eventsRepository.create({ ...body, organizerId })
     const event = await this.eventsRepository.save(instance)
-    return { data: plainToInstance(DataEventDto, event) }
+    return { data: plainToInstance(EventDataDto, event) }
   }
 
-  async update(organizerId: string, id: string, body: UpdateEventDto): Promise<ResponseEventDto> {
+  async update(organizerId: string, id: string, body: UpdateEventDto): Promise<EventResponseDto> {
     await this.validateBeforeUpdate(organizerId, id, body)
     await this.eventsRepository.update(id, body)
     return this.getById(id)
@@ -77,12 +77,12 @@ export class EventsService {
     }
   }
 
-  async getById(id: string): Promise<ResponseEventDto> {
+  async getById(id: string): Promise<EventResponseDto> {
     const event = await this.eventsRepository.findOne({ where: { id } })
     if (!event) {
       throw new NotFoundException('Event not found')
     }
-    return { data: plainToInstance(DataEventDto, event) }
+    return { data: plainToInstance(EventDataDto, event) }
   }
 
   async delete(id: string): Promise<void> {
@@ -138,19 +138,19 @@ export class EventsService {
     return JSON.stringify(value)
   }
 
-  private async dealWithRelevantChanges(data: DataEventDto, body: UpdateEventDto): Promise<void> {
+  private async dealWithRelevantChanges(data: EventDataDto, body: UpdateEventDto): Promise<void> {
     const relevantFields = new Set(['title', 'startDate', 'endDate', 'maxParticipants', ...relevantAddressFields])
 
     const relevantChangedFields = Object.keys(body).filter((key) => {
       if (!relevantFields.has(key)) return false
-      const previous = data[key as keyof DataEventDto]
+      const previous = data[key as keyof EventDataDto]
       const next = body[key as keyof UpdateEventDto]
       return this.serializeComparableFieldValue(previous) !== this.serializeComparableFieldValue(next)
     })
 
     if (relevantChangedFields.length === 0) return
 
-    const oldValue = Object.fromEntries(relevantChangedFields.map((f) => [f, data[f as keyof DataEventDto]]))
+    const oldValue = Object.fromEntries(relevantChangedFields.map((f) => [f, data[f as keyof EventDataDto]]))
     const newValue = Object.fromEntries(relevantChangedFields.map((f) => [f, body[f as keyof UpdateEventDto]]))
 
     await this.eventChangesService.create(data.organizerId, data.id, {
@@ -233,7 +233,7 @@ export class EventsService {
     }
   }
 
-  private validateOrganizer(organizerId: string, event: DataEventDto): void {
+  private validateOrganizer(organizerId: string, event: EventDataDto): void {
     if (event.organizerId !== organizerId) {
       throw new BadRequestException('You are not the organizer of this event')
     }
