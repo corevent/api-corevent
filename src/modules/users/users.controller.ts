@@ -1,8 +1,9 @@
 import { Body, Controller, Get, InternalServerErrorException, Param, Patch, Post, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { MessageDto } from '~/common/dto/message.dto'
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
-import { CreateUserDto, UpdateUserDto, UserResponseDto } from '~/modules/users/dto/users.dto'
+import { CreateUserDto, UpdatePassDto, UpdateUserDto, UserResponseDto } from '~/modules/users/dto/users.dto'
 import { UsersService } from '~/modules/users/users.service'
 
 @ApiTags('Users')
@@ -29,7 +30,16 @@ export class UsersController {
     return this.usersService.update(req.user.id, body)
   }
 
-  // TODO: update user password
+  @Patch('pass')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Update the password of the current user' })
+  @ApiBody({ type: UpdatePassDto })
+  @ApiResponse({ status: 200, type: MessageDto })
+  @ApiResponse({ status: 400, description: 'Invalid current password provided' })
+  @ApiResponse({ status: 500, type: InternalServerErrorException })
+  async updatePass(@Req() req: AuthenticatedRequest, @Body() body: UpdatePassDto): Promise<{ message: string }> {
+    return this.usersService.updatePass(req.user.id, body)
+  }
 
   // same endpoint as /users/:id, but with the current user's ID
   @Get('me')

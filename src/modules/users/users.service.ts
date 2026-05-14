@@ -4,7 +4,13 @@ import * as bcrypt from 'bcryptjs'
 import { plainToInstance } from 'class-transformer'
 import { Repository } from 'typeorm'
 import { isValidCpf } from '~/common/utils/cpf-cnpj.util'
-import { CreateUserDto, UpdateUserDto, UserDataDto, UserResponseDto } from '~/modules/users/dto/users.dto'
+import {
+  CreateUserDto,
+  UpdatePassDto,
+  UpdateUserDto,
+  UserDataDto,
+  UserResponseDto,
+} from '~/modules/users/dto/users.dto'
 import { Users } from '~/modules/users/users.entity'
 
 @Injectable()
@@ -26,6 +32,22 @@ export class UsersService {
     await this.validateCpfAndEmail(body.cpf)
     await this.usersRepository.update(id, body)
     return this.getById(id)
+  }
+
+  async updatePass(id: string, body: UpdatePassDto): Promise<{ message: string }> {
+    // getById don't return the passwordHash, so it's necessary to get the user using the repository
+    const user = await this.usersRepository.findOne({ where: { id } })
+    if (!user) {
+      throw new BadRequestException('User not found')
+    }
+    const isPasswordValid = await bcrypt.compare(body.currentPassword, user.passwordHash)
+    if (!isPasswordValid) {
+      throw new BadRequestException('Invalid current password provided')
+    }
+
+    const newPasswordHash = await this.validateAndhashPassword(body.newPassword)
+    await this.usersRepository.update(id, { passwordHash: newPasswordHash })
+    return { message: 'Password updated successfully' }
   }
 
   // used for authentication
