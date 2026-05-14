@@ -1,7 +1,9 @@
 import { Body, Controller, HttpCode, Post } from '@nestjs/common'
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger'
-import { AuthService } from '~/auth/auth.service'
-import { AuthTokensDto, LoginDto, RefreshTokenDto } from '~/auth/dto/auth.dto'
+import { Throttle } from '@nestjs/throttler'
+import { MessageDto } from '~/common/dto/message.dto'
+import { AuthService } from '~/modules/auth/auth.service'
+import { AuthTokensDto, ForgotPasswordDto, LoginDto, RefreshTokenDto } from '~/modules/auth/dto/auth.dto'
 
 @Controller('auth')
 export class AuthController {
@@ -35,5 +37,20 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Invalid refresh token' })
   async logout(@Body() body: RefreshTokenDto): Promise<void> {
     return this.authService.logout(body)
+  }
+
+  // prevent brute force attacks or spamming
+  @Throttle({ default: { limit: 3, ttl: 60 } })
+  @Post('forgot-password')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Send a recovery code to the user',
+    description: "Note: It will not throw an error if the email doesn't exist",
+  })
+  @ApiBody({ type: ForgotPasswordDto })
+  @ApiResponse({ status: 200, type: MessageDto })
+  @ApiResponse({ status: 400, description: 'Invalid email' })
+  async forgotPassword(@Body() body: ForgotPasswordDto): Promise<{ message: string }> {
+    return this.authService.forgotPassword(body.email)
   }
 }

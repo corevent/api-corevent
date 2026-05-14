@@ -1,4 +1,4 @@
-import { AuthModule } from '~/auth/auth.module'
+import { AuthModule } from '~/modules/auth/auth.module'
 import { DatabaseModule } from '~/database/database.module'
 import { CitiesModule } from '~/modules/cities/cities.module'
 import { EventChangesModule } from '~/modules/event-changes/event-changes.module'

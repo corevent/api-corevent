@@ -25,3 +25,9 @@ export class AuthTokensDto {
   @ApiProperty({ description: 'JWT refresh token' })
   refreshToken: string
 }
+
+export class ForgotPasswordDto {
+  @ApiProperty({ description: 'Email address of the user', example: 'john.doe@example.com' })
+  @IsEmail()
+  email: string
+}

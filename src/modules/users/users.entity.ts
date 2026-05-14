@@ -1,8 +1,9 @@
 import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { RefreshTokens } from '~/auth/refresh-tokens.entity'
+import { RefreshTokens } from '~/modules/auth/refresh-tokens.entity'
 import { EventChanges } from '~/modules/event-changes/event-changes.entity'
 import { Events } from '~/modules/events-module/events.entity'
 import { OrganizerPaymentInfo } from '~/modules/organizer-payment-info/organizer-payment-info.entity'
+import { PasswordRecoveryCodes } from '~/modules/password-recovery-codes/password-recovery-codes.entity'
 
 @Entity()
 export class Users {
@@ -41,4 +42,7 @@ export class Users {
 
   @OneToMany(() => EventChanges, (eventChange) => eventChange.changedByUser)
   eventChanges: EventChanges[]
+
+  @OneToMany(() => PasswordRecoveryCodes, (passwordRecoveryCode) => passwordRecoveryCode.user)
+  passwordRecoveryCodes: PasswordRecoveryCodes[]
 }

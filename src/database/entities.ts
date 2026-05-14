@@ -1,4 +1,4 @@
-import { RefreshTokens } from '~/auth/refresh-tokens.entity'
+import { RefreshTokens } from '~/modules/auth/refresh-tokens.entity'
 import { Cities } from '~/modules/cities/cities.entity'
 import { EventChanges } from '~/modules/event-changes/event-changes.entity'
 import { Events } from '~/modules/events-module/events.entity'

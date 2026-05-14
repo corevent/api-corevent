@@ -1,13 +1,15 @@
-import { Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common'
+import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
-import { AuthTokensDto, LoginDto, RefreshTokenDto } from '~/auth/dto/auth.dto'
-import { RefreshTokens } from '~/auth/refresh-tokens.entity'
+import { AuthTokensDto, LoginDto, RefreshTokenDto } from '~/modules/auth/dto/auth.dto'
+import { RefreshTokens } from '~/modules/auth/refresh-tokens.entity'
 import { UsersService } from '~/modules/users/users.service'
 import * as bcrypt from 'bcryptjs'
 import { randomUUID } from 'crypto'
+import { PasswordRecoveryCodesService } from '~/modules/password-recovery-codes/password-recovery-codes.service'
+import { MailService } from '~/modules/mail/mail.service'
 
 interface AccessTokenPayload {
   sub: string
@@ -27,6 +29,8 @@ export class AuthService {
     private configService: ConfigService,
     @InjectRepository(RefreshTokens)
     private refreshTokensRepository: Repository<RefreshTokens>,
+    private passwordRecoveryCodesService: PasswordRecoveryCodesService,
+    private mailService: MailService,
   ) {}
 
   async login(body: LoginDto): Promise<AuthTokensDto> {
@@ -102,6 +106,37 @@ export class AuthService {
     }
   }
 
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const user = await this.usersService.findByEmail(email)
+    if (!user) {
+      // don't throw an error if the email doesn't exist
+      return { message: 'If the email exists, a code was sent' }
+    }
+
+    await this.passwordRecoveryCodesService.invalidateOldCodes(user.id)
+
+    const { code, codeHash } = await this.generatePasswordResetCode()
+    await this.passwordRecoveryCodesService.createRecoveryCode({
+      userId: user.id,
+      codeHash,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      used: false,
+    })
+
+    await this.mailService.sendRecoveryCode(user.email, code)
+    return { message: 'If the email exists, a code was sent' }
+  }
+
+  async resetPassword(email: string, code: string, newPassword: string): Promise<{ message: string }> {
+    const user = await this.usersService.findByEmail(email)
+    if (!user) {
+      throw new BadRequestException('User not found')
+    }
+    await this.passwordRecoveryCodesService.validateCode(user, code)
+    await this.usersService.resetPass(user.id, newPassword)
+    return { message: 'Password reset successfully' }
+  }
+
   private async issueTokens(userId: string, email: string): Promise<AuthTokensDto> {
     const accessTokenPayload: AccessTokenPayload = {
       sub: userId,
@@ -140,5 +175,11 @@ export class AuthService {
     await this.refreshTokensRepository.save(tokenEntity)
 
     return refreshToken
+  }
+
+  private async generatePasswordResetCode(): Promise<{ code: string; codeHash: string }> {
+    const code = Math.floor(100000 + Math.random() * 900000).toString()
+    const codeHash = await bcrypt.hash(code, 10)
+    return { code, codeHash }
   }
 }

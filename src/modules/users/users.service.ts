@@ -50,6 +50,11 @@ export class UsersService {
     return { message: 'Password updated successfully' }
   }
 
+  async resetPass(id: string, newPassword: string): Promise<void> {
+    const newPasswordHash = await this.validateAndhashPassword(newPassword)
+    await this.usersRepository.update(id, { passwordHash: newPasswordHash })
+  }
+
   // used for authentication
   async findByEmail(email: string): Promise<Users | null> {
     const user = await this.usersRepository.findOne({ where: { email } })
