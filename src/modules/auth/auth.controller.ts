@@ -3,7 +3,13 @@ import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger'
 import { Throttle } from '@nestjs/throttler'
 import { MessageDto } from '~/common/dto/message.dto'
 import { AuthService } from '~/modules/auth/auth.service'
-import { AuthTokensDto, ForgotPasswordDto, LoginDto, RefreshTokenDto } from '~/modules/auth/dto/auth.dto'
+import {
+  AuthTokensDto,
+  ForgotPasswordDto,
+  LoginDto,
+  RefreshTokenDto,
+  ResetPasswordDto,
+} from '~/modules/auth/dto/auth.dto'
 
 @Controller('auth')
 export class AuthController {
@@ -52,5 +58,15 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Invalid email' })
   async forgotPassword(@Body() body: ForgotPasswordDto): Promise<{ message: string }> {
     return this.authService.forgotPassword(body.email)
+  }
+
+  @Post('reset-password')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Reset the password of the user' })
+  @ApiBody({ type: ResetPasswordDto })
+  @ApiResponse({ status: 200, type: MessageDto })
+  @ApiResponse({ status: 400, description: 'Invalid email or code' })
+  async resetPassword(@Body() body: ResetPasswordDto): Promise<{ message: string }> {
+    return this.authService.resetPassword(body.email, body.code, body.newPassword)
   }
 }

@@ -113,17 +113,22 @@ export class AuthService {
       return { message: 'If the email exists, a code was sent' }
     }
 
-    await this.passwordRecoveryCodesService.invalidateOldCodes(user.id)
-
     const { code, codeHash } = await this.generatePasswordResetCode()
-    await this.passwordRecoveryCodesService.createRecoveryCode({
-      userId: user.id,
-      codeHash,
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-      used: false,
-    })
 
-    await this.mailService.sendRecoveryCode(user.email, code)
+    try {
+      await this.passwordRecoveryCodesService.createRecoveryAndSendEmail({
+        userId: user.id,
+        email: user.email,
+        code,
+        codeHash,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+        sendEmail: (to, plainCode) => this.mailService.sendRecoveryCode(to, plainCode),
+      })
+    } catch (error) {
+      console.error(error)
+      throw new InternalServerErrorException('Unable to process password recovery request')
+    }
+
     return { message: 'If the email exists, a code was sent' }
   }
 

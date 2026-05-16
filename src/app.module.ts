@@ -4,7 +4,8 @@ import { ScheduleModule } from '@nestjs/schedule'
 import { AppController } from '~/app.controller'
 import { AppService } from '~/app.service'
 import { modules } from '~/modules'
-import { ThrottlerModule } from '@nestjs/throttler'
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
+import { APP_GUARD } from '@nestjs/core'
 
 @Module({
   imports: [
@@ -13,7 +14,7 @@ import { ThrottlerModule } from '@nestjs/throttler'
     ThrottlerModule.forRoot({
       throttlers: [
         {
-          ttl: 60, // seconds
+          ttl: 60_000, // 1 minute in milliseconds
           limit: 10, // maximum number of requests
         },
       ],
@@ -21,7 +22,13 @@ import { ThrottlerModule } from '@nestjs/throttler'
     ...modules,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
   exports: [AppService],
 })
 export class AppModule {}

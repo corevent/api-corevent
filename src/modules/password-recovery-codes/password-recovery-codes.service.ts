@@ -1,10 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
-import { PasswordRecoveryCode } from '~/modules/password-recovery-codes/interfaces/password-recovery-codes.interface'
-import { PasswordRecoveryCodes } from '~/modules/password-recovery-codes/password-recovery-codes.entity'
-import { UsersService } from '~/modules/users/users.service'
 import * as bcrypt from 'bcryptjs'
+import { DataSource, MoreThan, Repository } from 'typeorm'
+import { PasswordRecoveryCodes } from '~/modules/password-recovery-codes/password-recovery-codes.entity'
 import { Users } from '~/modules/users/users.entity'
 
 @Injectable()
@@ -12,12 +10,27 @@ export class PasswordRecoveryCodesService {
   constructor(
     @InjectRepository(PasswordRecoveryCodes)
     private passwordRecoveryCodesRepository: Repository<PasswordRecoveryCodes>,
-    private usersService: UsersService,
+    private dataSource: DataSource,
   ) {}
 
-  async createRecoveryCode(body: PasswordRecoveryCode): Promise<void> {
-    const passwordRecoveryCode = this.passwordRecoveryCodesRepository.create(body)
-    await this.passwordRecoveryCodesRepository.save(passwordRecoveryCode)
+  async createRecoveryAndSendEmail(params: {
+    userId: string
+    email: string
+    code: string
+    codeHash: string
+    expiresAt: Date
+    sendEmail: (to: string, code: string) => Promise<void>
+  }): Promise<void> {
+    await this.dataSource.transaction(async (manager) => {
+      await manager.update(PasswordRecoveryCodes, { userId: params.userId, used: false }, { used: true })
+      await manager.save(PasswordRecoveryCodes, {
+        userId: params.userId,
+        codeHash: params.codeHash,
+        expiresAt: params.expiresAt,
+        used: false,
+      })
+      await params.sendEmail(params.email, params.code)
+    })
   }
 
   async validateCode(user: Users, code: string): Promise<void> {
@@ -25,6 +38,7 @@ export class PasswordRecoveryCodesService {
       where: {
         userId: user.id,
         used: false,
+        expiresAt: MoreThan(new Date()),
       },
       order: { createdAt: 'DESC' },
     })
@@ -46,9 +60,7 @@ export class PasswordRecoveryCodesService {
       await this.passwordRecoveryCodesRepository.update(record.id, { attempts: record.attempts })
       throw new BadRequestException(`Invalid code, ${5 - record.attempts} attempts left`)
     }
-  }
 
-  async invalidateOldCodes(userId: string): Promise<void> {
-    await this.passwordRecoveryCodesRepository.update({ userId, used: false }, { used: true })
+    await this.passwordRecoveryCodesRepository.update(record.id, { used: true })
   }
 }
