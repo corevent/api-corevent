@@ -25,3 +25,24 @@ export class AuthTokensDto {
   @ApiProperty({ description: 'JWT refresh token' })
   refreshToken: string
 }
+
+export class EmailDto {
+  @ApiProperty({ description: 'Email address of the user', example: 'john.doe@example.com' })
+  @IsEmail()
+  email: string
+}
+
+export class ResetPasswordDto {
+  @ApiProperty({ description: 'Email address of the user', example: 'john.doe@example.com' })
+  @IsEmail()
+  email: string
+
+  @ApiProperty({ description: 'Code to reset the password', example: '123456' })
+  @IsString()
+  code: string
+
+  @ApiProperty({ description: 'New password of the user', example: '@Newpassword123' })
+  @IsString()
+  @MinLength(8)
+  newPassword: string
+}
