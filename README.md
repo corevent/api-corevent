@@ -41,7 +41,13 @@ Corevent API is the backend service for the Corevent event management platform. 
    pnpm migration:run
    ```
 
-4. **Run the API** (watch mode)
+4. **Run database seeds** (populates states and cities; creates a base dev user when `NODE_ENV=development`)
+
+   ```bash
+   pnpm seed
+   ```
+
+5. **Run the API** (watch mode)
 
    ```bash
    pnpm start:dev

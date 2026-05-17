@@ -26,7 +26,7 @@ export class AuthTokensDto {
   refreshToken: string
 }
 
-export class ForgotPasswordDto {
+export class EmailDto {
   @ApiProperty({ description: 'Email address of the user', example: 'john.doe@example.com' })
   @IsEmail()
   email: string

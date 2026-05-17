@@ -15,4 +15,15 @@ export class MailService {
       },
     })
   }
+
+  async sendVerifyEmailCode(to: string, code: string) {
+    await this.mailerService.sendMail({
+      to,
+      subject: 'Código de verificação de email',
+      template: 'verify-email',
+      context: {
+        code,
+      },
+    })
+  }
 }

@@ -8,6 +8,7 @@ import { StatesModule } from '~/modules/states/states.module'
 import { UsersModule } from '~/modules/users/users.module'
 import { PasswordRecoveryCodesModule } from '~/modules/password-recovery-codes/password-recovery-codes.module'
 import { MailModule } from '~/modules/mail/mail.module'
+import { RegistrationCodesModule } from '~/modules/registration-codes/registration-codes.module'
 
 export const modules = [
   AuthModule,
@@ -20,4 +21,5 @@ export const modules = [
   CitiesModule,
   PasswordRecoveryCodesModule,
   MailModule,
+  RegistrationCodesModule,
 ]

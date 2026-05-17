@@ -10,6 +10,7 @@ import { TypeOrmModule } from '@nestjs/typeorm'
 import { UsersModule } from '~/modules/users/users.module'
 import { PasswordRecoveryCodesModule } from '~/modules/password-recovery-codes/password-recovery-codes.module'
 import { MailModule } from '~/modules/mail/mail.module'
+import { RegistrationCodesModule } from '~/modules/registration-codes/registration-codes.module'
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { MailModule } from '~/modules/mail/mail.module'
     UsersModule,
     PasswordRecoveryCodesModule,
     MailModule,
+    RegistrationCodesModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],

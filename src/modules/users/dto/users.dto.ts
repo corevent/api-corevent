@@ -35,6 +35,11 @@ export class CreateUserDto extends BaseUserDto {
   @IsDateString()
   @IsNotEmpty()
   birthDate: string
+
+  @ApiProperty({ description: 'User verify email code', example: '123456' })
+  @IsString()
+  @IsNotEmpty()
+  verifyEmailCode: string
 }
 
 export class UpdateUserDto extends PartialType(BaseUserDto) {}

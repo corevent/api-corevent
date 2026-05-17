@@ -4,6 +4,7 @@ import * as bcrypt from 'bcryptjs'
 import { plainToInstance } from 'class-transformer'
 import { Repository } from 'typeorm'
 import { isValidCpf } from '~/common/utils/cpf-cnpj.util'
+import { RegistrationCodesService } from '~/modules/registration-codes/registration-codes.service'
 import {
   CreateUserDto,
   UpdatePassDto,
@@ -18,9 +19,11 @@ export class UsersService {
   constructor(
     @InjectRepository(Users)
     private usersRepository: Repository<Users>,
+    private registrationCodesService: RegistrationCodesService,
   ) {}
 
   async create(body: CreateUserDto): Promise<UserResponseDto> {
+    await this.registrationCodesService.validateCode(body.email, body.verifyEmailCode)
     await this.validateCpfAndEmail(body.cpf, body.email)
     const passwordHash = await this.validateAndhashPassword(body.password)
     const user = this.usersRepository.create({ ...body, passwordHash })

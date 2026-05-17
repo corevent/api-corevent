@@ -10,6 +10,7 @@ import * as bcrypt from 'bcryptjs'
 import { randomUUID } from 'crypto'
 import { PasswordRecoveryCodesService } from '~/modules/password-recovery-codes/password-recovery-codes.service'
 import { MailService } from '~/modules/mail/mail.service'
+import { RegistrationCodesService } from '~/modules/registration-codes/registration-codes.service'
 
 interface AccessTokenPayload {
   sub: string
@@ -31,6 +32,7 @@ export class AuthService {
     private refreshTokensRepository: Repository<RefreshTokens>,
     private passwordRecoveryCodesService: PasswordRecoveryCodesService,
     private mailService: MailService,
+    private registrationCodesService: RegistrationCodesService,
   ) {}
 
   async login(body: LoginDto): Promise<AuthTokensDto> {
@@ -137,9 +139,32 @@ export class AuthService {
     if (!user) {
       throw new BadRequestException('User not found')
     }
-    await this.passwordRecoveryCodesService.validateCode(user, code)
+    await this.passwordRecoveryCodesService.validateCode(user.id, code)
     await this.usersService.resetPass(user.id, newPassword)
     return { message: 'Password reset successfully' }
+  }
+
+  // used before creating a new user
+  async sendVerifyEmailCode(email: string): Promise<{ message: string }> {
+    const user = await this.usersService.findByEmail(email)
+    if (user) {
+      throw new BadRequestException('Email already used by another user')
+    }
+    const { code, codeHash } = await this.generatePasswordResetCode()
+    try {
+      await this.registrationCodesService.createRegistrationCodeAndSendEmail({
+        email,
+        code,
+        codeHash,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+        sendEmail: (to, plainCode) => this.mailService.sendVerifyEmailCode(to, plainCode),
+      })
+    } catch (error) {
+      console.error(error)
+      throw new InternalServerErrorException('Unable to process verify email request')
+    }
+
+    return { message: 'If the email exists, a code was sent' }
   }
 
   private async issueTokens(userId: string, email: string): Promise<AuthTokensDto> {
