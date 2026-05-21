@@ -9,6 +9,8 @@ import { UsersModule } from '~/modules/users/users.module'
 import { PasswordRecoveryCodesModule } from '~/modules/password-recovery-codes/password-recovery-codes.module'
 import { MailModule } from '~/modules/mail/mail.module'
 import { RegistrationCodesModule } from '~/modules/registration-codes/registration-codes.module'
+import { EventStaffModule } from '~/modules/event-staff/event-staff.module'
+import { EventStaffInvitationsModule } from '~/modules/event-staff-invitations/event-staff-invitations.module'
 
 export const modules = [
   AuthModule,
@@ -22,4 +24,6 @@ export const modules = [
   PasswordRecoveryCodesModule,
   MailModule,
   RegistrationCodesModule,
+  EventStaffModule,
+  EventStaffInvitationsModule,
 ]

@@ -2,6 +2,8 @@ import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, Pri
 import { Cities } from '~/modules/cities/cities.entity'
 import { EventChanges } from '~/modules/event-changes/event-changes.entity'
 import { Users } from '~/modules/users/users.entity'
+import { EventStaff } from '~/modules/event-staff/event-staff.entity'
+import { EventStaffInvitations } from '~/modules/event-staff-invitations/event-staff-invitations.entity'
 
 export enum EventStatus {
   DRAFT = 'draft',
@@ -114,4 +116,10 @@ export class Events {
   @OneToMany(() => EventChanges, (eventChange) => eventChange.event)
   @JoinColumn({ name: 'event_changes_id' })
   eventChanges: EventChanges[]
+
+  @OneToMany(() => EventStaff, (eventStaff) => eventStaff.event)
+  eventStaff: EventStaff[]
+
+  @OneToMany(() => EventStaffInvitations, (eventStaffInvitation) => eventStaffInvitation.event)
+  eventStaffInvitations: EventStaffInvitations[]
 }

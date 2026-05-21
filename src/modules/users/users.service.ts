@@ -25,9 +25,11 @@ export class UsersService {
   async create(body: CreateUserDto): Promise<UserResponseDto> {
     await this.registrationCodesService.validateCode(body.email, body.verifyEmailCode)
     await this.validateCpfAndEmail(body.cpf, body.email)
-    const passwordHash = await this.validateAndhashPassword(body.password)
+    const passwordHash = await this.validateAndHashPassword(body.password)
+
     const user = this.usersRepository.create({ ...body, passwordHash })
     const res = await this.usersRepository.save(user)
+
     return { data: plainToInstance(UserDataDto, res, { excludeExtraneousValues: true }) }
   }
 
@@ -48,13 +50,13 @@ export class UsersService {
       throw new BadRequestException('Invalid current password provided')
     }
 
-    const newPasswordHash = await this.validateAndhashPassword(body.newPassword)
+    const newPasswordHash = await this.validateAndHashPassword(body.newPassword)
     await this.usersRepository.update(id, { passwordHash: newPasswordHash })
     return { message: 'Password updated successfully' }
   }
 
   async resetPass(id: string, newPassword: string): Promise<void> {
-    const newPasswordHash = await this.validateAndhashPassword(newPassword)
+    const newPasswordHash = await this.validateAndHashPassword(newPassword)
     await this.usersRepository.update(id, { passwordHash: newPasswordHash })
   }
 
@@ -70,7 +72,7 @@ export class UsersService {
   }
 
   // helpers
-  private async validateAndhashPassword(password: string): Promise<string> {
+  private async validateAndHashPassword(password: string): Promise<string> {
     if (password.length < 8) {
       throw new BadRequestException('Password must be at least 8 characters long')
     }

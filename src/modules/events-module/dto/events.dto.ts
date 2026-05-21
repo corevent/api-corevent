@@ -1,5 +1,17 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger'
-import { IsBoolean, IsDate, IsEnum, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Length, Min } from 'class-validator'
+import {
+  IsBoolean,
+  IsDate,
+  IsEnum,
+  IsIn,
+  IsInt,
+  IsLowercase,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Length,
+  Min,
+} from 'class-validator'
 import { PaginationMetaDto, QueryPaginationDto } from '~/common/pagination/pagination.dto'
 import { EventCategory, EventLocationType, EventStatus } from '~/modules/events-module/events.entity'
 
@@ -152,6 +164,7 @@ export class QueryEventsDto extends QueryPaginationDto {
 
   @ApiProperty({ description: 'Filter by event status', example: EventStatus.OPENED })
   @IsIn([EventStatus.OPENED, EventStatus.GOING, EventStatus.FINISHED])
+  @IsLowercase()
   status: EventStatus
 
   @ApiProperty({ description: 'Filter by event is adult only', example: false, required: false })

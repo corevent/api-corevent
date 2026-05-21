@@ -26,4 +26,13 @@ export class MailService {
       },
     })
   }
+
+  async inviteStaff(to: string, organizerName: string, eventName: string) {
+    await this.mailerService.sendMail({
+      to,
+      subject: `Convite para ser um staff no evento ${eventName}`,
+      template: 'invite-staff',
+      context: { organizerName, eventName },
+    })
+  }
 }
