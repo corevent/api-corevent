@@ -3,8 +3,7 @@ name: Deploy
 on:
   push:
     branches:
-      - ci/push-to-heroku-actions
-
+      - develop
 jobs:
   build:
     runs-on: ubuntu-latest
