@@ -17,4 +17,5 @@ export default new DataSource({
   entities,
   migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
   namingStrategy: new SnakeNamingStrategy(),
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
 })

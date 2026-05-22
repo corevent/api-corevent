@@ -1,6 +1,8 @@
 import { RefreshTokens } from '~/modules/auth/refresh-tokens.entity'
 import { Cities } from '~/modules/cities/cities.entity'
 import { EventChanges } from '~/modules/event-changes/event-changes.entity'
+import { EventStaffInvitations } from '~/modules/event-staff-invitations/event-staff-invitations.entity'
+import { EventStaff } from '~/modules/event-staff/event-staff.entity'
 import { Events } from '~/modules/events-module/events.entity'
 import { OrganizerPaymentInfo } from '~/modules/organizer-payment-info/organizer-payment-info.entity'
 import { PasswordRecoveryCodes } from '~/modules/password-recovery-codes/password-recovery-codes.entity'
@@ -18,4 +20,6 @@ export const entities = [
   EventChanges,
   PasswordRecoveryCodes,
   RegistrationCodes,
+  EventStaff,
+  EventStaffInvitations,
 ]

@@ -4,6 +4,8 @@ import { EventChanges } from '~/modules/event-changes/event-changes.entity'
 import { Events } from '~/modules/events-module/events.entity'
 import { OrganizerPaymentInfo } from '~/modules/organizer-payment-info/organizer-payment-info.entity'
 import { PasswordRecoveryCodes } from '~/modules/password-recovery-codes/password-recovery-codes.entity'
+import { EventStaff } from '~/modules/event-staff/event-staff.entity'
+import { EventStaffInvitations } from '~/modules/event-staff-invitations/event-staff-invitations.entity'
 
 @Entity()
 export class Users {
@@ -45,4 +47,10 @@ export class Users {
 
   @OneToMany(() => PasswordRecoveryCodes, (passwordRecoveryCode) => passwordRecoveryCode.user)
   passwordRecoveryCodes: PasswordRecoveryCodes[]
+
+  @OneToMany(() => EventStaff, (eventStaff) => eventStaff.user)
+  eventStaff: EventStaff[]
+
+  @OneToMany(() => EventStaffInvitations, (eventStaffInvitation) => eventStaffInvitation.user)
+  eventStaffInvitations: EventStaffInvitations[]
 }
