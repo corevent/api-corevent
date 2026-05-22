@@ -114,12 +114,23 @@ export class CreateEventDto {
 
 export class UpdateEventDto extends PartialType(CreateEventDto) {}
 
+class OrganizerInfoDto {
+  @ApiProperty({ description: 'Organizer (user) ID', example: '123e4567-e89b-12d3-a456-4266141740423' })
+  id: string
+
+  @ApiProperty({ description: 'Organizer (user) name', example: 'John Doe' })
+  name: string
+
+  @ApiProperty({ description: 'Organizer (user) email', example: 'john.doe@example.com' })
+  email: string
+
+  @ApiProperty({ description: 'Organizer (user) avatar URL', example: 'https://example.com/avatar.png' })
+  avatarUrl?: string
+}
+
 export class EventDataDto extends CreateEventDto {
   @ApiProperty({ description: 'Event ID', example: '123e4567-e89b-12d3-a456-426614174432' })
   id: string
-
-  @ApiProperty({ description: 'Organizer (user) ID', example: '123e4567-e89b-12d3-a456-4266141740423' })
-  organizerId: string
 
   @ApiProperty({ description: 'Event changes ID', example: '123e4567-e89b-12d3-a456-426614174792' })
   eventChangesId?: string
@@ -129,6 +140,9 @@ export class EventDataDto extends CreateEventDto {
 
   @ApiProperty({ description: 'Event creation date', example: '2026-01-01T00:00:00.000Z' })
   createdAt: Date
+
+  @ApiProperty({ description: 'Organizer (user) information', type: OrganizerInfoDto })
+  organizer: OrganizerInfoDto
 }
 
 export class EventResponseDto {
@@ -209,6 +223,9 @@ export class ListEventsDto {
 
   @ApiProperty({ description: 'Event status', example: EventStatus.OPENED })
   status: EventStatus
+
+  @ApiProperty({ description: 'Organizer (user) information', type: OrganizerInfoDto })
+  organizer: OrganizerInfoDto
 }
 
 export class PaginateEventsDto {

@@ -21,8 +21,11 @@ import {
 } from '~/modules/event-staff-invitations/event-staff-invitations.entity'
 import { EventStaffResponseDto } from '~/modules/event-staff/dto/event-staff.dto'
 import { EventStaffService } from '~/modules/event-staff/event-staff.service'
+import { EventDataDto } from '~/modules/events-module/dto/events.dto'
 import { EventStatus } from '~/modules/events-module/events.entity'
 import { EventsService } from '~/modules/events-module/events.service'
+import { MailService } from '~/modules/mail/mail.service'
+import { UsersService } from '~/modules/users/users.service'
 
 @Injectable()
 export class EventStaffInvitationsService {
@@ -31,15 +34,19 @@ export class EventStaffInvitationsService {
     private staffInvitationRepo: Repository<EventStaffInvitations>,
     private eventsService: EventsService,
     private eventStaffService: EventStaffService,
+    private mailService: MailService,
+    private usersService: UsersService,
   ) {}
 
   async create(eventId: string, body: CreateEventStaffInvitationDto): Promise<EventStaffInvitationResponseDto> {
-    await this.validateEvent(eventId, body.userId)
+    const userId = await this.sendInvitationEmail(body.email, eventId)
     const staffInvitation = this.staffInvitationRepo.create({
       ...body,
       eventId,
+      userId,
       invitationStatus: EventStaffInvitationStatus.PENDING,
     })
+
     const data = await this.staffInvitationRepo.save(staffInvitation)
     return { data: plainToInstance(EventStaffInvitationDataDto, data) }
   }
@@ -126,17 +133,16 @@ export class EventStaffInvitationsService {
     }
   }
 
-  private async validateEvent(organizerId: string, eventId: string, userId?: string): Promise<void> {
-    const { data: event } = await this.eventsService.getById(eventId)
+  private validateEvent(organizerId: string, event: EventDataDto, userId: string): void {
     if (event.status !== EventStatus.OPENED) {
       throw new BadRequestException('Can only add staff to opened event')
     }
 
-    if (event.organizerId !== organizerId) {
+    if (event.organizer.id !== organizerId) {
       throw new BadRequestException('You are not the organizer of this event')
     }
 
-    if (userId && userId === organizerId) {
+    if (userId === organizerId) {
       throw new BadRequestException('You cannot add yourself as staff')
     }
   }
@@ -144,15 +150,7 @@ export class EventStaffInvitationsService {
   private buildBaseQuery(): SelectQueryBuilder<EventStaffInvitations> {
     return this.staffInvitationRepo
       .createQueryBuilder('esi')
-      .select([
-        'esi.id',
-        'esi.userId',
-        'esi.originalAccessLevel',
-        'esi.invitationStatus',
-        'u.name',
-        'u.email',
-        'u.avatarUrl',
-      ])
+      .select(['esi.id', 'esi.originalAccessLevel', 'esi.invitationStatus', 'u.id', 'u.name', 'u.email', 'u.avatarUrl'])
       .innerJoin('esi.user', 'u')
   }
 
@@ -190,5 +188,31 @@ export class EventStaffInvitationsService {
     if (event.status !== EventStatus.OPENED) {
       throw new BadRequestException('Can only accept invitation to opened event')
     }
+  }
+
+  private async checkIfInvitationExists(userId: string, eventId: string): Promise<void> {
+    const invitation = await this.staffInvitationRepo.findOne({ where: { userId, eventId } })
+    if (invitation) {
+      throw new BadRequestException('Invitation already exists')
+    }
+  }
+
+  private async sendInvitationEmail(email: string, eventId: string): Promise<string> {
+    const user = await this.usersService.findByEmail(email)
+    if (!user) {
+      throw new NotFoundException('User not found')
+    }
+
+    const { data: event } = await this.eventsService.getById(eventId)
+
+    await this.checkIfInvitationExists(user.id, eventId)
+    this.validateEvent(event.organizer.id, event, user.id)
+
+    const organizerName = event.organizer.name
+    const eventName = event.title
+
+    await this.mailService.inviteStaff(email, organizerName, eventName)
+
+    return user.id
   }
 }

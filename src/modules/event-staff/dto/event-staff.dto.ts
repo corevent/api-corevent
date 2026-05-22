@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger'
+import { ApiProperty, OmitType } from '@nestjs/swagger'
 import { IsEnum, IsLowercase, IsOptional, IsString } from 'class-validator'
 import { PaginationMetaDto, QueryPaginationDto } from '~/common/pagination/pagination.dto'
 import {
@@ -32,6 +32,9 @@ export class EventStaffResponseDto {
 }
 
 class UserInfoDto {
+  @ApiProperty({ description: 'User ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  id: string
+
   @ApiProperty({ description: 'User name', example: 'John Doe' })
   name: string
 
@@ -42,7 +45,9 @@ class UserInfoDto {
   avatarUrl?: string
 }
 
-export class ListEventStaffDto extends EventStaffDataDto {
+class EventStaffWithoutUserIdDto extends OmitType(EventStaffDataDto, ['userId']) {}
+
+export class ListEventStaffDto extends EventStaffWithoutUserIdDto {
   @ApiProperty({ description: 'User information', type: UserInfoDto })
   user: UserInfoDto
 }

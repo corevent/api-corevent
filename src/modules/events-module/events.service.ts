@@ -47,23 +47,7 @@ export class EventsService {
 
   async getAll(queryParams: QueryEventsDto): Promise<PaginateEventsDto> {
     const { page, limit, status } = queryParams
-    const query = this.eventsRepository
-      .createQueryBuilder('e')
-      .select([
-        'e.id',
-        'e.title',
-        'e.maxParticipants',
-        'c.name as cityName',
-        's.acronym as stateAcronym',
-        'e.locationName',
-        'e.startDate',
-        'e.endDate',
-        'e.category',
-        'e.isAdultOnly',
-        'e.status',
-      ])
-      .leftJoin('e.city', 'c')
-      .leftJoin('c.state', 's')
+    const query = this.buildBaseQuery()
       .limit(limit)
       .offset(getOffset(page, limit))
       .where('e.status = :status', { status })
@@ -78,7 +62,7 @@ export class EventsService {
   }
 
   async getById(id: string): Promise<EventResponseDto> {
-    const event = await this.eventsRepository.findOne({ where: { id } })
+    const event = await this.buildBaseQuery().where('e.id = :id', { id }).getOne()
     if (!event) {
       throw new NotFoundException('Event not found')
     }
@@ -87,7 +71,7 @@ export class EventsService {
 
   async delete(id: string): Promise<void> {
     const { data: event } = await this.getById(id)
-    this.validateOrganizer(event.organizerId, event)
+    this.validateOrganizer(event.organizer.id, event)
     if (event.status !== EventStatus.DRAFT) {
       throw new BadRequestException('Event cannot be deleted because it is not draft')
     }
@@ -96,10 +80,10 @@ export class EventsService {
 
   async cancel(id: string): Promise<void> {
     const { data: event } = await this.getById(id)
-    this.validateOrganizer(event.organizerId, event)
+    this.validateOrganizer(event.organizer.id, event)
     if (event.status === EventStatus.OPENED || event.status === EventStatus.GOING) {
       await this.eventsRepository.update(id, { status: EventStatus.CANCELED })
-      await this.eventChangesService.create(event.organizerId, id, {
+      await this.eventChangesService.create(event.organizer.id, id, {
         changedFields: ['status'],
         oldValue: { status: event.status },
         newValue: { status: EventStatus.CANCELED },
@@ -153,7 +137,7 @@ export class EventsService {
     const oldValue = Object.fromEntries(relevantChangedFields.map((f) => [f, data[f as keyof EventDataDto]]))
     const newValue = Object.fromEntries(relevantChangedFields.map((f) => [f, body[f as keyof UpdateEventDto]]))
 
-    await this.eventChangesService.create(data.organizerId, data.id, {
+    await this.eventChangesService.create(data.organizer.id, data.id, {
       changedFields: relevantChangedFields,
       oldValue,
       newValue,
@@ -234,8 +218,33 @@ export class EventsService {
   }
 
   private validateOrganizer(organizerId: string, event: EventDataDto): void {
-    if (event.organizerId !== organizerId) {
+    if (event.organizer.id !== organizerId) {
       throw new BadRequestException('You are not the organizer of this event')
     }
+  }
+
+  private buildBaseQuery(): SelectQueryBuilder<Events> {
+    return this.eventsRepository
+      .createQueryBuilder('e')
+      .select([
+        'e.id',
+        'e.title',
+        'e.maxParticipants',
+        'c.name as cityName',
+        's.acronym as stateAcronym',
+        'e.locationName',
+        'e.startDate',
+        'e.endDate',
+        'e.category',
+        'e.isAdultOnly',
+        'e.status',
+        'o.id',
+        'o.name',
+        'o.email',
+        'o.avatarUrl',
+      ])
+      .innerJoin('e.organizer', 'o')
+      .leftJoin('e.city', 'c')
+      .leftJoin('c.state', 's')
   }
 }

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsEnum, IsLowercase, IsOptional, IsString, IsUUID } from 'class-validator'
+import { IsEmail, IsEnum, IsLowercase, IsOptional, IsString } from 'class-validator'
 import { PaginationMetaDto, QueryPaginationDto } from '~/common/pagination/pagination.dto'
 import {
   EventStaffAccessLevel,
@@ -7,9 +7,9 @@ import {
 } from '~/modules/event-staff-invitations/event-staff-invitations.entity'
 
 export class CreateEventStaffInvitationDto {
-  @ApiProperty({ description: 'User ID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @IsUUID()
-  userId: string
+  @ApiProperty({ description: 'User email', example: 'john.doe@example.com' })
+  @IsEmail()
+  email: string
 
   @ApiProperty({ description: 'Access level', example: EventStaffAccessLevel.READONLY })
   @IsEnum(EventStaffAccessLevel)
@@ -19,6 +19,9 @@ export class CreateEventStaffInvitationDto {
 export class EventStaffInvitationDataDto extends CreateEventStaffInvitationDto {
   @ApiProperty({ description: 'Event staff invitation ID', example: '123e4567-e89b-12d3-a456-426614174000' })
   id: string
+
+  @ApiProperty({ description: 'User ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  userId: string
 
   @ApiProperty({ description: 'Event ID', example: '123e4567-e89b-12d3-a456-426614174000' })
   eventId: string
@@ -67,6 +70,9 @@ export class QueryEventStaffInvitationsDto extends QueryPaginationDto {
 }
 
 class UserInfoDto {
+  @ApiProperty({ description: 'User ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  id: string
+
   @ApiProperty({ description: 'User name', example: 'John Doe' })
   name: string
 

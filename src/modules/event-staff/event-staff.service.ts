@@ -89,10 +89,11 @@ export class EventStaffService {
       .createQueryBuilder('es')
       .select([
         'es.id',
-        'es.userId',
         'es.accessLevel',
         'es.invitationStatus',
+        'es.staffInvitationId',
         'es.createdAt',
+        'u.id',
         'u.name',
         'u.email',
         'u.avatarUrl',
