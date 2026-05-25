@@ -1,3 +1,4 @@
+import { Attractions } from '~/modules/attractions/attractions.entity'
 import { RefreshTokens } from '~/modules/auth/refresh-tokens.entity'
 import { Cities } from '~/modules/cities/cities.entity'
 import { EventChanges } from '~/modules/event-changes/event-changes.entity'
@@ -22,4 +23,5 @@ export const entities = [
   RegistrationCodes,
   EventStaff,
   EventStaffInvitations,
+  Attractions,
 ]

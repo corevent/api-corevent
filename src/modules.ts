@@ -11,6 +11,7 @@ import { MailModule } from '~/modules/mail/mail.module'
 import { RegistrationCodesModule } from '~/modules/registration-codes/registration-codes.module'
 import { EventStaffModule } from '~/modules/event-staff/event-staff.module'
 import { EventStaffInvitationsModule } from '~/modules/event-staff-invitations/event-staff-invitations.module'
+import { AttractionsModule } from '~/modules/attractions/attractions.module'
 
 export const modules = [
   AuthModule,
@@ -26,4 +27,5 @@ export const modules = [
   RegistrationCodesModule,
   EventStaffModule,
   EventStaffInvitationsModule,
+  AttractionsModule,
 ]
