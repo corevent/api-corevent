@@ -1,6 +1,6 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger'
 import { Expose } from 'class-transformer'
-import { IsDateString, IsEmail, IsNotEmpty, IsOptional, IsString, Length } from 'class-validator'
+import { IsDateString, IsEmail, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, Length } from 'class-validator'
 
 // Base dto to set common fields for user creation and update
 export class BaseUserDto {
@@ -9,10 +9,10 @@ export class BaseUserDto {
   @IsNotEmpty()
   name: string
 
-  @ApiProperty({ description: 'User CPF', example: '12345678900' })
-  @IsString()
-  @Length(11, 11)
-  cpf: string
+  @ApiProperty({ description: 'User phone number', example: '12345678900' })
+  @IsPhoneNumber('BR')
+  @IsOptional()
+  phoneNumber?: string
 
   @ApiProperty({ description: 'User avatar URL', example: 'https://example.com/avatar.png' })
   @IsString()
@@ -35,6 +35,11 @@ export class CreateUserDto extends BaseUserDto {
   @IsDateString()
   @IsNotEmpty()
   birthDate: string
+
+  @ApiProperty({ description: 'User CPF', example: '12345678900' })
+  @IsString()
+  @Length(11, 11)
+  cpf: string
 
   @ApiProperty({ description: 'User verify email code', example: '123456' })
   @IsString()
@@ -76,6 +81,10 @@ export class UserDataDto {
   @ApiProperty({ description: 'User birth date', example: '1990-01-01' })
   @Expose()
   birthDate: string
+
+  @ApiProperty({ description: 'User phone number', example: '12345678900' })
+  @Expose()
+  phoneNumber?: string
 
   @ApiProperty({ description: 'User avatar URL', example: 'https://example.com/avatar.png' })
   @Expose()

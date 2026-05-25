@@ -34,7 +34,6 @@ export class UsersService {
   }
 
   async update(id: string, body: UpdateUserDto): Promise<UserResponseDto> {
-    await this.validateCpfAndEmail(body.cpf)
     await this.usersRepository.update(id, body)
     return this.getById(id)
   }
@@ -92,23 +91,19 @@ export class UsersService {
     return await bcrypt.hash(password, 10)
   }
 
-  private async validateCpfAndEmail(cpf?: string, email?: string): Promise<void> {
-    if (cpf) {
-      if (!isValidCpf(cpf)) {
-        throw new BadRequestException('Invalid CPF')
-      }
-
-      const user = await this.usersRepository.findOne({ where: { cpf } })
-      if (user) {
-        throw new BadRequestException('CPF already used by another user')
-      }
+  private async validateCpfAndEmail(cpf: string, email: string): Promise<void> {
+    if (!isValidCpf(cpf)) {
+      throw new BadRequestException('Invalid CPF')
     }
 
-    if (email) {
-      const user = await this.usersRepository.findOne({ where: { email } })
-      if (user) {
-        throw new BadRequestException('Email already used by another user')
-      }
+    const cpfUser = await this.usersRepository.findOne({ where: { cpf } })
+    if (cpfUser) {
+      throw new BadRequestException('CPF already used by another user')
+    }
+
+    const emailUser = await this.usersRepository.findOne({ where: { email } })
+    if (emailUser) {
+      throw new BadRequestException('Email already used by another user')
     }
   }
 }

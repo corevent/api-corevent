@@ -28,6 +28,9 @@ export class Users {
   passwordHash: string
 
   @Column({ type: 'text', nullable: true })
+  phoneNumber?: string
+
+  @Column({ type: 'text', nullable: true })
   avatarUrl?: string
 
   @CreateDateColumn({ name: 'created_at' })
