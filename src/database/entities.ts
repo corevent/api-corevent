@@ -10,7 +10,9 @@ import { PasswordRecoveryCodes } from '~/modules/password-recovery-codes/passwor
 import { RegistrationCodes } from '~/modules/registration-codes/registration-codes.entity'
 import { States } from '~/modules/states/states.entity'
 import { TicketTypes } from '~/modules/ticket-types/ticket-types.entity'
+import { Tickets } from '~/modules/tickets/tickets.entity'
 import { Users } from '~/modules/users/users.entity'
+import { Orders } from '~/modules/orders/orders.entity'
 
 export const entities = [
   Users,
@@ -26,4 +28,6 @@ export const entities = [
   EventStaffInvitations,
   Attractions,
   TicketTypes,
+  Tickets,
+  Orders,
 ]
