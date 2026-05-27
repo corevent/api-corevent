@@ -115,7 +115,7 @@ export class AuthService {
       return { message: 'If the email exists, a code was sent' }
     }
 
-    const { code, codeHash } = await this.generatePasswordResetCode()
+    const { code, codeHash } = await this.generateCode()
 
     try {
       await this.passwordRecoveryCodesService.createRecoveryAndSendEmail({
@@ -150,7 +150,7 @@ export class AuthService {
     if (user) {
       throw new BadRequestException('Email already used by another user')
     }
-    const { code, codeHash } = await this.generatePasswordResetCode()
+    const { code, codeHash } = await this.generateCode()
     try {
       await this.registrationCodesService.createRegistrationCodeAndSendEmail({
         email,
@@ -207,7 +207,7 @@ export class AuthService {
     return refreshToken
   }
 
-  private async generatePasswordResetCode(): Promise<{ code: string; codeHash: string }> {
+  private async generateCode(): Promise<{ code: string; codeHash: string }> {
     const code = Math.floor(100000 + Math.random() * 900000).toString()
     const codeHash = await bcrypt.hash(code, 10)
     return { code, codeHash }

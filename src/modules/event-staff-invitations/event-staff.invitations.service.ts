@@ -208,10 +208,10 @@ export class EventStaffInvitationsService {
     await this.checkIfInvitationExists(user.id, eventId)
     this.validateEvent(event.organizer.id, event, user.id)
 
-    const organizerName = event.organizer.name
-    const eventName = event.title
+    // const organizerName = event.organizer.name
+    // const eventName = event.title
 
-    await this.mailService.inviteStaff(email, organizerName, eventName)
+    // await this.mailService.inviteStaff(email, organizerName, eventName)
 
     return user.id
   }

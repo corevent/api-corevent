@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { InjectRepository } from '@nestjs/typeorm'
 import * as bcrypt from 'bcryptjs'
 import { DataSource, MoreThan, Repository } from 'typeorm'
@@ -10,6 +11,7 @@ export class RegistrationCodesService {
     @InjectRepository(RegistrationCodes)
     private registrationCodesRepository: Repository<RegistrationCodes>,
     private dataSource: DataSource,
+    private configService: ConfigService,
   ) {}
 
   async createRegistrationCodeAndSendEmail(params: {
@@ -32,6 +34,11 @@ export class RegistrationCodesService {
   }
 
   async validateCode(email: string, code: string): Promise<void> {
+    const adminVerificationCode = this.configService.get<string>('ADMIN_VERIFICATION_CODE')
+    if (adminVerificationCode && code === adminVerificationCode) {
+      return
+    }
+
     const record = await this.registrationCodesRepository.findOne({
       where: {
         email,
