@@ -13,7 +13,6 @@ import {
   QueryTicketTypesDto,
   TicketTypeDataDto,
   TicketTypeResponseDto,
-  TicketTypesListDto,
   UpdateTicketTypeDto,
 } from '~/modules/ticket-types/dto/ticket-types.dto'
 import { TicketTypes } from '~/modules/ticket-types/ticket-types.entity'
@@ -44,7 +43,6 @@ export class TicketTypesService {
     const { page, limit, ...filters } = queryParams
     const query = this.ticketTypesRepository
       .createQueryBuilder('tt')
-      .select('tt.id, tt.name, tt.price, tt.availableQuantity, tt.startDate, tt.endDate')
       .where('tt.eventId = :eventId', { eventId })
       .limit(limit)
       .offset(getOffset(page, limit))
@@ -53,7 +51,7 @@ export class TicketTypesService {
 
     const [list, total] = await query.getManyAndCount()
     return {
-      data: plainToInstance(TicketTypesListDto, list),
+      data: plainToInstance(TicketTypeDataDto, list),
       meta: createPaginationMeta(page, limit, total),
     }
   }
@@ -107,7 +105,7 @@ export class TicketTypesService {
   private applyFilters(query: SelectQueryBuilder<TicketTypes>, filters: Partial<QueryTicketTypesDto>): void {
     const { name, startDate, endDate, availableOnly } = filters
 
-    if (availableOnly) {
+    if (availableOnly === true) {
       query.andWhere('tt.startDate <= NOW() AND tt.endDate >= NOW()')
     }
     if (name) {
@@ -127,7 +125,7 @@ export class TicketTypesService {
     type: 'create' | 'update' | 'delete',
   ): Promise<void> {
     const { data: event } = await this.eventsService.getById(eventId)
-    if ((type === 'update' || type === 'delete') && event.status !== EventStatus.DRAFT) {
+    if (event.status !== EventStatus.DRAFT) {
       throw new BadRequestException(`Cannot ${type} because event is not draft`)
     }
 

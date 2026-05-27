@@ -1,4 +1,5 @@
-import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger'
+import { ApiProperty, PartialType } from '@nestjs/swagger'
+import { Transform, Type } from 'class-transformer'
 import { IsBoolean, IsDate, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator'
 import { PaginationMetaDto, QueryPaginationDto } from '~/common/pagination/pagination.dto'
 
@@ -45,21 +46,17 @@ export class TicketTypeResponseDto {
   data: TicketTypeDataDto
 }
 
-export class TicketTypesListDto extends OmitType(TicketTypeDataDto, ['eventId']) {}
-
 export class PaginatedTicketTypesListDto {
-  @ApiProperty({ description: 'List of ticket types', type: [TicketTypesListDto] })
-  data: TicketTypesListDto[]
+  @ApiProperty({ description: 'List of ticket types', type: [TicketTypeDataDto] })
+  data: TicketTypeDataDto[]
 
   @ApiProperty({ description: 'Pagination meta', type: PaginationMetaDto })
   meta: PaginationMetaDto
 }
 
 export class QueryTicketTypesDto extends QueryPaginationDto {
-  @ApiProperty({
-    description: 'Filter by available only (user -> startDate <= now <= endDate) or all (organizer)',
-    example: true,
-  })
+  @Type(() => String)
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   availableOnly: boolean
 

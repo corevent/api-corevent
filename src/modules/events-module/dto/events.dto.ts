@@ -15,12 +15,6 @@ import {
 import { PaginationMetaDto, QueryPaginationDto } from '~/common/pagination/pagination.dto'
 import { EventCategory, EventLocationType, EventStatus } from '~/modules/events-module/events.entity'
 
-export enum EventStatusFilter {
-  OPENED = 'opened',
-  GOING = 'going',
-  FINISHED = 'finished',
-}
-
 export class CreateEventDto {
   @ApiProperty({ description: 'Title of the event', example: 'Event Title' })
   @IsString()
@@ -108,7 +102,7 @@ export class CreateEventDto {
   isAdultOnly: boolean
 
   @ApiProperty({ description: 'Event status', example: EventStatus.OPENED })
-  @IsIn([EventStatusFilter.OPENED, EventStatusFilter.GOING, EventStatusFilter.FINISHED])
+  @IsIn([EventStatus.DRAFT, EventStatus.OPENED])
   status: EventStatus
 }
 

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
@@ -86,9 +86,10 @@ export class TicketTypesController {
   }
 
   @Delete('ticket-types/:ticketTypeId')
+  @HttpCode(204)
   @ApiOperation({ summary: 'Delete a ticket type' })
   @ApiParam({ name: 'ticketTypeId', description: 'The ID of the ticket type to delete' })
-  @ApiResponse({ status: 200, description: 'The ticket type has been successfully deleted' })
+  @ApiResponse({ status: 204, description: 'The ticket type has been successfully deleted' })
   @ApiResponse({ status: 404, description: 'Ticket type not found' })
   async delete(@Req() req: AuthenticatedRequest, @Param('ticketTypeId') ticketTypeId: string): Promise<void> {
     return this.ticketTypesService.delete(req.user.id, ticketTypeId)
