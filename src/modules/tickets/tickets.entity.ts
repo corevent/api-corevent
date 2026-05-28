@@ -1,5 +1,5 @@
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Orders } from '../orders/orders.entity'
+import { Orders } from '~/modules/orders/orders.entity'
 
 export enum TicketStatus {
   PENDING = 'pending',
@@ -26,6 +26,9 @@ export class Tickets {
 
   @Column({ type: 'text' })
   qrCodeHash: string
+
+  @Column({ type: 'text' })
+  qrCodeEncryptedToken: string
 
   @Column({ type: 'enum', enum: TicketStatus })
   status: TicketStatus
