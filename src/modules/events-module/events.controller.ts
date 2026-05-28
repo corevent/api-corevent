@@ -20,7 +20,7 @@ export class EventsController {
   @Post()
   @ApiOperation({ summary: 'Create an event' })
   @ApiBody({ type: CreateEventDto })
-  @ApiResponse({ status: 201, description: 'The event has been successfully created.' })
+  @ApiResponse({ status: 201, type: EventResponseDto, description: 'The event has been successfully created.' })
   @ApiResponse({ status: 400, description: 'Bad request.' })
   async create(@Req() req: AuthenticatedRequest, @Body() body: CreateEventDto): Promise<EventResponseDto> {
     return this.eventsService.create(req.user.id, body)
@@ -40,7 +40,7 @@ export class EventsController {
   @ApiOperation({ summary: 'Update an event' })
   @ApiParam({ name: 'id', description: 'The ID of the event' })
   @ApiBody({ type: UpdateEventDto })
-  @ApiResponse({ status: 200, description: 'The event has been successfully updated.' })
+  @ApiResponse({ status: 200, type: EventResponseDto, description: 'The event has been successfully updated.' })
   @ApiResponse({ status: 400, description: 'Bad request.' })
   @ApiResponse({ status: 404, description: 'Event not found.' })
   async update(
@@ -54,7 +54,7 @@ export class EventsController {
   @Get()
   @ApiOperation({ summary: 'Get all events' })
   @ApiQuery({ type: QueryEventsDto })
-  @ApiResponse({ status: 200, description: 'The events have been successfully retrieved.' })
+  @ApiResponse({ status: 200, type: PaginateEventsDto, description: 'The events have been successfully retrieved.' })
   async getAll(@Query() query: QueryEventsDto): Promise<PaginateEventsDto> {
     return this.eventsService.getAll(query)
   }
@@ -62,7 +62,7 @@ export class EventsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get an event by ID' })
   @ApiParam({ name: 'id', description: 'The ID of the event' })
-  @ApiResponse({ status: 200, description: 'The event has been successfully retrieved.' })
+  @ApiResponse({ status: 200, type: EventResponseDto, description: 'The event has been successfully retrieved.' })
   @ApiResponse({ status: 404, description: 'Event not found.' })
   async getById(@Param('id') id: string): Promise<EventResponseDto> {
     return this.eventsService.getById(id)
