@@ -1,10 +1,11 @@
-import { Body, Controller, HttpCode, Post } from '@nestjs/common'
+import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common'
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger'
-import { Throttle } from '@nestjs/throttler'
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler'
 import { MessageDto } from '~/common/dto/message.dto'
 import { AuthService } from '~/modules/auth/auth.service'
 import { AuthTokensDto, EmailDto, LoginDto, RefreshTokenDto, ResetPasswordDto } from '~/modules/auth/dto/auth.dto'
 
+@UseGuards(ThrottlerGuard)
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}

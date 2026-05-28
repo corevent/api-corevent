@@ -4,8 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule'
 import { AppController } from '~/app.controller'
 import { AppService } from '~/app.service'
 import { modules } from '~/modules'
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
-import { APP_GUARD } from '@nestjs/core'
+import { ThrottlerModule } from '@nestjs/throttler'
 
 @Module({
   imports: [
@@ -22,13 +21,7 @@ import { APP_GUARD } from '@nestjs/core'
     ...modules,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
-  ],
+  providers: [AppService],
   exports: [AppService],
 })
 export class AppModule {}
