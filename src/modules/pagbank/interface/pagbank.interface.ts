@@ -1,4 +1,4 @@
-interface Item {
+export interface Item {
   reference_id: string
   name: string
   quantity: number
@@ -12,13 +12,14 @@ interface Link {
 }
 
 export interface CreateCheckout {
+  reference_id: string
   customer: {
     name: string
     email: string
     tax_id: string
   }
   customerModifiable: boolean
-  items: [Item]
+  items: Item[]
   redirect_url: string
 }
 
@@ -28,6 +29,6 @@ export interface CheckoutResponse extends CreateCheckout {
   created_at: string
   additional_amount: number
   discount_amount: number
-  links: [Link]
+  links: Link[]
   origin: string
 }

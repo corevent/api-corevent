@@ -1,5 +1,7 @@
-import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { Tickets } from '../tickets/tickets.entity'
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
+import { Events } from '~/modules/events-module/events.entity'
+import { Tickets } from '~/modules/tickets/tickets.entity'
+import { Users } from '~/modules/users/users.entity'
 
 export enum OrderStatus {
   PENDING = 'pending',
@@ -24,12 +26,20 @@ export class Orders {
   @Column({ type: 'enum', enum: OrderStatus })
   status: OrderStatus
 
-  @Column({ type: 'text', nullable: true })
-  gatewayTransactionId?: string
+  @Column({ type: 'text' })
+  gatewayTransactionId: string
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
   createdAt: Date
 
   @OneToMany(() => Tickets, (ticket) => ticket.order)
   tickets: Tickets[]
+
+  @ManyToOne(() => Users, (user) => user.orders)
+  @JoinColumn({ name: 'user_id' })
+  user: Users
+
+  @ManyToOne(() => Events, (event) => event.orders)
+  @JoinColumn({ name: 'event_id' })
+  event: Events
 }
