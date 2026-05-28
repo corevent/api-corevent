@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^2.3.4",
+    "@nestjs/axios": "^4.0.1",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.0.1",

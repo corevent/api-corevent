@@ -9,6 +9,7 @@ import { EventsModule } from '~/modules/events-module/events.module'
 import { MailModule } from '~/modules/mail/mail.module'
 import { OrdersModule } from '~/modules/orders/orders.module'
 import { OrganizerPaymentInfoModule } from '~/modules/organizer-payment-info/organizer-payment-info.module'
+import { PagBankModule } from '~/modules/pagbank/pagbank.module'
 import { PasswordRecoveryCodesModule } from '~/modules/password-recovery-codes/password-recovery-codes.module'
 import { RegistrationCodesModule } from '~/modules/registration-codes/registration-codes.module'
 import { StatesModule } from '~/modules/states/states.module'
@@ -34,4 +35,5 @@ export const modules = [
   TicketTypesModule,
   TicketsModule,
   OrdersModule,
+  PagBankModule,
 ]
