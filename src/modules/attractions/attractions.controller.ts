@@ -35,7 +35,7 @@ export class AttractionsController {
     return this.attractionsService.create(eventId, body)
   }
 
-  @Patch(':attractionId')
+  @Patch('attractions/:attractionId')
   @ApiOperation({ summary: 'Update an attraction' })
   @ApiParam({ name: 'attractionId', type: String, description: 'The ID of the attraction' })
   @ApiBody({ type: UpdateAttractionDto })
@@ -63,7 +63,7 @@ export class AttractionsController {
     return this.attractionsService.getAll(eventId, query)
   }
 
-  @Get(':attractionId')
+  @Get('attractions/:attractionId')
   @ApiOperation({ summary: 'Get an attraction by ID' })
   @ApiParam({ name: 'attractionId', type: String, description: 'The ID of the attraction' })
   @ApiResponse({ status: 200, description: 'The attraction has been successfully retrieved.' })
@@ -73,7 +73,7 @@ export class AttractionsController {
     return this.attractionsService.getById(attractionId)
   }
 
-  @Delete(':attractionId')
+  @Delete('attractions/:attractionId')
   @HttpCode(204)
   @ApiOperation({ summary: 'Delete an attraction' })
   @ApiParam({ name: 'attractionId', type: String, description: 'The ID of the attraction' })
