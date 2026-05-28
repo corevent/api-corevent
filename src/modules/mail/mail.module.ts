@@ -20,11 +20,11 @@ import { ConfigModule } from '@nestjs/config'
 
         return {
           transport: {
-            host: 'smtp.gmail.com',
-            port: 587,
-            secure: false,
+            host: 'smtp.resend.com',
+            port: 2465,
+            secure: true,
             auth: {
-              user: emailUser,
+              user: 'resend',
               pass: emailPass,
             },
           },

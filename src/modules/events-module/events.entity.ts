@@ -5,6 +5,7 @@ import { Users } from '~/modules/users/users.entity'
 import { EventStaff } from '~/modules/event-staff/event-staff.entity'
 import { EventStaffInvitations } from '~/modules/event-staff-invitations/event-staff-invitations.entity'
 import { Attractions } from '~/modules/attractions/attractions.entity'
+import { TicketTypes } from '~/modules/ticket-types/ticket-types.entity'
 
 export enum EventStatus {
   DRAFT = 'draft',
@@ -126,4 +127,7 @@ export class Events {
 
   @OneToMany(() => Attractions, (attraction) => attraction.event)
   attractions: Attractions[]
+
+  @OneToMany(() => TicketTypes, (ticketType) => ticketType.event)
+  ticketTypes: TicketTypes[]
 }

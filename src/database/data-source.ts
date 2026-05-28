@@ -7,15 +7,29 @@ import { entities } from '~/database/entities'
 
 config()
 
-export default new DataSource({
-  type: 'postgres',
-  host: process.env.DB_HOST,
-  port: Number(process.env.DB_PORT ?? '5432'),
-  username: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+const dbUrl = process.env.DB_URL
+
+const baseConfig = {
+  type: 'postgres' as const,
   entities,
   migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
   namingStrategy: new SnakeNamingStrategy(),
-  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-})
+}
+
+export default new DataSource(
+  dbUrl
+    ? {
+        ...baseConfig,
+        url: dbUrl,
+        ssl: { rejectUnauthorized: false },
+      }
+    : {
+        ...baseConfig,
+        host: process.env.DB_HOST,
+        port: Number(process.env.DB_PORT ?? '5432'),
+        username: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+      },
+)
