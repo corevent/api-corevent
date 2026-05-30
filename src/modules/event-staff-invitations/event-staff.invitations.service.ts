@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
 import { Repository, SelectQueryBuilder } from 'typeorm'
@@ -58,7 +58,7 @@ export class EventStaffInvitationsService {
   async acceptInvitation(userId: string, id: string): Promise<EventStaffResponseDto> {
     const { data: invitation } = await this.getById(id)
     if (invitation.userId !== userId) {
-      throw new BadRequestException('This invitation is not for you')
+      throw new ForbiddenException('This invitation is not for you')
     }
     await this.validateBeforeAccept(invitation.eventId)
 
@@ -77,7 +77,7 @@ export class EventStaffInvitationsService {
   async rejectInvitation(userId: string, id: string): Promise<{ message: string }> {
     const { data: invitation } = await this.getById(id)
     if (invitation.userId !== userId) {
-      throw new BadRequestException('This invitation is not for you')
+      throw new ForbiddenException('This invitation is not for you')
     }
     await this.staffInvitationRepo.update(id, { invitationStatus: EventStaffInvitationStatus.REJECTED })
 
@@ -88,7 +88,7 @@ export class EventStaffInvitationsService {
     const { data: invitation } = await this.getById(id)
     const { data: event } = await this.eventsService.getById(invitation.eventId)
     if (event.organizer.id !== organizerId) {
-      throw new BadRequestException('You are not the organizer of this event')
+      throw new ForbiddenException('You are not the organizer of this event')
     }
     await this.staffInvitationRepo.update(id, { invitationStatus: EventStaffInvitationStatus.CANCELED })
     return { message: 'Invitation canceled successfully' }
@@ -153,7 +153,7 @@ export class EventStaffInvitationsService {
     }
 
     if (event.organizer.id !== organizerId) {
-      throw new BadRequestException('You are not the organizer of this event')
+      throw new ForbiddenException('You are not the organizer of this event')
     }
 
     if (userId === organizerId) {

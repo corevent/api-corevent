@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
 import { Repository, SelectQueryBuilder } from 'typeorm'
@@ -85,7 +85,7 @@ export class EventStaffService {
   private async validateOrganizer(userId: string, eventId: string): Promise<void> {
     const { data: event } = await this.eventsService.getById(eventId)
     if (event.organizer.id !== userId) {
-      throw new BadRequestException('You are not the organizer of this event')
+      throw new ForbiddenException('You are not the organizer of this event')
     }
   }
 
