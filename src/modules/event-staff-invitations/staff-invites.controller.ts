@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
+import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
 import { MessageDto } from '~/common/dto/message.dto'
 import {
   CreateEventStaffInvitationDto,
@@ -26,10 +27,11 @@ export class StaffInvitesController {
   })
   @ApiResponse({ status: 400, description: 'Bad request.' })
   async create(
+    @Req() req: AuthenticatedRequest,
     @Param('eventId') eventId: string,
     @Body() body: CreateEventStaffInvitationDto,
   ): Promise<EventStaffInvitationResponseDto> {
-    return this.eventStaffInvitationsService.create(eventId, body)
+    return this.eventStaffInvitationsService.create(req.user.id, eventId, body)
   }
 
   @Post(':invitationId/cancel')
@@ -40,8 +42,11 @@ export class StaffInvitesController {
     type: MessageDto,
     description: 'The invitation has been canceled.',
   })
-  async cancelInvitation(@Param('invitationId') invitationId: string): Promise<MessageDto> {
-    return this.eventStaffInvitationsService.cancelInvitation(invitationId)
+  async cancelInvitation(
+    @Req() req: AuthenticatedRequest,
+    @Param('invitationId') invitationId: string,
+  ): Promise<MessageDto> {
+    return this.eventStaffInvitationsService.cancelInvitation(req.user.id, invitationId)
   }
 
   @Get('events/:eventId')

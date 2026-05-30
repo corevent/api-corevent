@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
 import { Repository, SelectQueryBuilder } from 'typeorm'
@@ -38,8 +38,12 @@ export class EventStaffInvitationsService {
     private usersService: UsersService,
   ) {}
 
-  async create(eventId: string, body: CreateEventStaffInvitationDto): Promise<EventStaffInvitationResponseDto> {
-    const userId = await this.sendInvitationEmail(body.email, eventId)
+  async create(
+    organizerId: string,
+    eventId: string,
+    body: CreateEventStaffInvitationDto,
+  ): Promise<EventStaffInvitationResponseDto> {
+    const userId = await this.sendInvitationEmail(organizerId, body.email, eventId)
     const staffInvitation = this.staffInvitationRepo.create({
       ...body,
       eventId,
@@ -51,8 +55,11 @@ export class EventStaffInvitationsService {
     return { data: plainToInstance(EventStaffInvitationDataDto, data) }
   }
 
-  async acceptInvitation(id: string): Promise<EventStaffResponseDto> {
+  async acceptInvitation(userId: string, id: string): Promise<EventStaffResponseDto> {
     const { data: invitation } = await this.getById(id)
+    if (invitation.userId !== userId) {
+      throw new ForbiddenException('This invitation is not for you')
+    }
     await this.validateBeforeAccept(invitation.eventId)
 
     await this.staffInvitationRepo.update(id, {
@@ -67,15 +74,22 @@ export class EventStaffInvitationsService {
     })
   }
 
-  async rejectInvitation(id: string): Promise<{ message: string }> {
-    await this.getById(id)
+  async rejectInvitation(userId: string, id: string): Promise<{ message: string }> {
+    const { data: invitation } = await this.getById(id)
+    if (invitation.userId !== userId) {
+      throw new ForbiddenException('This invitation is not for you')
+    }
     await this.staffInvitationRepo.update(id, { invitationStatus: EventStaffInvitationStatus.REJECTED })
 
     return { message: 'Invitation rejected successfully' }
   }
 
-  async cancelInvitation(id: string): Promise<{ message: string }> {
-    await this.getById(id)
+  async cancelInvitation(organizerId: string, id: string): Promise<{ message: string }> {
+    const { data: invitation } = await this.getById(id)
+    const { data: event } = await this.eventsService.getById(invitation.eventId)
+    if (event.organizer.id !== organizerId) {
+      throw new ForbiddenException('You are not the organizer of this event')
+    }
     await this.staffInvitationRepo.update(id, { invitationStatus: EventStaffInvitationStatus.CANCELED })
     return { message: 'Invitation canceled successfully' }
   }
@@ -139,7 +153,7 @@ export class EventStaffInvitationsService {
     }
 
     if (event.organizer.id !== organizerId) {
-      throw new BadRequestException('You are not the organizer of this event')
+      throw new ForbiddenException('You are not the organizer of this event')
     }
 
     if (userId === organizerId) {
@@ -150,7 +164,7 @@ export class EventStaffInvitationsService {
   private buildBaseQuery(): SelectQueryBuilder<EventStaffInvitations> {
     return this.staffInvitationRepo
       .createQueryBuilder('esi')
-      .select(['esi.id', 'esi.originalAccessLevel', 'esi.invitationStatus', 'u.id', 'u.name', 'u.email', 'u.avatarUrl'])
+      .select(['esi.id', 'esi.userId', 'esi.eventId', 'esi.originalAccessLevel', 'esi.invitationStatus', 'u.id', 'u.name', 'u.email', 'u.avatarUrl'])
       .innerJoin('esi.user', 'u')
   }
 
@@ -197,7 +211,7 @@ export class EventStaffInvitationsService {
     }
   }
 
-  private async sendInvitationEmail(email: string, eventId: string): Promise<string> {
+  private async sendInvitationEmail(organizerId: string, email: string, eventId: string): Promise<string> {
     const user = await this.usersService.findByEmail(email)
     if (!user) {
       throw new NotFoundException('User not found')
@@ -206,7 +220,7 @@ export class EventStaffInvitationsService {
     const { data: event } = await this.eventsService.getById(eventId)
 
     await this.checkIfInvitationExists(user.id, eventId)
-    this.validateEvent(event.organizer.id, event, user.id)
+    this.validateEvent(organizerId, event, user.id)
 
     // const organizerName = event.organizer.name
     // const eventName = event.title

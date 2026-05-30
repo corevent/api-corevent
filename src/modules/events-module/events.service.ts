@@ -69,21 +69,21 @@ export class EventsService {
     return { data: plainToInstance(EventDataDto, event) }
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(organizerId: string, id: string): Promise<void> {
     const { data: event } = await this.getById(id)
-    this.validateOrganizer(event.organizer.id, event)
+    this.validateOrganizer(organizerId, event)
     if (event.status !== EventStatus.DRAFT) {
       throw new BadRequestException('Event cannot be deleted because it is not draft')
     }
     await this.eventsRepository.delete(id)
   }
 
-  async cancel(id: string): Promise<void> {
+  async cancel(organizerId: string, id: string): Promise<void> {
     const { data: event } = await this.getById(id)
-    this.validateOrganizer(event.organizer.id, event)
+    this.validateOrganizer(organizerId, event)
     if (event.status === EventStatus.OPENED || event.status === EventStatus.GOING) {
       await this.eventsRepository.update(id, { status: EventStatus.CANCELED })
-      await this.eventChangesService.create(event.organizer.id, id, {
+      await this.eventChangesService.create(organizerId, id, {
         changedFields: ['status'],
         oldValue: { status: event.status },
         newValue: { status: EventStatus.CANCELED },

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
 import { Repository, SelectQueryBuilder } from 'typeorm'
@@ -14,12 +14,14 @@ import {
 } from '~/modules/event-staff/dto/event-staff.dto'
 import { EventStaff } from '~/modules/event-staff/event-staff.entity'
 import { CreateEventStaff } from '~/modules/event-staff/interfaces/event-staff.interface'
+import { EventsService } from '~/modules/events-module/events.service'
 
 @Injectable()
 export class EventStaffService {
   constructor(
     @InjectRepository(EventStaff)
     private eventStaffRepository: Repository<EventStaff>,
+    private eventsService: EventsService,
   ) {}
 
   async create(body: CreateEventStaff): Promise<EventStaffResponseDto> {
@@ -29,16 +31,24 @@ export class EventStaffService {
     return { data: plainToInstance(EventStaffDataDto, data) }
   }
 
-  async updateAccessLevel(staffId: string, accessLevel: EventStaffAccessLevel): Promise<EventStaffResponseDto> {
-    const updated = await this.eventStaffRepository.update(staffId, { accessLevel })
-    if (updated.affected === 0) {
+  async updateAccessLevel(
+    userId: string,
+    staffId: string,
+    accessLevel: EventStaffAccessLevel,
+  ): Promise<EventStaffResponseDto> {
+    const staff = await this.eventStaffRepository.findOne({ where: { id: staffId }, select: ['eventId', 'id'] })
+    if (!staff) {
       throw new NotFoundException('Event staff not found')
     }
+    await this.validateOrganizer(userId, staff.eventId)
 
-    return this.getById(staffId)
+    await this.eventStaffRepository.update(staffId, { accessLevel })
+    return this.getById(userId, staffId)
   }
 
-  async getByEventId(eventId: string, queryParams: QueryEventStaffDto): Promise<PaginateEventStaffDto> {
+  async getByEventId(userId: string, eventId: string, queryParams: QueryEventStaffDto): Promise<PaginateEventStaffDto> {
+    await this.validateOrganizer(userId, eventId)
+
     const { page, limit, ...filters } = queryParams
     const query = this.buildBaseQuery()
       .where('es.eventId = :eventId', { eventId })
@@ -53,18 +63,29 @@ export class EventStaffService {
     }
   }
 
-  async getById(id: string): Promise<EventStaffResponseDto> {
+  async getById(userId: string, id: string): Promise<EventStaffResponseDto> {
     const data = await this.buildBaseQuery().where('es.id = :id', { id }).getOne()
     if (!data) {
       throw new NotFoundException('Event staff not found')
     }
+    await this.validateOrganizer(userId, data.eventId)
     return { data: plainToInstance(EventStaffDataDto, data) }
   }
 
-  async deleteStaff(staffId: string): Promise<void> {
-    const deleted = await this.eventStaffRepository.delete(staffId)
-    if (deleted.affected === 0) {
+  async deleteStaff(userId: string, staffId: string): Promise<void> {
+    const staff = await this.eventStaffRepository.findOne({ where: { id: staffId }, select: ['eventId', 'id'] })
+    if (!staff) {
       throw new NotFoundException('Event staff not found')
+    }
+    await this.validateOrganizer(userId, staff.eventId)
+
+    await this.eventStaffRepository.delete(staffId)
+  }
+
+  private async validateOrganizer(userId: string, eventId: string): Promise<void> {
+    const { data: event } = await this.eventsService.getById(eventId)
+    if (event.organizer.id !== userId) {
+      throw new ForbiddenException('You are not the organizer of this event')
     }
   }
 
@@ -89,6 +110,7 @@ export class EventStaffService {
       .createQueryBuilder('es')
       .select([
         'es.id',
+        'es.eventId',
         'es.accessLevel',
         'es.invitationStatus',
         'es.staffInvitationId',

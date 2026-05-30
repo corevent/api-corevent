@@ -24,8 +24,11 @@ export class UserInvitationsController {
     type: EventStaffResponseDto,
     description: 'The invitation has been accepted.',
   })
-  async acceptInvitation(@Param('invitationId') invitationId: string): Promise<EventStaffResponseDto> {
-    return this.eventStaffInvitationsService.acceptInvitation(invitationId)
+  async acceptInvitation(
+    @Req() req: AuthenticatedRequest,
+    @Param('invitationId') invitationId: string,
+  ): Promise<EventStaffResponseDto> {
+    return this.eventStaffInvitationsService.acceptInvitation(req.user.id, invitationId)
   }
 
   @Post(':invitationId/reject')
@@ -36,8 +39,11 @@ export class UserInvitationsController {
     type: MessageDto,
     description: 'The invitation has been rejected.',
   })
-  async rejectInvitation(@Param('invitationId') invitationId: string): Promise<MessageDto> {
-    return this.eventStaffInvitationsService.rejectInvitation(invitationId)
+  async rejectInvitation(
+    @Req() req: AuthenticatedRequest,
+    @Param('invitationId') invitationId: string,
+  ): Promise<MessageDto> {
+    return this.eventStaffInvitationsService.rejectInvitation(req.user.id, invitationId)
   }
 
   @Get('me')

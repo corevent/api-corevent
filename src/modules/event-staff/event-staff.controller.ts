@@ -1,6 +1,7 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Query, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Query, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
+import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
 import { MessageDto } from '~/common/dto/message.dto'
 import {
   EventStaffResponseDto,
@@ -24,10 +25,11 @@ export class EventStaffController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 404, description: 'Staff not found' })
   async updateAccessLevel(
+    @Req() req: AuthenticatedRequest,
     @Param('staffId') staffId: string,
     @Body() body: UpdateAccessLevelDto,
   ): Promise<EventStaffResponseDto> {
-    return this.eventStaffService.updateAccessLevel(staffId, body.accessLevel)
+    return this.eventStaffService.updateAccessLevel(req.user.id, staffId, body.accessLevel)
   }
 
   @Get(':eventId/staff')
@@ -35,8 +37,12 @@ export class EventStaffController {
   @ApiParam({ name: 'eventId', type: String, description: 'The ID of the event' })
   @ApiQuery({ type: QueryEventStaffDto })
   @ApiResponse({ status: 200, type: PaginateEventStaffDto, description: 'The list of staff for the event.' })
-  async getAll(@Param('eventId') eventId: string, @Query() query: QueryEventStaffDto): Promise<PaginateEventStaffDto> {
-    return this.eventStaffService.getByEventId(eventId, query)
+  async getAll(
+    @Req() req: AuthenticatedRequest,
+    @Param('eventId') eventId: string,
+    @Query() query: QueryEventStaffDto,
+  ): Promise<PaginateEventStaffDto> {
+    return this.eventStaffService.getByEventId(req.user.id, eventId, query)
   }
 
   @Get('staff/:staffId')
@@ -44,8 +50,8 @@ export class EventStaffController {
   @ApiParam({ name: 'staffId' })
   @ApiResponse({ status: 200, type: EventStaffResponseDto })
   @ApiResponse({ status: 404, description: 'Staff not found' })
-  async getById(@Param('staffId') staffId: string): Promise<EventStaffResponseDto> {
-    return this.eventStaffService.getById(staffId)
+  async getById(@Req() req: AuthenticatedRequest, @Param('staffId') staffId: string): Promise<EventStaffResponseDto> {
+    return this.eventStaffService.getById(req.user.id, staffId)
   }
 
   @Delete('staff/:staffId')
@@ -54,7 +60,7 @@ export class EventStaffController {
   @ApiParam({ name: 'staffId' })
   @ApiResponse({ status: 204, description: 'The staff has been deleted successfully' })
   @ApiResponse({ status: 404, description: 'Staff not found' })
-  async deleteStaff(@Param('staffId') staffId: string): Promise<void> {
-    return this.eventStaffService.deleteStaff(staffId)
+  async deleteStaff(@Req() req: AuthenticatedRequest, @Param('staffId') staffId: string): Promise<void> {
+    return this.eventStaffService.deleteStaff(req.user.id, staffId)
   }
 }
