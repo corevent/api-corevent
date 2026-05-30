@@ -164,7 +164,7 @@ export class EventStaffInvitationsService {
   private buildBaseQuery(): SelectQueryBuilder<EventStaffInvitations> {
     return this.staffInvitationRepo
       .createQueryBuilder('esi')
-      .select(['esi.id', 'esi.originalAccessLevel', 'esi.invitationStatus', 'u.id', 'u.name', 'u.email', 'u.avatarUrl'])
+      .select(['esi.id', 'esi.userId', 'esi.eventId', 'esi.originalAccessLevel', 'esi.invitationStatus', 'u.id', 'u.name', 'u.email', 'u.avatarUrl'])
       .innerJoin('esi.user', 'u')
   }
 
