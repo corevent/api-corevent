@@ -32,8 +32,8 @@ export class EventsController {
   @ApiResponse({ status: 200, description: 'The event has been successfully cancelled.' })
   @ApiResponse({ status: 400, description: 'Bad request.' })
   @ApiResponse({ status: 404, description: 'Event not found.' })
-  async cancel(@Param('id') id: string): Promise<void> {
-    return this.eventsService.cancel(id)
+  async cancel(@Req() req: AuthenticatedRequest, @Param('id') id: string): Promise<void> {
+    return this.eventsService.cancel(req.user.id, id)
   }
 
   @Patch(':id')
@@ -73,7 +73,7 @@ export class EventsController {
   @ApiParam({ name: 'id', description: 'The ID of the event' })
   @ApiResponse({ status: 200, description: 'The event has been successfully deleted.' })
   @ApiResponse({ status: 404, description: 'Event not found.' })
-  async delete(@Param('id') id: string): Promise<void> {
-    return this.eventsService.delete(id)
+  async delete(@Req() req: AuthenticatedRequest, @Param('id') id: string): Promise<void> {
+    return this.eventsService.delete(req.user.id, id)
   }
 }

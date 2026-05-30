@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
 import { Repository } from 'typeorm'
@@ -37,11 +37,11 @@ export class OrganizerPaymentInfoService {
     return { data: plainToInstance(OrganizerPaymentInfoDataDto, data) }
   }
 
-  async update(id: string, body: UpdateOrganizerPaymentInfoDto): Promise<OrganizerPaymentInfoResDto> {
-    const current = await this.getById(id)
+  async update(userId: string, id: string, body: UpdateOrganizerPaymentInfoDto): Promise<OrganizerPaymentInfoResDto> {
+    const current = await this.getById(userId, id)
     await this.validateBody({ ...current.data, ...body })
     await this.organizerPaymentInfoRepository.update(id, body)
-    return this.getById(id)
+    return this.getById(userId, id)
   }
 
   async listByUserId(userId: string, query: QueryPaginationDto): Promise<OrganizerPaymentInfoPageDto> {
@@ -60,21 +60,31 @@ export class OrganizerPaymentInfoService {
     }
   }
 
-  async getById(id: string): Promise<OrganizerPaymentInfoResDto> {
+  async getById(userId: string, id: string): Promise<OrganizerPaymentInfoResDto> {
     const organizerPaymentInfo = await this.organizerPaymentInfoRepository.findOne({ where: { id } })
     if (!organizerPaymentInfo) {
       throw new NotFoundException('Organizer payment info not found')
+    }
+    if (organizerPaymentInfo.userId !== userId) {
+      throw new ForbiddenException('You do not own this payment info')
     }
     return {
       data: plainToInstance(OrganizerPaymentInfoDataDto, organizerPaymentInfo, { excludeExtraneousValues: true }),
     }
   }
 
-  async delete(id: string): Promise<void> {
-    const { affected } = await this.organizerPaymentInfoRepository.delete(id)
-    if (affected === 0) {
+  async delete(userId: string, id: string): Promise<void> {
+    const organizerPaymentInfo = await this.organizerPaymentInfoRepository.findOne({
+      where: { id },
+      select: ['id', 'userId'],
+    })
+    if (!organizerPaymentInfo) {
       throw new NotFoundException('Organizer payment info not found')
     }
+    if (organizerPaymentInfo.userId !== userId) {
+      throw new ForbiddenException('You do not own this payment info')
+    }
+    await this.organizerPaymentInfoRepository.delete(id)
   }
 
   // used to check if user is a organizer

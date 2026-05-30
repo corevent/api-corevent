@@ -1,6 +1,20 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, UseGuards } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Delete,
+  ForbiddenException,
+  Get,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
+import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
 import { QueryPaginationDto } from '~/common/pagination/pagination.dto'
 import {
   CreateOrganizerPaymentInfoDto,
@@ -34,9 +48,13 @@ export class OrganizerPaymentInfoController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async createOrganizerPaymentInfo(
+    @Req() req: AuthenticatedRequest,
     @Param('id') id: string,
     @Body() body: CreateOrganizerPaymentInfoDto,
   ): Promise<OrganizerPaymentInfoResDto> {
+    if (req.user.id !== id) {
+      throw new ForbiddenException('You can only create your own payment info')
+    }
     return this.organizerPaymentInfoService.create(id, body)
   }
 
@@ -52,10 +70,11 @@ export class OrganizerPaymentInfoController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async updateOrganizerPaymentInfo(
+    @Req() req: AuthenticatedRequest,
     @Param('id') id: string,
     @Body() body: UpdateOrganizerPaymentInfoDto,
   ): Promise<OrganizerPaymentInfoResDto> {
-    return this.organizerPaymentInfoService.update(id, body)
+    return this.organizerPaymentInfoService.update(req.user.id, id, body)
   }
 
   @Get(':id/organizer-payment-info')
@@ -70,9 +89,13 @@ export class OrganizerPaymentInfoController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async getOrganizerPaymentInfosByUserId(
+    @Req() req: AuthenticatedRequest,
     @Param('id') id: string,
     @Query() query: QueryPaginationDto,
   ): Promise<OrganizerPaymentInfoPageDto> {
+    if (req.user.id !== id) {
+      throw new ForbiddenException('You can only list your own payment info')
+    }
     return this.organizerPaymentInfoService.listByUserId(id, query)
   }
 
@@ -86,8 +109,11 @@ export class OrganizerPaymentInfoController {
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  async getOrganizerPaymentInfoById(@Param('id') id: string): Promise<OrganizerPaymentInfoResDto> {
-    return this.organizerPaymentInfoService.getById(id)
+  async getOrganizerPaymentInfoById(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ): Promise<OrganizerPaymentInfoResDto> {
+    return this.organizerPaymentInfoService.getById(req.user.id, id)
   }
 
   @Delete('organizer-payment-info/:id')
@@ -97,7 +123,7 @@ export class OrganizerPaymentInfoController {
   @ApiResponse({ status: 200, description: 'Organizer payment info deleted successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  async deleteOrganizerPaymentInfoById(@Param('id') id: string): Promise<void> {
-    return this.organizerPaymentInfoService.delete(id)
+  async deleteOrganizerPaymentInfoById(@Req() req: AuthenticatedRequest, @Param('id') id: string): Promise<void> {
+    return this.organizerPaymentInfoService.delete(req.user.id, id)
   }
 }
