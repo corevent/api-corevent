@@ -1,14 +1,19 @@
-import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common'
+import { Body, Controller, HttpCode, InternalServerErrorException, Post, UseGuards } from '@nestjs/common'
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger'
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler'
 import { MessageDto } from '~/common/dto/message.dto'
 import { AuthService } from '~/modules/auth/auth.service'
 import { AuthTokensDto, EmailDto, LoginDto, RefreshTokenDto, ResetPasswordDto } from '~/modules/auth/dto/auth.dto'
+import { CreateUserDto, UserResponseDto } from '~/modules/users/dto/users.dto'
+import { UsersService } from '~/modules/users/users.service'
 
 @UseGuards(ThrottlerGuard)
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Post('login')
   @HttpCode(200)
@@ -74,5 +79,14 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Invalid email or code' })
   async verifyEmail(@Body() body: EmailDto): Promise<{ message: string }> {
     return this.authService.sendVerifyEmailCode(body.email)
+  }
+
+  @Post('register')
+  @ApiOperation({ summary: 'Create a new user' })
+  @ApiBody({ type: CreateUserDto })
+  @ApiResponse({ status: 201, type: UserResponseDto })
+  @ApiResponse({ status: 500, type: InternalServerErrorException })
+  async create(@Body() body: CreateUserDto): Promise<UserResponseDto> {
+    return this.usersService.create(body)
   }
 }

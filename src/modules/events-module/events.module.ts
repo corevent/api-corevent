@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'
+import { Module, forwardRef } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { EventChangesModule } from '~/modules/event-changes/event-changes.module'
 import { EventsController } from '~/modules/events-module/events.controller'
@@ -8,7 +8,7 @@ import { EventsCronService } from '~/modules/events-module/jobs/finish-events.jo
 import { OrganizerPaymentInfoModule } from '~/modules/organizer-payment-info/organizer-payment-info.module'
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Events]), EventChangesModule, OrganizerPaymentInfoModule],
+  imports: [TypeOrmModule.forFeature([Events]), EventChangesModule, forwardRef(() => OrganizerPaymentInfoModule)],
   controllers: [EventsController],
   providers: [EventsService, EventsCronService],
   exports: [EventsService, EventsCronService],
