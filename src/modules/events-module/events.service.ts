@@ -7,6 +7,7 @@ import { createPaginationMeta } from '~/common/pagination/pagination-meta.factor
 import { getOffset } from '~/common/utils/get-offset.util'
 import { hasValue } from '~/common/utils/has-value.util'
 import { EventChangesService } from '~/modules/event-changes/event-changes.service'
+import { EventStaff } from '~/modules/event-staff/event-staff.entity'
 import {
   CreateEventDto,
   EventDataDto,
@@ -15,6 +16,10 @@ import {
   PaginateEventsDto,
   EventResponseDto,
   UpdateEventDto,
+  QueryMyEventsDto,
+  QueryMyStaffEventsDto,
+  MyStaffEventDto,
+  PaginateMyStaffEventsDto,
 } from '~/modules/events-module/dto/events.dto'
 import { EventLocationType, Events, EventStatus } from '~/modules/events-module/events.entity'
 import { OrganizerPaymentInfoService } from '~/modules/organizer-payment-info/organizer-payment-info.service'
@@ -26,6 +31,8 @@ export class EventsService {
   constructor(
     @InjectRepository(Events)
     private readonly eventsRepository: Repository<Events>,
+    @InjectRepository(EventStaff)
+    private readonly eventStaffRepository: Repository<EventStaff>,
     private readonly eventChangesService: EventChangesService,
     private readonly organizerPaymentInfoService: OrganizerPaymentInfoService,
   ) {}
@@ -57,6 +64,72 @@ export class EventsService {
     const [list, total] = await query.getManyAndCount()
     return {
       data: plainToInstance(ListEventsDto, list),
+      meta: createPaginationMeta(page, limit, total),
+    }
+  }
+
+  async getMyOrganizedEvents(userId: string, queryParams: QueryMyEventsDto): Promise<PaginateEventsDto> {
+    const { page, limit, status, ...filters } = queryParams
+    const query = this.buildBaseQuery()
+      .where('e.organizerId = :userId', { userId })
+      .limit(limit)
+      .offset(getOffset(page, limit))
+
+    if (status) {
+      query.andWhere('e.status = :status', { status })
+    }
+
+    this.applyFilters(query, filters)
+    this.applySearch(query, queryParams.search)
+
+    const [list, total] = await query.getManyAndCount()
+    return {
+      data: plainToInstance(ListEventsDto, list),
+      meta: createPaginationMeta(page, limit, total),
+    }
+  }
+
+  async getMyStaffEvents(userId: string, queryParams: QueryMyStaffEventsDto): Promise<PaginateMyStaffEventsDto> {
+    const { page, limit, status, accessLevel } = queryParams
+    const query = this.eventStaffRepository
+      .createQueryBuilder('es')
+      .select([
+        'e.id',
+        'e.title',
+        'e.maxParticipants',
+        'c.name as cityName',
+        's.acronym as stateAcronym',
+        'e.locationName',
+        'e.startDate',
+        'e.endDate',
+        'e.category',
+        'e.isAdultOnly',
+        'e.status',
+        'es.accessLevel',
+        'o.id',
+        'o.name',
+        'o.email',
+        'o.avatarUrl',
+      ])
+      .innerJoin('es.event', 'e')
+      .innerJoin('e.organizer', 'o')
+      .leftJoin('e.city', 'c')
+      .leftJoin('c.state', 's')
+      .where('es.userId = :userId', { userId })
+      .limit(limit)
+      .offset(getOffset(page, limit))
+
+    if (status) {
+      query.andWhere('e.status = :status', { status })
+    }
+
+    if (accessLevel) {
+      query.andWhere('es.accessLevel = :accessLevel', { accessLevel })
+    }
+
+    const [list, total] = await query.getManyAndCount()
+    return {
+      data: plainToInstance(MyStaffEventDto, list),
       meta: createPaginationMeta(page, limit, total),
     }
   }
@@ -178,7 +251,7 @@ export class EventsService {
     }
   }
 
-  private applyFilters(query: SelectQueryBuilder<Events>, filters: QueryEventsDto): void {
+  private applyFilters(query: SelectQueryBuilder<Events>, filters: Partial<QueryEventsDto>): void {
     if (filters.stateId) {
       query.andWhere('e.cityId = :cityId', { cityId: filters.stateId })
     }
