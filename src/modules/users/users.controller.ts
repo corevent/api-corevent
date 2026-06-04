@@ -1,20 +1,8 @@
-import {
-  Body,
-  Controller,
-  Get,
-  InternalServerErrorException,
-  Param,
-  Patch,
-  Query,
-  Req,
-  UseGuards,
-} from '@nestjs/common'
+import { Body, Controller, Get, InternalServerErrorException, Param, Patch, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
-import { ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
 import { MessageDto } from '~/common/dto/message.dto'
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
-import { PaginateEventsDto, QueryEventsDto } from '~/modules/events-module/dto/events.dto'
-import { EventsService } from '~/modules/events-module/events.service'
 import { UpdatePassDto, UpdateUserDto, UserResponseDto } from '~/modules/users/dto/users.dto'
 import { UsersService } from '~/modules/users/users.service'
 
@@ -22,10 +10,7 @@ import { UsersService } from '~/modules/users/users.service'
 @UseGuards(AuthGuard('jwt'))
 @Controller('users')
 export class UsersController {
-  constructor(
-    private readonly usersService: UsersService,
-    private readonly eventsService: EventsService,
-  ) {}
+  constructor(private readonly usersService: UsersService) {}
 
   @Patch()
   @ApiOperation({ summary: 'Update a user' })
@@ -53,24 +38,6 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getProfile(@Req() req: AuthenticatedRequest): Promise<UserResponseDto> {
     return this.usersService.getById(req.user.id)
-  }
-
-  @Get('my-events')
-  @ApiOperation({ summary: 'Get the events of the current user' })
-  @ApiQuery({ type: QueryEventsDto })
-  @ApiResponse({ status: 200, type: PaginateEventsDto })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getEvents(@Req() req: AuthenticatedRequest, @Query() query: QueryEventsDto): Promise<PaginateEventsDto> {
-    return this.eventsService.getAll(query, req.user.id)
-  }
-
-  @Get('my-staff-events')
-  @ApiOperation({ summary: 'Get the events where the current user is a staff' })
-  @ApiQuery({ type: QueryEventsDto })
-  @ApiResponse({ status: 200, type: PaginateEventsDto })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getStaffEvents(@Req() req: AuthenticatedRequest, @Query() query: QueryEventsDto): Promise<PaginateEventsDto> {
-    return this.eventsService.getAll(query, req.user.id, 'staff')
   }
 
   @Get(':id')

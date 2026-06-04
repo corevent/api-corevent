@@ -45,11 +45,7 @@ export class EventsService {
     return this.getById(id)
   }
 
-  async getAll(
-    queryParams: QueryEventsDto,
-    userId?: string,
-    type: 'organizer' | 'staff' = 'organizer',
-  ): Promise<PaginateEventsDto> {
+  async getAll(queryParams: QueryEventsDto, userId?: string, type?: 'organizer' | 'staff'): Promise<PaginateEventsDto> {
     const { page, limit, status } = queryParams
     const query = this.buildBaseQuery()
       .limit(limit)
@@ -256,11 +252,19 @@ export class EventsService {
   private applyOrganizerOrStaffFilter(
     query: SelectQueryBuilder<Events>,
     userId?: string,
-    type: 'organizer' | 'staff' = 'organizer',
+    type?: 'organizer' | 'staff',
   ): void {
+    if (userId && !type) {
+      throw new BadRequestException('Type is required when userId is provided')
+    }
+    if (!userId && type) {
+      throw new BadRequestException('UserId is required when type is provided')
+    }
+
     if (type === 'organizer') {
       query.andWhere('e.organizerId = :userId', { userId })
-    } else {
+    }
+    if (type === 'staff') {
       query.innerJoin('e.eventStaff', 'es').andWhere('es.userId = :userId', { userId })
     }
   }

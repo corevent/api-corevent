@@ -59,6 +59,24 @@ export class EventsController {
     return this.eventsService.getAll(query)
   }
 
+  @Get('my/organizer')
+  @ApiOperation({ summary: 'Get the events of the current user' })
+  @ApiQuery({ type: QueryEventsDto })
+  @ApiResponse({ status: 200, type: PaginateEventsDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getEvents(@Req() req: AuthenticatedRequest, @Query() query: QueryEventsDto): Promise<PaginateEventsDto> {
+    return this.eventsService.getAll(query, req.user.id, 'organizer')
+  }
+
+  @Get('my/staff')
+  @ApiOperation({ summary: 'Get the events where the current user is a staff' })
+  @ApiQuery({ type: QueryEventsDto })
+  @ApiResponse({ status: 200, type: PaginateEventsDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getStaffEvents(@Req() req: AuthenticatedRequest, @Query() query: QueryEventsDto): Promise<PaginateEventsDto> {
+    return this.eventsService.getAll(query, req.user.id, 'staff')
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get an event by ID' })
   @ApiParam({ name: 'id', description: 'The ID of the event' })
