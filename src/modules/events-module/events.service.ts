@@ -45,11 +45,7 @@ export class EventsService {
     return this.getById(id)
   }
 
-  async getAll(
-    queryParams: QueryEventsDto,
-    userId?: string,
-    type: 'organizer' | 'staff' = 'organizer',
-  ): Promise<PaginateEventsDto> {
+  async getAll(queryParams: QueryEventsDto): Promise<PaginateEventsDto> {
     const { page, limit, status } = queryParams
     const query = this.buildBaseQuery()
       .limit(limit)
@@ -57,7 +53,6 @@ export class EventsService {
       .where('e.status = :status', { status })
     this.applyFilters(query, queryParams)
     this.applySearch(query, queryParams.search)
-    this.applyOrganizerOrStaffFilter(query, userId, type)
 
     const [list, total] = await query.getManyAndCount()
     return {
@@ -251,17 +246,5 @@ export class EventsService {
       .innerJoin('e.organizer', 'o')
       .leftJoin('e.city', 'c')
       .leftJoin('c.state', 's')
-  }
-
-  private applyOrganizerOrStaffFilter(
-    query: SelectQueryBuilder<Events>,
-    userId?: string,
-    type: 'organizer' | 'staff' = 'organizer',
-  ): void {
-    if (type === 'organizer') {
-      query.andWhere('e.organizerId = :userId', { userId })
-    } else {
-      query.innerJoin('e.eventStaff', 'es').andWhere('es.userId = :userId', { userId })
-    }
   }
 }
