@@ -1,7 +1,6 @@
-import { Module } from '@nestjs/common'
+import { Module, forwardRef } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { EventChangesModule } from '~/modules/event-changes/event-changes.module'
-import { EventStaff } from '~/modules/event-staff/event-staff.entity'
 import { EventsController } from '~/modules/events-module/events.controller'
 import { Events } from '~/modules/events-module/events.entity'
 import { EventsService } from '~/modules/events-module/events.service'
@@ -9,7 +8,7 @@ import { EventsCronService } from '~/modules/events-module/jobs/finish-events.jo
 import { OrganizerPaymentInfoModule } from '~/modules/organizer-payment-info/organizer-payment-info.module'
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Events, EventStaff]), EventChangesModule, OrganizerPaymentInfoModule],
+  imports: [TypeOrmModule.forFeature([Events]), EventChangesModule, forwardRef(() => OrganizerPaymentInfoModule)],
   controllers: [EventsController],
   providers: [EventsService, EventsCronService],
   exports: [EventsService, EventsCronService],

@@ -6,10 +6,7 @@ import {
   CreateEventDto,
   EventResponseDto,
   PaginateEventsDto,
-  PaginateMyStaffEventsDto,
   QueryEventsDto,
-  QueryMyEventsDto,
-  QueryMyStaffEventsDto,
   UpdateEventDto,
 } from '~/modules/events-module/dto/events.dto'
 import { EventsService } from '~/modules/events-module/events.service'
@@ -60,33 +57,6 @@ export class EventsController {
   @ApiResponse({ status: 200, type: PaginateEventsDto, description: 'The events have been successfully retrieved.' })
   async getAll(@Query() query: QueryEventsDto): Promise<PaginateEventsDto> {
     return this.eventsService.getAll(query)
-  }
-
-  @Get('my/organizer')
-  @ApiOperation({ summary: 'Get my organized events' })
-  @ApiQuery({ type: QueryMyEventsDto })
-  @ApiResponse({
-    status: 200,
-    type: PaginateEventsDto,
-    description: 'The organized events have been successfully retrieved.',
-  })
-  async getMyOrganized(@Req() req: AuthenticatedRequest, @Query() query: QueryMyEventsDto): Promise<PaginateEventsDto> {
-    return this.eventsService.getMyOrganizedEvents(req.user.id, query)
-  }
-
-  @Get('my/staff')
-  @ApiOperation({ summary: 'Get my staff events' })
-  @ApiQuery({ type: QueryMyStaffEventsDto })
-  @ApiResponse({
-    status: 200,
-    type: PaginateMyStaffEventsDto,
-    description: 'The staff events have been successfully retrieved.',
-  })
-  async getMyStaff(
-    @Req() req: AuthenticatedRequest,
-    @Query() query: QueryMyStaffEventsDto,
-  ): Promise<PaginateMyStaffEventsDto> {
-    return this.eventsService.getMyStaffEvents(req.user.id, query)
   }
 
   @Get(':id')

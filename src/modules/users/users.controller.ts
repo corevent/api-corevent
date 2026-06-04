@@ -1,27 +1,33 @@
-import { Body, Controller, Get, InternalServerErrorException, Param, Patch, Post, Req, UseGuards } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Get,
+  InternalServerErrorException,
+  Param,
+  Patch,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
 import { MessageDto } from '~/common/dto/message.dto'
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
-import { CreateUserDto, UpdatePassDto, UpdateUserDto, UserResponseDto } from '~/modules/users/dto/users.dto'
+import { PaginateEventsDto, QueryEventsDto } from '~/modules/events-module/dto/events.dto'
+import { EventsService } from '~/modules/events-module/events.service'
+import { UpdatePassDto, UpdateUserDto, UserResponseDto } from '~/modules/users/dto/users.dto'
 import { UsersService } from '~/modules/users/users.service'
 
 @ApiTags('Users')
+@UseGuards(AuthGuard('jwt'))
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
-
-  @Post()
-  @ApiOperation({ summary: 'Create a new user' })
-  @ApiBody({ type: CreateUserDto })
-  @ApiResponse({ status: 201, type: UserResponseDto })
-  @ApiResponse({ status: 500, type: InternalServerErrorException })
-  async create(@Body() body: CreateUserDto): Promise<UserResponseDto> {
-    return this.usersService.create(body)
-  }
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly eventsService: EventsService,
+  ) {}
 
   @Patch()
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Update a user' })
   @ApiBody({ type: UpdateUserDto })
   @ApiResponse({ status: 200, type: UserResponseDto })
@@ -31,7 +37,6 @@ export class UsersController {
   }
 
   @Patch('pass')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Update the password of the current user' })
   @ApiBody({ type: UpdatePassDto })
   @ApiResponse({ status: 200, type: MessageDto })
@@ -43,7 +48,6 @@ export class UsersController {
 
   // same endpoint as /users/:id, but with the current user's ID
   @Get('me')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get the profile of the current user' })
   @ApiResponse({ status: 200, type: UserResponseDto })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -51,8 +55,25 @@ export class UsersController {
     return this.usersService.getById(req.user.id)
   }
 
+  @Get('my-events')
+  @ApiOperation({ summary: 'Get the events of the current user' })
+  @ApiQuery({ type: QueryEventsDto })
+  @ApiResponse({ status: 200, type: PaginateEventsDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getEvents(@Req() req: AuthenticatedRequest, @Query() query: QueryEventsDto): Promise<PaginateEventsDto> {
+    return this.eventsService.getAll(query, req.user.id)
+  }
+
+  @Get('my-staff-events')
+  @ApiOperation({ summary: 'Get the events where the current user is a staff' })
+  @ApiQuery({ type: QueryEventsDto })
+  @ApiResponse({ status: 200, type: PaginateEventsDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getStaffEvents(@Req() req: AuthenticatedRequest, @Query() query: QueryEventsDto): Promise<PaginateEventsDto> {
+    return this.eventsService.getAll(query, req.user.id, 'staff')
+  }
+
   @Get(':id')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get a user by ID' })
   @ApiResponse({ status: 200, type: UserResponseDto })
   @ApiResponse({ status: 404, description: 'User not found' })
