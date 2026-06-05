@@ -5,6 +5,7 @@ import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
 import {
   CreateEventDto,
   EventResponseDto,
+  OrganizerQueryEventsDto,
   PaginateEventsDto,
   QueryEventsDto,
   UpdateEventDto,
@@ -61,10 +62,10 @@ export class EventsController {
 
   @Get('my/organizer')
   @ApiOperation({ summary: 'Get the events of the current user' })
-  @ApiQuery({ type: QueryEventsDto })
+  @ApiQuery({ type: OrganizerQueryEventsDto })
   @ApiResponse({ status: 200, type: PaginateEventsDto })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getEvents(@Req() req: AuthenticatedRequest, @Query() query: QueryEventsDto): Promise<PaginateEventsDto> {
+  async getEvents(@Req() req: AuthenticatedRequest, @Query() query: OrganizerQueryEventsDto): Promise<PaginateEventsDto> {
     return this.eventsService.getAll(query, req.user.id, 'organizer')
   }
 
