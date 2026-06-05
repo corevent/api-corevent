@@ -181,6 +181,43 @@ export class QueryEventsDto extends QueryPaginationDto {
   isAdultOnly?: boolean
 }
 
+export class OrganizerQueryEventsDto extends QueryPaginationDto {
+  @ApiProperty({ description: 'Search by title' })
+  @IsString()
+  @IsOptional()
+  search?: string
+
+  @ApiProperty({ description: 'Filter by state ID', example: 35, required: false })
+  @IsInt()
+  @IsOptional()
+  stateId?: number
+
+  @ApiProperty({ description: 'Filter by city ID', example: 35, required: false })
+  @IsInt()
+  @IsOptional()
+  cityId?: number
+
+  @ApiProperty({ description: 'Filter by category', example: EventCategory.MUSIC, required: false })
+  @IsEnum(EventCategory)
+  @IsOptional()
+  category?: EventCategory
+
+  @ApiProperty({ description: 'Filter by event start date', example: '2026-01-01T00:00:00.000Z', required: false })
+  @IsDate()
+  @IsOptional()
+  startDate?: Date
+
+  @ApiProperty({ description: 'Filter by event status', example: EventStatus.DRAFT })
+  @IsEnum(EventStatus)
+  @IsLowercase()
+  status: EventStatus
+
+  @ApiProperty({ description: 'Filter by event is adult only', example: false, required: false })
+  @IsBoolean()
+  @IsOptional()
+  isAdultOnly?: boolean
+}
+
 export class ListEventsDto {
   @ApiProperty({ description: 'Event ID', example: '123e4567-e89b-12d3-a456-426614174432' })
   id: string
