@@ -255,6 +255,9 @@ export class ListEventsDto {
   @ApiProperty({ description: 'Event status', example: EventStatus.OPENED })
   status: EventStatus
 
+  @ApiProperty({ description: 'Location type', enum: EventLocationType, example: EventLocationType.IN_PERSON })
+  locationType: EventLocationType
+
   @ApiProperty({ description: 'Organizer (user) information', type: OrganizerInfoDto })
   organizer: OrganizerInfoDto
 }

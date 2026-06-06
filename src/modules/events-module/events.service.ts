@@ -234,6 +234,7 @@ export class EventsService {
         'c.name as cityName',
         's.acronym as stateAcronym',
         'e.locationName',
+        'e.locationType',
         'e.startDate',
         'e.endDate',
         'e.category',
