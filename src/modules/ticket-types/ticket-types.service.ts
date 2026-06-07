@@ -97,7 +97,7 @@ export class TicketTypesService {
       throw new BadRequestException('Start date must be before end date')
     }
 
-    if (startDate && endDate && event && (startDate < event.startDate || endDate > event.endDate)) {
+    if (startDate && endDate && event && (startDate < event.createdAt || endDate > event.startDate)) {
       throw new BadRequestException('Ticket type dates must be within the event dates')
     }
   }
