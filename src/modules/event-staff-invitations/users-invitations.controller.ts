@@ -5,7 +5,7 @@ import { MessageDto } from '~/common/dto/message.dto'
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
 import {
   PaginateEventStaffInvitationsWithOrganizerDto,
-  QueryEventStaffInvitationsDto,
+  QueryUserInvitationsDto,
 } from '~/modules/event-staff-invitations/dto/event-staff.invitations.dto'
 import { EventStaffInvitationsService } from '~/modules/event-staff-invitations/event-staff.invitations.service'
 import { EventStaffResponseDto } from '~/modules/event-staff/dto/event-staff.dto'
@@ -48,7 +48,7 @@ export class UserInvitationsController {
 
   @Get('me')
   @ApiOperation({ summary: 'Get all invitations for the current user' })
-  @ApiQuery({ type: QueryEventStaffInvitationsDto })
+  @ApiQuery({ type: QueryUserInvitationsDto })
   @ApiResponse({
     status: 200,
     type: PaginateEventStaffInvitationsWithOrganizerDto,
@@ -56,7 +56,7 @@ export class UserInvitationsController {
   })
   async getByUserId(
     @Req() req: AuthenticatedRequest,
-    @Query() query: QueryEventStaffInvitationsDto,
+    @Query() query: QueryUserInvitationsDto,
   ): Promise<PaginateEventStaffInvitationsWithOrganizerDto> {
     return this.eventStaffInvitationsService.getByUserId(req.user.id, query)
   }

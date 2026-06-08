@@ -38,6 +38,17 @@ export class EventStaffInvitationResponseDto {
   data: EventStaffInvitationDataDto
 }
 
+export class QueryUserInvitationsDto extends QueryPaginationDto {
+  @ApiProperty({
+    description: 'Filter by invitation status',
+    example: EventStaffInvitationStatus.PENDING,
+    required: false,
+  })
+  @IsEnum(EventStaffInvitationStatus)
+  @IsOptional()
+  invitationStatus?: EventStaffInvitationStatus
+}
+
 export class QueryEventStaffInvitationsDto extends QueryPaginationDto {
   @ApiProperty({ description: 'Search by user name', example: 'John Doe', required: false })
   @IsString()

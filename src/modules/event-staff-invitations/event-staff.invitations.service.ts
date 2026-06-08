@@ -14,6 +14,7 @@ import {
   PaginateEventStaffInvitationsDto,
   PaginateEventStaffInvitationsWithOrganizerDto,
   QueryEventStaffInvitationsDto,
+  QueryUserInvitationsDto,
 } from '~/modules/event-staff-invitations/dto/event-staff.invitations.dto'
 import {
   EventStaffInvitations,
@@ -114,10 +115,10 @@ export class EventStaffInvitationsService {
   // user list all invitations for him
   async getByUserId(
     userId: string,
-    queryParams: QueryPaginationDto,
+    queryParams: QueryUserInvitationsDto,
   ): Promise<PaginateEventStaffInvitationsWithOrganizerDto> {
-    const { page, limit } = queryParams
-    const [list, total] = await this.staffInvitationRepo
+    const { page, limit, invitationStatus } = queryParams
+    const query = this.staffInvitationRepo
       .createQueryBuilder('esi')
       .select([
         'esi.id',
@@ -133,13 +134,17 @@ export class EventStaffInvitationsService {
         'o.avatarUrl',
       ])
       .where('esi.userId = :userId', { userId })
-      .andWhere('esi.invitationStatus = :invitationStatus', { invitationStatus: EventStaffInvitationStatus.PENDING })
       .innerJoin('esi.event', 'e')
       .innerJoin('e.organizer', 'o')
       .orderBy('esi.createdAt', 'DESC')
       .limit(limit)
       .offset(getOffset(page, limit))
-      .getManyAndCount()
+
+    if (invitationStatus) {
+      query.andWhere('esi.invitationStatus = :invitationStatus', { invitationStatus })
+    }
+
+    const [list, total] = await query.getManyAndCount()
 
     return {
       data: plainToInstance(ListEventStaffInvitationsWithOrganizerDto, list),
