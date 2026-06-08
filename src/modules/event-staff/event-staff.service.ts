@@ -98,7 +98,7 @@ export class EventStaffService {
       query.andWhere('u.email ILIKE :email', { email: `%${email}%` })
     }
     if (invitationStatus) {
-      query.andWhere('es.invitationStatus = :invitationStatus', { invitationStatus })
+      query.andWhere('esi.invitationStatus = :invitationStatus', { invitationStatus })
     }
     if (accessLevel) {
       query.andWhere('es.accessLevel = :accessLevel', { accessLevel })
@@ -108,11 +108,13 @@ export class EventStaffService {
   private buildBaseQuery(): SelectQueryBuilder<EventStaff> {
     const query = this.eventStaffRepository
       .createQueryBuilder('es')
+      .innerJoin('es.user', 'u')
+      .innerJoin('es.staffInvitation', 'esi')
       .select([
         'es.id',
         'es.eventId',
         'es.accessLevel',
-        'es.invitationStatus',
+        'esi.invitationStatus',
         'es.staffInvitationId',
         'es.createdAt',
         'u.id',
@@ -120,7 +122,6 @@ export class EventStaffService {
         'u.email',
         'u.avatarUrl',
       ])
-      .innerJoin('es.user', 'u')
 
     return query
   }
