@@ -164,7 +164,17 @@ export class EventStaffInvitationsService {
   private buildBaseQuery(): SelectQueryBuilder<EventStaffInvitations> {
     return this.staffInvitationRepo
       .createQueryBuilder('esi')
-      .select(['esi.id', 'esi.userId', 'esi.eventId', 'esi.originalAccessLevel', 'esi.invitationStatus', 'u.id', 'u.name', 'u.email', 'u.avatarUrl'])
+      .select([
+        'esi.id',
+        'esi.userId',
+        'esi.eventId',
+        'esi.originalAccessLevel',
+        'esi.invitationStatus',
+        'u.id',
+        'u.name',
+        'u.email',
+        'u.avatarUrl',
+      ])
       .innerJoin('esi.user', 'u')
   }
 
@@ -222,10 +232,10 @@ export class EventStaffInvitationsService {
     await this.checkIfInvitationExists(user.id, eventId)
     this.validateEvent(organizerId, event, user.id)
 
-    // const organizerName = event.organizer.name
-    // const eventName = event.title
+    const organizerName = event.organizer.name
+    const eventName = event.title
 
-    // await this.mailService.inviteStaff(email, organizerName, eventName)
+    await this.mailService.inviteStaff(email, organizerName, eventName)
 
     return user.id
   }
