@@ -23,6 +23,7 @@ import { OrganizerPaymentInfoService } from '~/modules/organizer-payment-info/or
 const relevantAddressFields = ['cityId', 'zipCode', 'neighborhood', 'street', 'number', 'locationName']
 type EventListRawRow = {
   averageRating?: string | number | null
+  eventStaffAccessLevel?: string | null
 }
 
 @Injectable()
@@ -69,6 +70,7 @@ export class EventsService {
     const list = entities.map((entity, index) => ({
       ...entity,
       averageRating: this.parseAverageRating(rawRows[index]?.averageRating),
+      accessLevel: rawRows[index]?.eventStaffAccessLevel ?? undefined,
     }))
 
     return {
@@ -296,7 +298,10 @@ export class EventsService {
       query.andWhere('e.organizerId = :userId', { userId })
     }
     if (type === 'staff') {
-      query.innerJoin('e.eventStaff', 'es').andWhere('es.userId = :userId', { userId })
+      query
+        .innerJoin('e.eventStaff', 'es')
+        .andWhere('es.userId = :userId', { userId })
+        .addSelect('es.access_level', 'eventStaffAccessLevel')
     }
     if (type === 'favorite') {
       query.innerJoin('e.favorites', 'f').andWhere('f.userId = :userId', { userId })

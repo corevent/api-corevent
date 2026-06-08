@@ -14,6 +14,7 @@ import {
 } from 'class-validator'
 import { PaginationMetaDto, QueryPaginationDto } from '~/common/pagination/pagination.dto'
 import { EventCategory, EventLocationType, EventStatus } from '~/modules/events-module/events.entity'
+import { EventStaffAccessLevel } from '~/modules/event-staff-invitations/event-staff-invitations.entity'
 
 export class CreateEventDto {
   @ApiProperty({ description: 'Title of the event', example: 'Event Title' })
@@ -291,6 +292,13 @@ export class ListEventsDto {
 
   @ApiProperty({ description: 'Average event rating', example: 4.5, required: false })
   averageRating?: number
+
+  @ApiProperty({
+    description: 'Staff access level',
+    enum: EventStaffAccessLevel,
+    required: false,
+  })
+  accessLevel?: EventStaffAccessLevel
 }
 
 export class PaginateEventsDto {
