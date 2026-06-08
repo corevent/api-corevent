@@ -14,6 +14,7 @@ import { Tickets } from '~/modules/tickets/tickets.entity'
 import { Users } from '~/modules/users/users.entity'
 import { Orders } from '~/modules/orders/orders.entity'
 import { Favorites } from '~/modules/favorites/favorites.entity'
+import { EventRatings } from '~/modules/event-ratings/event-ratings.entity'
 
 export const entities = [
   Users,
@@ -32,4 +33,5 @@ export const entities = [
   Tickets,
   Orders,
   Favorites,
+  EventRatings,
 ]

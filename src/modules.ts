@@ -3,6 +3,7 @@ import { AttractionsModule } from '~/modules/attractions/attractions.module'
 import { AuthModule } from '~/modules/auth/auth.module'
 import { CitiesModule } from '~/modules/cities/cities.module'
 import { EventChangesModule } from '~/modules/event-changes/event-changes.module'
+import { EventRatingsModule } from '~/modules/event-ratings/event-ratings.module'
 import { EventStaffInvitationsModule } from '~/modules/event-staff-invitations/event-staff-invitations.module'
 import { EventStaffModule } from '~/modules/event-staff/event-staff.module'
 import { EventsModule } from '~/modules/events-module/events.module'
@@ -38,4 +39,5 @@ export const modules = [
   OrdersModule,
   PagBankModule,
   FavoritesModule,
+  EventRatingsModule,
 ]

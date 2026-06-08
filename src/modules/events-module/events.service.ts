@@ -16,10 +16,14 @@ import {
   EventResponseDto,
   UpdateEventDto,
 } from '~/modules/events-module/dto/events.dto'
+import { EventRatings } from '~/modules/event-ratings/event-ratings.entity'
 import { EventLocationType, Events, EventStatus } from '~/modules/events-module/events.entity'
 import { OrganizerPaymentInfoService } from '~/modules/organizer-payment-info/organizer-payment-info.service'
 
 const relevantAddressFields = ['cityId', 'zipCode', 'neighborhood', 'street', 'number', 'locationName']
+type EventListRawRow = {
+  averageRating?: string | number | null
+}
 
 @Injectable()
 export class EventsService {
@@ -59,7 +63,14 @@ export class EventsService {
     this.applySearch(query, queryParams.search)
     this.applyTypeOfList(query, userId, type)
 
-    const [list, total] = await query.getManyAndCount()
+    const total = await query.getCount()
+    const { entities, raw } = await query.getRawAndEntities()
+    const rawRows = raw as EventListRawRow[]
+    const list = entities.map((entity, index) => ({
+      ...entity,
+      averageRating: this.parseAverageRating(rawRows[index]?.averageRating),
+    }))
+
     return {
       data: plainToInstance(ListEventsDto, list),
       meta: createPaginationMeta(page, limit, total),
@@ -67,11 +78,17 @@ export class EventsService {
   }
 
   async getById(id: string): Promise<EventResponseDto> {
-    const event = await this.buildBaseQuery().where('e.id = :id', { id }).getOne()
-    if (!event) {
-      throw new NotFoundException('Event not found')
+    const { entities, raw } = await this.buildBaseQuery().where('e.id = :id', { id }).getRawAndEntities()
+    const event = entities[0]
+    if (!event) throw new NotFoundException('Event not found')
+
+    const rawRow = raw[0] as { averageRating?: string | number | null } | undefined
+    return {
+      data: plainToInstance(EventDataDto, {
+        ...event,
+        averageRating: this.parseAverageRating(rawRow?.averageRating),
+      }),
     }
-    return { data: plainToInstance(EventDataDto, event) }
   }
 
   async delete(organizerId: string, id: string): Promise<void> {
@@ -235,8 +252,11 @@ export class EventsService {
         'e.id',
         'e.title',
         'e.maxParticipants',
-        'c.name as cityName',
-        's.acronym as stateAcronym',
+        'c.id',
+        'c.name',
+        's.id',
+        's.name',
+        's.acronym',
         'e.locationName',
         'e.locationType',
         'e.startDate',
@@ -252,6 +272,12 @@ export class EventsService {
       .innerJoin('e.organizer', 'o')
       .leftJoin('e.city', 'c')
       .leftJoin('c.state', 's')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('AVG(eventRating.rating)', 'averageRating')
+          .from(EventRatings, 'eventRating')
+          .where('eventRating.eventId = e.id')
+      }, 'averageRating')
   }
 
   private applyTypeOfList(
@@ -277,9 +303,8 @@ export class EventsService {
     }
   }
 
-  private applyFavoritesFilter(query: SelectQueryBuilder<Events>, userId?: string, isFavorite?: boolean): void {
-    if (isFavorite === true) {
-      query.innerJoin('e.favorites', 'f').andWhere('f.userId = :userId', { userId })
-    }
+  private parseAverageRating(value: unknown): number | null {
+    if (value == null) return null
+    return Number(value)
   }
 }

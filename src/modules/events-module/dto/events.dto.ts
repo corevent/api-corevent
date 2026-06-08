@@ -1,4 +1,4 @@
-import { ApiProperty, PartialType } from '@nestjs/swagger'
+import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger'
 import {
   IsBoolean,
   IsDate,
@@ -122,7 +122,29 @@ class OrganizerInfoDto {
   avatarUrl?: string
 }
 
-export class EventDataDto extends CreateEventDto {
+class StateInfoDto {
+  @ApiProperty({ description: 'State ID', example: 35 })
+  id: number
+
+  @ApiProperty({ description: 'State name', example: 'São Paulo' })
+  name: string
+
+  @ApiProperty({ description: 'State acronym', example: 'SP' })
+  acronym: string
+}
+
+class CityInfoDto {
+  @ApiProperty({ description: 'City ID', example: 3525300 })
+  id: number
+
+  @ApiProperty({ description: 'City name', example: 'Jaú' })
+  name: string
+
+  @ApiProperty({ description: 'State information', type: StateInfoDto })
+  state: StateInfoDto
+}
+
+export class EventDataDto extends OmitType(CreateEventDto, ['cityId']) {
   @ApiProperty({ description: 'Event ID', example: '123e4567-e89b-12d3-a456-426614174432' })
   id: string
 
@@ -137,6 +159,12 @@ export class EventDataDto extends CreateEventDto {
 
   @ApiProperty({ description: 'Organizer (user) information', type: OrganizerInfoDto })
   organizer: OrganizerInfoDto
+
+  @ApiProperty({ description: 'City information', type: CityInfoDto })
+  city: CityInfoDto
+
+  @ApiProperty({ description: 'Average event rating', example: 4.5, required: false })
+  averageRating?: number
 }
 
 export class EventResponseDto {
@@ -260,6 +288,9 @@ export class ListEventsDto {
 
   @ApiProperty({ description: 'Organizer (user) information', type: OrganizerInfoDto })
   organizer: OrganizerInfoDto
+
+  @ApiProperty({ description: 'Average event rating', example: 4.5, required: false })
+  averageRating?: number
 }
 
 export class PaginateEventsDto {

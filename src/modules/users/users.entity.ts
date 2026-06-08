@@ -8,6 +8,7 @@ import { EventStaff } from '~/modules/event-staff/event-staff.entity'
 import { EventStaffInvitations } from '~/modules/event-staff-invitations/event-staff-invitations.entity'
 import { Orders } from '~/modules/orders/orders.entity'
 import { Favorites } from '~/modules/favorites/favorites.entity'
+import { EventRatings } from '~/modules/event-ratings/event-ratings.entity'
 
 @Entity()
 export class Users {
@@ -64,4 +65,7 @@ export class Users {
 
   @OneToMany(() => Favorites, (favorite) => favorite.user)
   favorites: Favorites[]
+
+  @OneToMany(() => EventRatings, (eventRating) => eventRating.user)
+  eventRatings: EventRatings[]
 }
