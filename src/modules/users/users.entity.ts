@@ -7,6 +7,7 @@ import { PasswordRecoveryCodes } from '~/modules/password-recovery-codes/passwor
 import { EventStaff } from '~/modules/event-staff/event-staff.entity'
 import { EventStaffInvitations } from '~/modules/event-staff-invitations/event-staff-invitations.entity'
 import { Orders } from '~/modules/orders/orders.entity'
+import { Favorites } from '~/modules/favorites/favorites.entity'
 
 @Entity()
 export class Users {
@@ -60,4 +61,7 @@ export class Users {
 
   @OneToMany(() => Orders, (order) => order.user)
   orders: Orders[]
+
+  @OneToMany(() => Favorites, (favorite) => favorite.user)
+  favorites: Favorites[]
 }

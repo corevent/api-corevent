@@ -6,6 +6,7 @@ import { EventChangesModule } from '~/modules/event-changes/event-changes.module
 import { EventStaffInvitationsModule } from '~/modules/event-staff-invitations/event-staff-invitations.module'
 import { EventStaffModule } from '~/modules/event-staff/event-staff.module'
 import { EventsModule } from '~/modules/events-module/events.module'
+import { FavoritesModule } from '~/modules/favorites/favorites.module'
 import { MailModule } from '~/modules/mail/mail.module'
 import { OrdersModule } from '~/modules/orders/orders.module'
 import { OrganizerPaymentInfoModule } from '~/modules/organizer-payment-info/organizer-payment-info.module'
@@ -36,4 +37,5 @@ export const modules = [
   TicketsModule,
   OrdersModule,
   PagBankModule,
+  FavoritesModule,
 ]

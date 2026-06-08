@@ -65,7 +65,10 @@ export class EventsController {
   @ApiQuery({ type: OrganizerQueryEventsDto })
   @ApiResponse({ status: 200, type: PaginateEventsDto })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getEvents(@Req() req: AuthenticatedRequest, @Query() query: OrganizerQueryEventsDto): Promise<PaginateEventsDto> {
+  async getEvents(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: OrganizerQueryEventsDto,
+  ): Promise<PaginateEventsDto> {
     return this.eventsService.getAll(query, req.user.id, 'organizer')
   }
 
@@ -76,6 +79,15 @@ export class EventsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getStaffEvents(@Req() req: AuthenticatedRequest, @Query() query: QueryEventsDto): Promise<PaginateEventsDto> {
     return this.eventsService.getAll(query, req.user.id, 'staff')
+  }
+
+  @Get('my/favorites')
+  @ApiOperation({ summary: 'Get the events that the current user has favorited' })
+  @ApiQuery({ type: QueryEventsDto })
+  @ApiResponse({ status: 200, type: PaginateEventsDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getFavorites(@Req() req: AuthenticatedRequest, @Query() query: QueryEventsDto): Promise<PaginateEventsDto> {
+    return this.eventsService.getAll(query, req.user.id, 'favorite')
   }
 
   @Get(':id')

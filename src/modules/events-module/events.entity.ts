@@ -7,6 +7,7 @@ import { EventStaffInvitations } from '~/modules/event-staff-invitations/event-s
 import { Attractions } from '~/modules/attractions/attractions.entity'
 import { TicketTypes } from '~/modules/ticket-types/ticket-types.entity'
 import { Orders } from '~/modules/orders/orders.entity'
+import { Favorites } from '~/modules/favorites/favorites.entity'
 
 export enum EventStatus {
   DRAFT = 'draft',
@@ -134,4 +135,7 @@ export class Events {
 
   @OneToMany(() => Orders, (order) => order.event)
   orders: Orders[]
+
+  @OneToMany(() => Favorites, (favorite) => favorite.event)
+  favorites: Favorites[]
 }

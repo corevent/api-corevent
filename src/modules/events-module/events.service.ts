@@ -45,7 +45,11 @@ export class EventsService {
     return this.getById(id)
   }
 
-  async getAll(queryParams: QueryEventsDto, userId?: string, type?: 'organizer' | 'staff'): Promise<PaginateEventsDto> {
+  async getAll(
+    queryParams: QueryEventsDto,
+    userId?: string,
+    type?: 'organizer' | 'staff' | 'favorite',
+  ): Promise<PaginateEventsDto> {
     const { page, limit, status } = queryParams
     const query = this.buildBaseQuery()
       .limit(limit)
@@ -53,7 +57,7 @@ export class EventsService {
       .where('e.status = :status', { status })
     this.applyFilters(query, queryParams)
     this.applySearch(query, queryParams.search)
-    this.applyOrganizerOrStaffFilter(query, userId, type)
+    this.applyTypeOfList(query, userId, type)
 
     const [list, total] = await query.getManyAndCount()
     return {
@@ -250,10 +254,10 @@ export class EventsService {
       .leftJoin('c.state', 's')
   }
 
-  private applyOrganizerOrStaffFilter(
+  private applyTypeOfList(
     query: SelectQueryBuilder<Events>,
     userId?: string,
-    type?: 'organizer' | 'staff',
+    type?: 'organizer' | 'staff' | 'favorite',
   ): void {
     if (userId && !type) {
       throw new BadRequestException('Type is required when userId is provided')
@@ -267,6 +271,15 @@ export class EventsService {
     }
     if (type === 'staff') {
       query.innerJoin('e.eventStaff', 'es').andWhere('es.userId = :userId', { userId })
+    }
+    if (type === 'favorite') {
+      query.innerJoin('e.favorites', 'f').andWhere('f.userId = :userId', { userId })
+    }
+  }
+
+  private applyFavoritesFilter(query: SelectQueryBuilder<Events>, userId?: string, isFavorite?: boolean): void {
+    if (isFavorite === true) {
+      query.innerJoin('e.favorites', 'f').andWhere('f.userId = :userId', { userId })
     }
   }
 }
