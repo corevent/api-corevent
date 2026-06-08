@@ -24,6 +24,7 @@ const relevantAddressFields = ['cityId', 'zipCode', 'neighborhood', 'street', 'n
 type EventListRawRow = {
   averageRating?: string | number | null
   eventStaffAccessLevel?: string | null
+  favoriteId?: string | null
 }
 
 @Injectable()
@@ -71,6 +72,7 @@ export class EventsService {
       ...entity,
       averageRating: this.parseAverageRating(rawRows[index]?.averageRating),
       accessLevel: rawRows[index]?.eventStaffAccessLevel ?? undefined,
+      favoriteId: rawRows[index]?.favoriteId ?? undefined,
     }))
 
     return {
@@ -304,7 +306,10 @@ export class EventsService {
         .addSelect('es.access_level', 'eventStaffAccessLevel')
     }
     if (type === 'favorite') {
-      query.innerJoin('e.favorites', 'f').andWhere('f.userId = :userId', { userId })
+      query
+        .innerJoin('e.favorites', 'f')
+        .andWhere('f.userId = :userId', { userId })
+        .addSelect('f.id', 'favoriteId')
     }
   }
 
