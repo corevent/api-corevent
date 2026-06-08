@@ -92,8 +92,8 @@ class EventInfoDto {
   @ApiProperty({ description: 'Event ID', example: '123e4567-e89b-12d3-a456-426614174000' })
   id: string
 
-  @ApiProperty({ description: 'Event name', example: 'Event Name' })
-  name: string
+  @ApiProperty({ description: 'Event title', example: 'Event Title' })
+  title: string
 }
 
 export class ListEventStaffInvitationsWithOrganizerDto extends EventStaffInvitationDataDto {

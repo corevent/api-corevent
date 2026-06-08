@@ -126,7 +126,7 @@ export class EventStaffInvitationsService {
         'esi.invitationStatus',
         'esi.createdAt',
         'e.id',
-        'e.name',
+        'e.title',
         'o.id',
         'o.name',
         'o.email',
