@@ -1,13 +1,30 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
 import { createHash } from 'crypto'
-import { Repository } from 'typeorm'
+import { FindOptionsWhere, Repository } from 'typeorm'
+import { createPaginationMeta } from '~/common/pagination/pagination-meta.factory'
+import { getOffset } from '~/common/utils/get-offset.util'
+import { decryptQrToken } from '~/common/utils/qr-code-crypto.util'
 import { EventStaffService } from '~/modules/event-staff/event-staff.service'
 import { EventsService } from '~/modules/events-module/events.service'
 import { OrderStatus } from '~/modules/orders/orders.entity'
 import { DecreaseTicketTypeQuantityItem } from '~/modules/ticket-types/interfaces/decrease-ticket'
-import { CheckinDataDto, CheckinResponseDto } from '~/modules/tickets/dto/tickets.dto'
+import {
+  CheckinDataDto,
+  CheckinResponseDto,
+  MyTicketsResponseDto,
+  PaginateMyTicketsDto,
+  QueryMyTicketsDto,
+  UserTicketDataDto,
+} from '~/modules/tickets/dto/tickets.dto'
 import { CreateTicket } from '~/modules/tickets/interfaces/tickets.interface'
 import { Tickets, TicketStatus } from '~/modules/tickets/tickets.entity'
 import { UsersService } from '~/modules/users/users.service'
@@ -17,6 +34,7 @@ export class TicketsService {
   constructor(
     @InjectRepository(Tickets)
     private ticketsRepository: Repository<Tickets>,
+    private configService: ConfigService,
     private eventsService: EventsService,
     private eventStaffService: EventStaffService,
     private usersService: UsersService,
@@ -42,6 +60,38 @@ export class TicketsService {
       relations: ['ticketType'],
       order: { createdAt: 'ASC' },
     })
+  }
+
+  async getMyTicketsByEvent(userId: string, eventId: string): Promise<MyTicketsResponseDto> {
+    const tickets = await this.ticketsRepository.find({
+      where: { userId, eventId },
+      relations: ['ticketType', 'order', 'event'],
+      order: { createdAt: 'ASC' },
+    })
+
+    return { data: tickets.map((ticket) => this.mapUserTicket(ticket)) }
+  }
+
+  async getMyTickets(userId: string, query: QueryMyTicketsDto): Promise<PaginateMyTicketsDto> {
+    const { page, limit, eventId } = query
+    const where: FindOptionsWhere<Tickets> = { userId }
+
+    if (eventId) {
+      where.eventId = eventId
+    }
+
+    const [tickets, total] = await this.ticketsRepository.findAndCount({
+      where,
+      relations: ['ticketType', 'order', 'event'],
+      skip: getOffset(page, limit),
+      take: limit,
+      order: { createdAt: 'DESC' },
+    })
+
+    return {
+      data: tickets.map((ticket) => this.mapUserTicket(ticket)),
+      meta: createPaginationMeta(page, limit, total),
+    }
   }
 
   async createTicket(body: CreateTicket): Promise<Tickets> {
@@ -106,6 +156,43 @@ export class TicketsService {
       },
       checkedInBy,
     })
+  }
+
+  private mapUserTicket(ticket: Tickets): UserTicketDataDto {
+    return plainToInstance(UserTicketDataDto, {
+      id: ticket.id,
+      eventId: ticket.eventId,
+      ticketTypeId: ticket.ticketTypeId,
+      status: ticket.status,
+      checkinAt: ticket.checkinAt,
+      qrToken: this.decryptQrToken(ticket.qrCodeEncryptedToken),
+      ticketType: {
+        id: ticket.ticketType.id,
+        name: ticket.ticketType.name,
+        price: Number(ticket.ticketType.price),
+      },
+      event: {
+        id: ticket.event.id,
+        title: ticket.event.title,
+      },
+      order: {
+        id: ticket.order.id,
+        status: ticket.order.status,
+      },
+    })
+  }
+
+  private decryptQrToken(encryptedToken: string): string {
+    const secret = this.configService.get<string>('QR_CODE_SECRET')
+    if (!secret) {
+      throw new InternalServerErrorException('Missing QR_CODE_SECRET configuration')
+    }
+
+    try {
+      return decryptQrToken(encryptedToken, secret)
+    } catch {
+      throw new InternalServerErrorException('Invalid QR code encrypted token format')
+    }
   }
 
   private async validateCheckinPermission(userId: string, eventId: string): Promise<void> {

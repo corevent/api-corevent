@@ -1,8 +1,14 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
-import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
-import { CreateOrderDto, OrderDetailsResponseDto, OrderResponseDto } from '~/modules/orders/dto/orders.dto'
+import { QueryPaginationDto } from '~/common/pagination/pagination.dto'
+import {
+  CreateOrderDto,
+  OrderDetailsResponseDto,
+  OrderResponseDto,
+  PaginateMyOrdersDto,
+} from '~/modules/orders/dto/orders.dto'
 import { OrdersService } from '~/modules/orders/orders.service'
 
 @ApiTags('Orders')
@@ -22,6 +28,18 @@ export class OrdersController {
     @Body() body: CreateOrderDto,
   ): Promise<OrderResponseDto> {
     return this.ordersService.createOrder(req.user.id, eventId, body)
+  }
+
+  @Get('my/orders')
+  @ApiOperation({ summary: 'Get my orders' })
+  @ApiQuery({ type: QueryPaginationDto })
+  @ApiResponse({ status: 200, type: PaginateMyOrdersDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  async getMyOrders(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: QueryPaginationDto,
+  ): Promise<PaginateMyOrdersDto> {
+    return this.ordersService.getMyOrders(req.user.id, query)
   }
 
   @Get('orders/:orderId')

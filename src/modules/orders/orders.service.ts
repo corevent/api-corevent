@@ -9,14 +9,20 @@ import {
 import { ConfigService } from '@nestjs/config'
 import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
-import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID } from 'crypto'
+import { createHash, randomBytes, randomUUID } from 'crypto'
 import { DataSource, Repository } from 'typeorm'
+import { createPaginationMeta } from '~/common/pagination/pagination-meta.factory'
+import { QueryPaginationDto } from '~/common/pagination/pagination.dto'
+import { getOffset } from '~/common/utils/get-offset.util'
+import { decryptQrToken, encryptQrToken } from '~/common/utils/qr-code-crypto.util'
 import {
   CheckoutDataDto,
   CreateOrderDto,
+  MyOrdersDataDto,
   OrderDetailsDataDto,
   OrderDetailsResponseDto,
   OrderResponseDto,
+  PaginateMyOrdersDto,
 } from '~/modules/orders/dto/orders.dto'
 import { Orders, OrderStatus } from '~/modules/orders/orders.entity'
 import { CheckoutResponse, CreateCheckout, Item } from '~/modules/pagbank/interface/pagbank.interface'
@@ -80,6 +86,22 @@ export class OrdersService {
     })
   }
 
+  async getMyOrders(userId: string, queryParams: QueryPaginationDto): Promise<PaginateMyOrdersDto> {
+    const { page, limit } = queryParams
+    const [data, total] = await this.ordersRepository.findAndCount({
+      where: { userId },
+      skip: getOffset(page, limit),
+      take: limit,
+      order: { createdAt: 'DESC' },
+      relations: ['event'],
+    })
+
+    return {
+      data: plainToInstance(MyOrdersDataDto, data, { excludeExtraneousValues: true }),
+      meta: createPaginationMeta(page, limit, total),
+    }
+  }
+
   async getOrderById(userId: string, orderId: string): Promise<OrderDetailsResponseDto> {
     const order = await this.ordersRepository.findOne({
       where: { id: orderId },
@@ -125,6 +147,8 @@ export class OrdersService {
       event: {
         id: order.event.id,
         title: order.event.title,
+        startDate: order.event.startDate,
+        endDate: order.event.endDate,
       },
       checkout: {
         id: checkout?.id ?? order.gatewayTransactionId,
@@ -262,13 +286,7 @@ export class OrdersService {
       throw new InternalServerErrorException('Missing QR_CODE_SECRET configuration')
     }
 
-    const key = createHash('sha256').update(secret).digest()
-    const iv = randomBytes(12)
-    const cipher = createCipheriv('aes-256-gcm', key, iv)
-    const encrypted = Buffer.concat([cipher.update(token, 'utf8'), cipher.final()])
-    const authTag = cipher.getAuthTag()
-
-    return `${iv.toString('base64')}:${authTag.toString('base64')}:${encrypted.toString('base64')}`
+    return encryptQrToken(token, secret)
   }
 
   private decryptQrToken(encryptedToken: string): string {
@@ -277,18 +295,10 @@ export class OrdersService {
       throw new InternalServerErrorException('Missing QR_CODE_SECRET configuration')
     }
 
-    const [ivBase64, authTagBase64, encryptedBase64] = encryptedToken.split(':')
-    if (!ivBase64 || !authTagBase64 || !encryptedBase64) {
+    try {
+      return decryptQrToken(encryptedToken, secret)
+    } catch {
       throw new InternalServerErrorException('Invalid QR code encrypted token format')
     }
-
-    const key = createHash('sha256').update(secret).digest()
-    const iv = Buffer.from(ivBase64, 'base64')
-    const authTag = Buffer.from(authTagBase64, 'base64')
-    const encrypted = Buffer.from(encryptedBase64, 'base64')
-    const decipher = createDecipheriv('aes-256-gcm', key, iv)
-    decipher.setAuthTag(authTag)
-
-    return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString('utf8')
   }
 }

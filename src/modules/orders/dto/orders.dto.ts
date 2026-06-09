@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { Type } from 'class-transformer'
+import { Expose, Type } from 'class-transformer'
 import { IsArray, IsInt, IsUUID, ValidateNested } from 'class-validator'
+import { PaginationMetaDto } from '~/common/pagination/pagination.dto'
 import { OrderStatus } from '~/modules/orders/orders.entity'
 import { TicketStatus } from '~/modules/tickets/tickets.entity'
 
@@ -92,10 +93,20 @@ export class OrderTicketDto {
 
 export class OrderEventDto {
   @ApiProperty({ description: 'Event ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @Expose()
   id: string
 
   @ApiProperty({ description: 'Event title', example: 'Summer Festival' })
+  @Expose()
   title: string
+
+  @ApiProperty({ description: 'Event start date', example: '2026-06-09T10:55:10.000Z' })
+  @Expose()
+  startDate: Date
+
+  @ApiProperty({ description: 'Event end date', example: '2026-06-09T10:55:10.000Z' })
+  @Expose()
+  endDate: Date
 }
 
 export class OrderCheckoutDto {
@@ -151,4 +162,37 @@ export class OrderDetailsDataDto {
 export class OrderDetailsResponseDto {
   @ApiProperty({ description: 'Order details', type: OrderDetailsDataDto })
   data: OrderDetailsDataDto
+}
+
+export class MyOrdersDataDto {
+  @ApiProperty({ description: 'Order ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @Expose()
+  id: string
+
+  @ApiProperty({ description: 'Event', type: OrderEventDto })
+  @Type(() => OrderEventDto)
+  @Expose()
+  event: OrderEventDto
+
+  @ApiProperty({ description: 'Total amount', example: 100 })
+  @Expose()
+  totalAmount: number
+
+  @ApiProperty({ description: 'Order status', example: OrderStatus.PENDING })
+  @Expose()
+  status: OrderStatus
+
+  @ApiProperty({ description: 'Order creation date', example: '2026-06-09T10:55:10.000Z' })
+  @Expose()
+  createdAt: Date
+}
+
+export class PaginateMyOrdersDto {
+  @ApiProperty({ description: 'List of orders', type: [MyOrdersDataDto] })
+  @Type(() => MyOrdersDataDto)
+  data: MyOrdersDataDto[]
+
+  @ApiProperty({ description: 'Pagination meta', type: PaginationMetaDto })
+  @Type(() => PaginationMetaDto)
+  meta: PaginationMetaDto
 }
