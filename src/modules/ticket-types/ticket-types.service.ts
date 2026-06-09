@@ -34,7 +34,7 @@ export class TicketTypesService {
 
   async update(userId: string, ticketTypeId: string, body: UpdateTicketTypeDto): Promise<TicketTypeResponseDto> {
     const { data: ticketType } = await this.getById(ticketTypeId)
-    await this.checkCapacityAndEvent(userId, ticketType.eventId, body)
+    await this.checkCapacityAndEvent(userId, ticketType.eventId, body, ticketType.totalQuantity)
     await this.ticketTypesRepository.update(ticketTypeId, body)
     return this.getById(ticketTypeId)
   }
@@ -77,12 +77,14 @@ export class TicketTypesService {
     userId: string,
     eventId: string,
     body: CreateTicketTypeDto | UpdateTicketTypeDto,
+    oldTotalQuantity?: number,
   ): Promise<void> {
     const { data: event } = await this.eventsService.getById(eventId)
     const totalCapacity = event.maxParticipants
 
+    const newTotalQuantity = body.totalQuantity ?? oldTotalQuantity ?? 0
     const summedTotalQuantity = (await this.ticketTypesRepository.sum('totalQuantity', { eventId })) ?? 0
-    if (totalCapacity < summedTotalQuantity + (body.totalQuantity ?? 0)) {
+    if (totalCapacity < summedTotalQuantity - (oldTotalQuantity ?? 0) + newTotalQuantity) {
       throw new BadRequestException('Event capacity is not enough for the ticket types')
     }
 
