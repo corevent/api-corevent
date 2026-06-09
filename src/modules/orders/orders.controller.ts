@@ -1,8 +1,8 @@
-import { Body, Controller, Param, Post, Req, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger'
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
-import { CreateOrderDto, OrderResponseDto } from '~/modules/orders/dto/orders.dto'
+import { CreateOrderDto, OrderDetailsResponseDto, OrderResponseDto } from '~/modules/orders/dto/orders.dto'
 import { OrdersService } from '~/modules/orders/orders.service'
 
 @ApiTags('Orders')
@@ -22,5 +22,15 @@ export class OrdersController {
     @Body() body: CreateOrderDto,
   ): Promise<OrderResponseDto> {
     return this.ordersService.createOrder(req.user.id, eventId, body)
+  }
+
+  @Get('orders/:orderId')
+  @ApiOperation({ summary: 'Get order details by ID' })
+  @ApiParam({ name: 'orderId', description: 'The ID of the order' })
+  @ApiResponse({ status: 200, type: OrderDetailsResponseDto })
+  @ApiResponse({ status: 403, description: 'Forbidden.' })
+  @ApiResponse({ status: 404, description: 'Order not found.' })
+  async getById(@Req() req: AuthenticatedRequest, @Param('orderId') orderId: string): Promise<OrderDetailsResponseDto> {
+    return this.ordersService.getOrderById(req.user.id, orderId)
   }
 }

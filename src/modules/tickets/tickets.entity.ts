@@ -1,6 +1,8 @@
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Events } from '~/modules/events-module/events.entity'
 import { Orders } from '~/modules/orders/orders.entity'
 import { TicketTypes } from '~/modules/ticket-types/ticket-types.entity'
+import { Users } from '~/modules/users/users.entity'
 
 export enum TicketStatus {
   PENDING = 'pending',
@@ -47,7 +49,19 @@ export class Tickets {
   @JoinColumn({ name: 'order_id' })
   order: Orders
 
-  @ManyToOne(() => TicketTypes)
+  @ManyToOne(() => Events, (event) => event.tickets)
+  @JoinColumn({ name: 'event_id' })
+  event: Events
+
+  @ManyToOne(() => Users, (user) => user.tickets)
+  @JoinColumn({ name: 'user_id' })
+  user: Users
+
+  @ManyToOne(() => TicketTypes, (ticketType) => ticketType.tickets)
   @JoinColumn({ name: 'ticket_type_id' })
   ticketType: TicketTypes
+
+  @ManyToOne(() => Users, (user) => user.checkedInTickets)
+  @JoinColumn({ name: 'checkin_by' })
+  checkedInByUser?: Users
 }

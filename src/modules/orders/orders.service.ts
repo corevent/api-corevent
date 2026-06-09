@@ -1,14 +1,28 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common'
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { InjectRepository } from '@nestjs/typeorm'
-import { createCipheriv, createHash, randomBytes, randomUUID } from 'crypto'
+import { plainToInstance } from 'class-transformer'
+import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID } from 'crypto'
 import { DataSource, Repository } from 'typeorm'
-import { CheckoutDataDto, CreateOrderDto, OrderResponseDto } from '~/modules/orders/dto/orders.dto'
+import {
+  CheckoutDataDto,
+  CreateOrderDto,
+  OrderDetailsDataDto,
+  OrderDetailsResponseDto,
+  OrderResponseDto,
+} from '~/modules/orders/dto/orders.dto'
 import { Orders, OrderStatus } from '~/modules/orders/orders.entity'
 import { CheckoutResponse, CreateCheckout, Item } from '~/modules/pagbank/interface/pagbank.interface'
 import { PagBankService } from '~/modules/pagbank/pagbank.service'
 import { TicketTypesService } from '~/modules/ticket-types/ticket-types.service'
-import { TicketStatus } from '~/modules/tickets/tickets.entity'
+import { Tickets, TicketStatus } from '~/modules/tickets/tickets.entity'
 import { TicketsService } from '~/modules/tickets/tickets.service'
 import { UsersService } from '~/modules/users/users.service'
 
@@ -63,6 +77,74 @@ export class OrdersService {
     await this.dataSource.transaction(async (manager) => {
       await this.ticketTypesService.decreaseAvailableQuantity(ticketTypeQuantities, manager)
       await manager.update(Orders, order.id, { status: OrderStatus.PAID })
+    })
+  }
+
+  async getOrderById(userId: string, orderId: string): Promise<OrderDetailsResponseDto> {
+    const order = await this.ordersRepository.findOne({
+      where: { id: orderId },
+      relations: ['event'],
+    })
+
+    if (!order) {
+      throw new NotFoundException('Order not found')
+    }
+
+    if (order.userId !== userId) {
+      throw new ForbiddenException('You do not own this order')
+    }
+
+    const [tickets, checkout] = await Promise.all([
+      this.ticketsService.getByOrderId(orderId),
+      this.fetchCheckout(order.gatewayTransactionId),
+    ])
+
+    return {
+      data: this.mapOrderDetails(order, tickets, checkout),
+    }
+  }
+
+  private async fetchCheckout(checkoutId: string): Promise<CheckoutResponse | null> {
+    try {
+      return await this.pagbankService.getCheckoutById(checkoutId)
+    } catch (error) {
+      this.logger.warn(`Failed to fetch PagBank checkout ${checkoutId}`, error)
+      return null
+    }
+  }
+
+  private mapOrderDetails(order: Orders, tickets: Tickets[], checkout: CheckoutResponse | null): OrderDetailsDataDto {
+    const gatewayOrderIds = checkout?.orders?.map((gatewayOrder) => gatewayOrder.id)
+
+    return plainToInstance(OrderDetailsDataDto, {
+      id: order.id,
+      eventId: order.eventId,
+      status: order.status,
+      totalAmount: Number(order.totalAmount),
+      createdAt: order.createdAt,
+      event: {
+        id: order.event.id,
+        title: order.event.title,
+      },
+      checkout: {
+        id: checkout?.id ?? order.gatewayTransactionId,
+        status: checkout?.status ?? 'UNKNOWN',
+        createdAt: checkout?.created_at ?? order.createdAt.toISOString(),
+        checkoutLinks: checkout?.links ?? [],
+        ...(gatewayOrderIds?.length ? { gatewayOrderIds } : {}),
+      },
+      tickets: tickets.map((ticket) => ({
+        id: ticket.id,
+        ticketTypeId: ticket.ticketTypeId,
+        status: ticket.status,
+        checkinAt: ticket.checkinAt,
+        qrToken: this.decryptQrToken(ticket.qrCodeEncryptedToken),
+        ticketType: {
+          id: ticket.ticketType.id,
+          name: ticket.ticketType.name,
+          price: Number(ticket.ticketType.price),
+        },
+      })),
     })
   }
 
@@ -187,5 +269,26 @@ export class OrdersService {
     const authTag = cipher.getAuthTag()
 
     return `${iv.toString('base64')}:${authTag.toString('base64')}:${encrypted.toString('base64')}`
+  }
+
+  private decryptQrToken(encryptedToken: string): string {
+    const secret = this.configService.get<string>('QR_CODE_SECRET')
+    if (!secret) {
+      throw new InternalServerErrorException('Missing QR_CODE_SECRET configuration')
+    }
+
+    const [ivBase64, authTagBase64, encryptedBase64] = encryptedToken.split(':')
+    if (!ivBase64 || !authTagBase64 || !encryptedBase64) {
+      throw new InternalServerErrorException('Invalid QR code encrypted token format')
+    }
+
+    const key = createHash('sha256').update(secret).digest()
+    const iv = Buffer.from(ivBase64, 'base64')
+    const authTag = Buffer.from(authTagBase64, 'base64')
+    const encrypted = Buffer.from(encryptedBase64, 'base64')
+    const decipher = createDecipheriv('aes-256-gcm', key, iv)
+    decipher.setAuthTag(authTag)
+
+    return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString('utf8')
   }
 }

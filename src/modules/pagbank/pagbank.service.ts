@@ -10,4 +10,9 @@ export class PagBankService {
     const response = await this.http.axiosRef.post<CheckoutResponse>('/checkouts', body)
     return response.data
   }
+
+  async getCheckoutById(checkoutId: string): Promise<CheckoutResponse> {
+    const response = await this.http.axiosRef.get<CheckoutResponse>(`/checkouts/${checkoutId}`)
+    return response.data
+  }
 }

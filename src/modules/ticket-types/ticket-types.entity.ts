@@ -1,5 +1,6 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 import { Events } from '~/modules/events-module/events.entity'
+import { Tickets } from '~/modules/tickets/tickets.entity'
 
 @Entity()
 export class TicketTypes {
@@ -32,4 +33,7 @@ export class TicketTypes {
   @ManyToOne(() => Events, (event) => event.ticketTypes)
   @JoinColumn({ name: 'event_id' })
   event: Events
+
+  @OneToMany(() => Tickets, (ticket) => ticket.ticketType)
+  tickets: Tickets[]
 }

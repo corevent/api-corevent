@@ -11,6 +11,11 @@ interface Link {
   method: string
 }
 
+export interface PagBankCheckoutOrder {
+  id: string
+  links?: Link[]
+}
+
 export interface CreateCheckout {
   reference_id: string
   customer: {
@@ -32,6 +37,7 @@ export interface CheckoutResponse extends CreateCheckout {
   discount_amount: number
   links: Link[]
   origin: string
+  orders?: PagBankCheckoutOrder[]
 }
 
 export type PagBankChargeStatus = 'PAID' | 'IN_ANALYSIS' | 'DECLINED' | 'CANCELED' | 'WAITING'

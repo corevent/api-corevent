@@ -10,6 +10,7 @@ import { DecreaseTicketTypeQuantityItem } from '~/modules/ticket-types/interface
 import { CheckinDataDto, CheckinResponseDto } from '~/modules/tickets/dto/tickets.dto'
 import { CreateTicket } from '~/modules/tickets/interfaces/tickets.interface'
 import { Tickets, TicketStatus } from '~/modules/tickets/tickets.entity'
+import { UsersService } from '~/modules/users/users.service'
 
 @Injectable()
 export class TicketsService {
@@ -18,6 +19,7 @@ export class TicketsService {
     private ticketsRepository: Repository<Tickets>,
     private eventsService: EventsService,
     private eventStaffService: EventStaffService,
+    private usersService: UsersService,
   ) {}
 
   async getTicketTypeQuantitiesByOrderId(orderId: string): Promise<DecreaseTicketTypeQuantityItem[]> {
@@ -32,6 +34,14 @@ export class TicketsService {
     }, new Map())
 
     return Array.from(quantityByTicketType, ([ticketTypeId, quantity]) => ({ ticketTypeId, quantity }))
+  }
+
+  async getByOrderId(orderId: string): Promise<Tickets[]> {
+    return this.ticketsRepository.find({
+      where: { orderId },
+      relations: ['ticketType'],
+      order: { createdAt: 'ASC' },
+    })
   }
 
   async createTicket(body: CreateTicket): Promise<Tickets> {
@@ -54,16 +64,21 @@ export class TicketsService {
 
     this.ticketValidations(eventId, ticket)
 
+    const { data: staffUser } = await this.usersService.getById(staffUserId)
+
     ticket.status = TicketStatus.CHECKED_IN
     ticket.checkinAt = new Date()
     ticket.checkinBy = staffUserId
 
     const savedTicket = await this.ticketsRepository.save(ticket)
-    return { data: this.mapCheckinResponse(savedTicket) }
+    return {
+      data: this.mapCheckinResponse(savedTicket, { id: staffUser.id, name: staffUser.name }),
+    }
   }
 
-  private mapCheckinResponse(ticket: Tickets): CheckinDataDto {
+  private mapCheckinResponse(ticket: Tickets, checkedInByStaff: { id: string; name: string }): CheckinDataDto {
     const { order, ticketType } = ticket
+    const checkedInBy = { id: checkedInByStaff.id, name: checkedInByStaff.name }
 
     return plainToInstance(CheckinDataDto, {
       ticketId: ticket.id,
@@ -89,6 +104,7 @@ export class TicketsService {
         name: order.user.name,
         email: order.user.email,
       },
+      checkedInBy,
     })
   }
 

@@ -53,6 +53,14 @@ export class CheckinUserDto {
   email: string
 }
 
+export class CheckinStaffUserDto {
+  @ApiProperty({ description: 'Staff user ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  id: string
+
+  @ApiProperty({ description: 'Staff user name', example: 'Jane Staff' })
+  name: string
+}
+
 export class CheckinDataDto {
   @ApiProperty({ description: 'Ticket ID', example: '1234567890' })
   ticketId: string
@@ -81,6 +89,10 @@ export class CheckinDataDto {
   @ApiProperty({ description: 'User', type: CheckinUserDto })
   @Type(() => CheckinUserDto)
   user: CheckinUserDto
+
+  @ApiProperty({ description: 'Staff user who performed the checkin', type: CheckinStaffUserDto })
+  @Type(() => CheckinStaffUserDto)
+  checkedInBy: CheckinStaffUserDto
 }
 
 export class CheckinResponseDto {

@@ -9,6 +9,7 @@ import { EventStaffInvitations } from '~/modules/event-staff-invitations/event-s
 import { Orders } from '~/modules/orders/orders.entity'
 import { Favorites } from '~/modules/favorites/favorites.entity'
 import { EventRatings } from '~/modules/event-ratings/event-ratings.entity'
+import { Tickets } from '~/modules/tickets/tickets.entity'
 
 @Entity()
 export class Users {
@@ -68,4 +69,10 @@ export class Users {
 
   @OneToMany(() => EventRatings, (eventRating) => eventRating.user)
   eventRatings: EventRatings[]
+
+  @OneToMany(() => Tickets, (ticket) => ticket.user)
+  tickets: Tickets[]
+
+  @OneToMany(() => Tickets, (ticket) => ticket.checkedInByUser)
+  checkedInTickets: Tickets[]
 }
