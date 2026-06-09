@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
-import { Repository, SelectQueryBuilder } from 'typeorm'
+import { EntityManager, Repository, SelectQueryBuilder } from 'typeorm'
 import { createPaginationMeta } from '~/common/pagination/pagination-meta.factory'
 import { getOffset } from '~/common/utils/get-offset.util'
 import { EventDataDto } from '~/modules/events-module/dto/events.dto'
@@ -15,6 +15,7 @@ import {
   TicketTypeResponseDto,
   UpdateTicketTypeDto,
 } from '~/modules/ticket-types/dto/ticket-types.dto'
+import { DecreaseTicketTypeQuantityItem } from '~/modules/ticket-types/interfaces/decrease-ticket'
 import { TicketTypes } from '~/modules/ticket-types/ticket-types.entity'
 
 @Injectable()
@@ -64,6 +65,27 @@ export class TicketTypesService {
     return { data: plainToInstance(TicketTypeDataDto, ticketType) }
   }
 
+  async decreaseAvailableQuantity(items: DecreaseTicketTypeQuantityItem[], manager?: EntityManager): Promise<void> {
+    const quantityByTicketType = this.aggregateQuantityByTicketType(items)
+    const repository = manager ? manager.getRepository(TicketTypes) : this.ticketTypesRepository
+
+    for (const [ticketTypeId, quantity] of quantityByTicketType) {
+      const result = await repository
+        .createQueryBuilder()
+        .update(TicketTypes)
+        .set({ availableQuantity: () => 'available_quantity - :quantity' })
+        .where('id = :ticketTypeId', { ticketTypeId })
+        .andWhere('available_quantity >= :quantity', { quantity })
+        .setParameters({ quantity, ticketTypeId })
+        .execute()
+
+      if (!result.affected) {
+        const { data: ticketType } = await this.getById(ticketTypeId)
+        throw new BadRequestException(`Not enough tickets available for ${ticketType.name}`)
+      }
+    }
+  }
+
   async delete(userId: string, ticketTypeId: string): Promise<void> {
     const { data: ticketType } = await this.getById(ticketTypeId)
     await this.checkEventStatusAndOrganizer(userId, ticketType.eventId, 'delete')
@@ -71,6 +93,13 @@ export class TicketTypesService {
     if (affected === 0) {
       throw new NotFoundException('Ticket type not found')
     }
+  }
+
+  private aggregateQuantityByTicketType(items: DecreaseTicketTypeQuantityItem[]): Map<string, number> {
+    return items.reduce<Map<string, number>>((acc, item) => {
+      acc.set(item.ticketTypeId, (acc.get(item.ticketTypeId) ?? 0) + item.quantity)
+      return acc
+    }, new Map())
   }
 
   private async checkCapacityAndEvent(

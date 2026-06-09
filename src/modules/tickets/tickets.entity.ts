@@ -1,5 +1,6 @@
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
 import { Orders } from '~/modules/orders/orders.entity'
+import { TicketTypes } from '~/modules/ticket-types/ticket-types.entity'
 
 export enum TicketStatus {
   PENDING = 'pending',
@@ -45,4 +46,8 @@ export class Tickets {
   @ManyToOne(() => Orders, (order) => order.tickets)
   @JoinColumn({ name: 'order_id' })
   order: Orders
+
+  @ManyToOne(() => TicketTypes)
+  @JoinColumn({ name: 'ticket_type_id' })
+  ticketType: TicketTypes
 }

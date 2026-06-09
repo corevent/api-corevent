@@ -306,10 +306,7 @@ export class EventsService {
         .addSelect('es.access_level', 'eventStaffAccessLevel')
     }
     if (type === 'favorite') {
-      query
-        .innerJoin('e.favorites', 'f')
-        .andWhere('f.userId = :userId', { userId })
-        .addSelect('f.id', 'favoriteId')
+      query.innerJoin('e.favorites', 'f').andWhere('f.userId = :userId', { userId }).addSelect('f.id', 'favoriteId')
     }
   }
 

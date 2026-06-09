@@ -7,13 +7,7 @@ export class PagBankService {
   constructor(private readonly http: HttpService) {}
 
   async createCheckout(body: CreateCheckout): Promise<CheckoutResponse> {
-    const response = await this.http.axiosRef.post('/checkouts', body, {
-      headers: {
-        Authorization: `Bearer ${process.env.PAGBANK_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-    })
-
-    return response.data as CheckoutResponse
+    const response = await this.http.axiosRef.post<CheckoutResponse>('/checkouts', body)
+    return response.data
   }
 }

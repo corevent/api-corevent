@@ -4,7 +4,10 @@ import { plainToInstance } from 'class-transformer'
 import { Repository, SelectQueryBuilder } from 'typeorm'
 import { createPaginationMeta } from '~/common/pagination/pagination-meta.factory'
 import { getOffset } from '~/common/utils/get-offset.util'
-import { EventStaffAccessLevel } from '~/modules/event-staff-invitations/event-staff-invitations.entity'
+import {
+  EventStaffAccessLevel,
+  EventStaffInvitationStatus,
+} from '~/modules/event-staff-invitations/event-staff-invitations.entity'
 import {
   EventStaffDataDto,
   EventStaffResponseDto,
@@ -80,6 +83,22 @@ export class EventStaffService {
     await this.validateOrganizer(userId, staff.eventId)
 
     await this.eventStaffRepository.delete(staffId)
+  }
+
+  // used on tickets service
+  async validateStaff(userId: string, eventId: string): Promise<void> {
+    const staff = await this.eventStaffRepository.findOne({
+      where: { userId, eventId },
+      relations: ['staffInvitation'],
+    })
+
+    const hasCheckinAccess =
+      staff?.accessLevel === EventStaffAccessLevel.CHECKIN &&
+      staff.staffInvitation?.invitationStatus === EventStaffInvitationStatus.ACCEPTED
+
+    if (!hasCheckinAccess) {
+      throw new ForbiddenException('You do not have permission to check in tickets for this event')
+    }
   }
 
   private async validateOrganizer(userId: string, eventId: string): Promise<void> {

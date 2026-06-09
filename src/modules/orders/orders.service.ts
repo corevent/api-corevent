@@ -1,9 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common'
+import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { InjectRepository } from '@nestjs/typeorm'
-import { createCipheriv, createHash, randomBytes } from 'crypto'
-import { Repository } from 'typeorm'
-import { EventsService } from '~/modules/events-module/events.service'
+import { createCipheriv, createHash, randomBytes, randomUUID } from 'crypto'
+import { DataSource, Repository } from 'typeorm'
 import { CheckoutDataDto, CreateOrderDto, OrderResponseDto } from '~/modules/orders/dto/orders.dto'
 import { Orders, OrderStatus } from '~/modules/orders/orders.entity'
 import { CheckoutResponse, CreateCheckout, Item } from '~/modules/pagbank/interface/pagbank.interface'
@@ -15,6 +14,8 @@ import { UsersService } from '~/modules/users/users.service'
 
 @Injectable()
 export class OrdersService {
+  private readonly logger = new Logger(OrdersService.name)
+
   constructor(
     @InjectRepository(Orders)
     private ordersRepository: Repository<Orders>,
@@ -22,72 +23,126 @@ export class OrdersService {
     private ticketTypesService: TicketTypesService,
     private pagbankService: PagBankService,
     private usersService: UsersService,
-    private eventsService: EventsService,
     private ticketsService: TicketsService,
+    private dataSource: DataSource,
   ) {}
 
   async createOrder(userId: string, eventId: string, body: CreateOrderDto): Promise<OrderResponseDto> {
-    const { order, checkoutLinks: checkout } = await this.createBody(userId, eventId, body)
-    const data = await this.ordersRepository.save(order)
-    const { qrCodes, ticketIds } = await this.createTicket(data.id, userId, eventId, body)
-    return { data: { orderId: data.id, checkoutLinks: checkout, qrCodes, ticketIds } }
-  }
+    await this.validateTicketAvailability(body.items)
+    const orderId = randomUUID()
+    const { items, totalAmount } = await this.buildOrderItems(body)
+    const { checkout, checkoutLinks } = await this.createCheckout(userId, items, orderId)
 
-  private async createBody(
-    userId: string,
-    eventId: string,
-    body: CreateOrderDto,
-  ): Promise<{ order: Orders; checkoutLinks: CheckoutDataDto[] }> {
-    const status: OrderStatus = OrderStatus.PENDING
-    const { checkout, totalAmount } = await this.createCheckout(userId, eventId, body)
-    const order = this.ordersRepository.create({
+    await this.ordersRepository.save({
+      id: orderId,
       userId,
       eventId,
       totalAmount,
-      status,
+      status: OrderStatus.PENDING,
       gatewayTransactionId: checkout.id,
     })
-    return { order, checkoutLinks: checkout.links }
+
+    const { qrCodes, ticketIds } = await this.createTicket(orderId, userId, eventId, body)
+    return { data: { orderId, checkoutLinks, qrCodes, ticketIds } }
   }
 
-  private async createCheckout(
-    userId: string,
-    eventId: string,
-    body: CreateOrderDto,
-  ): Promise<{ checkout: CheckoutResponse; totalAmount: number }> {
-    const { data: user } = await this.usersService.getById(userId)
-    const { data: event } = await this.eventsService.getById(eventId)
+  async markAsPaidFromWebhook(checkoutId: string | null, referenceId: string | null): Promise<void> {
+    const order = await this.findOrderForWebhook(checkoutId, referenceId)
 
-    const referenceId = `${event.title} - ${event.startDate.toLocaleDateString()}`
+    if (!order) {
+      this.logger.warn(`Order not found for webhook checkoutId=${checkoutId} referenceId=${referenceId}`)
+      return
+    }
 
+    if (order.status === OrderStatus.PAID || order.status === OrderStatus.CANCELLED) {
+      return
+    }
+
+    const ticketTypeQuantities = await this.ticketsService.getTicketTypeQuantitiesByOrderId(order.id)
+
+    await this.dataSource.transaction(async (manager) => {
+      await this.ticketTypesService.decreaseAvailableQuantity(ticketTypeQuantities, manager)
+      await manager.update(Orders, order.id, { status: OrderStatus.PAID })
+    })
+  }
+
+  private async findOrderForWebhook(checkoutId: string | null, referenceId: string | null): Promise<Orders | null> {
+    if (checkoutId) {
+      const orderByCheckout = await this.ordersRepository.findOne({
+        where: { gatewayTransactionId: checkoutId },
+      })
+      if (orderByCheckout) {
+        return orderByCheckout
+      }
+    }
+
+    if (referenceId) {
+      return this.ordersRepository.findOne({ where: { id: referenceId } })
+    }
+
+    return null
+  }
+
+  private async validateTicketAvailability(items: CreateOrderDto['items']): Promise<void> {
+    const quantityByTicketType = items.reduce<Map<string, number>>((acc, item) => {
+      acc.set(item.ticketTypeId, (acc.get(item.ticketTypeId) ?? 0) + item.quantity)
+      return acc
+    }, new Map())
+
+    for (const [ticketTypeId, quantity] of quantityByTicketType) {
+      const { data: ticketType } = await this.ticketTypesService.getById(ticketTypeId)
+      if (ticketType.availableQuantity < quantity) {
+        throw new BadRequestException(`Not enough tickets available for ${ticketType.name}`)
+      }
+    }
+  }
+
+  private async buildOrderItems(body: CreateOrderDto): Promise<{ items: Item[]; totalAmount: number }> {
     const items: Item[] = []
     let totalAmount = 0
-    const tickets = body.items.map((item) => ({ ticketTypeId: item.ticketTypeId, quantity: item.quantity }))
-    for (const { ticketTypeId, quantity } of tickets) {
+
+    for (const { ticketTypeId, quantity } of body.items) {
       const { data: ticketType } = await this.ticketTypesService.getById(ticketTypeId)
       items.push({
         reference_id: ticketTypeId,
         name: ticketType.name,
-        quantity: quantity,
+        quantity,
         unit_amount: ticketType.price * 100,
       })
       totalAmount += ticketType.price * quantity
     }
 
+    return { items, totalAmount }
+  }
+
+  private async createCheckout(
+    userId: string,
+    items: Item[],
+    orderId: string,
+  ): Promise<{ checkout: CheckoutResponse; checkoutLinks: CheckoutDataDto[] }> {
+    const { data: user } = await this.usersService.getById(userId)
+    const webhookUrl = this.configService.get<string>('PAGBANK_WEBHOOK_URL')
+    const redirectUrl = this.configService.get<string>('PAGBANK_REDIRECT_URL')
+
+    if (!redirectUrl) {
+      throw new InternalServerErrorException('Missing PAGBANK_REDIRECT_URL configuration')
+    }
+
     const checkoutBody: CreateCheckout = {
-      reference_id: referenceId,
+      reference_id: orderId,
       customer: {
         name: user.name,
         email: user.email,
         tax_id: user.cpf,
       },
       customerModifiable: true,
-      items: items,
-      redirect_url: `${process.env.PAGBANK_REDIRECT_URL}`,
+      items,
+      redirect_url: redirectUrl,
+      ...(webhookUrl ? { notification_urls: [webhookUrl] } : {}),
     }
 
     const checkout = await this.pagbankService.createCheckout(checkoutBody)
-    return { checkout, totalAmount }
+    return { checkout, checkoutLinks: checkout.links }
   }
 
   private async createTicket(

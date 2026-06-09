@@ -21,6 +21,7 @@ export interface CreateCheckout {
   customerModifiable: boolean
   items: Item[]
   redirect_url: string
+  notification_urls?: string[]
 }
 
 export interface CheckoutResponse extends CreateCheckout {
@@ -31,4 +32,18 @@ export interface CheckoutResponse extends CreateCheckout {
   discount_amount: number
   links: Link[]
   origin: string
+}
+
+export type PagBankChargeStatus = 'PAID' | 'IN_ANALYSIS' | 'DECLINED' | 'CANCELED' | 'WAITING'
+
+export interface PagBankWebhookCharge {
+  id: string
+  status: PagBankChargeStatus
+}
+
+export interface PagBankWebhookPayload {
+  id: string
+  reference_id?: string
+  status?: string
+  charges?: PagBankWebhookCharge[]
 }
