@@ -18,3 +18,13 @@ export class AgePolicyAcceptanceResponseDto {
   @ApiProperty({ description: 'The data of the age policy acceptance', type: AgePolicyAcceptanceDataDto })
   data: AgePolicyAcceptanceDataDto
 }
+
+export class CheckIfUserHasAcceptedDto {
+  @ApiProperty({ description: 'Whether the user has accepted the age policy', example: true })
+  userHasAccepted: boolean
+}
+
+export class CheckIfUserHasAcceptedResponseDto {
+  @ApiProperty({ description: 'The data of the check if user has accepted', type: CheckIfUserHasAcceptedDto })
+  data: CheckIfUserHasAcceptedDto
+}
