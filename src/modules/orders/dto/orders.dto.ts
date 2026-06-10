@@ -64,6 +64,7 @@ export class OrderTicketTypeDto {
   name: string
 
   @ApiProperty({ description: 'Ticket type price', example: 100 })
+  @Type(() => Number)
   price: number
 }
 
@@ -150,9 +151,9 @@ export class OrderDetailsDataDto {
   @Type(() => OrderEventDto)
   event: OrderEventDto
 
-  @ApiProperty({ description: 'PagBank checkout', type: OrderCheckoutDto })
+  @ApiPropertyOptional({ description: 'PagBank checkout. Omitted for free orders.', type: OrderCheckoutDto })
   @Type(() => OrderCheckoutDto)
-  checkout: OrderCheckoutDto
+  checkout?: OrderCheckoutDto
 
   @ApiProperty({ description: 'Tickets', type: [OrderTicketDto] })
   @Type(() => OrderTicketDto)

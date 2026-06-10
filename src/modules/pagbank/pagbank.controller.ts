@@ -16,6 +16,7 @@ export class PagBankController {
     @Req() req: RawBodyRequest<Request>,
     @Headers('x-authenticity-token') authenticityToken: string | undefined,
   ): Promise<void> {
+    console.log('webhook received')
     const rawBody = req.rawBody?.toString('utf8')
 
     if (!rawBody) {

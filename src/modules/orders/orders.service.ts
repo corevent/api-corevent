@@ -10,7 +10,7 @@ import { ConfigService } from '@nestjs/config'
 import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
 import { createHash, randomBytes, randomUUID } from 'crypto'
-import { DataSource, Repository } from 'typeorm'
+import { DataSource, EntityManager, Repository } from 'typeorm'
 import { createPaginationMeta } from '~/common/pagination/pagination-meta.factory'
 import { QueryPaginationDto } from '~/common/pagination/pagination.dto'
 import { getOffset } from '~/common/utils/get-offset.util'
@@ -49,8 +49,15 @@ export class OrdersService {
 
   async createOrder(userId: string, eventId: string, body: CreateOrderDto): Promise<OrderResponseDto> {
     await this.validateTicketAvailability(body.items)
+    await this.validateFreeTicketRules(userId, body.items)
+
     const orderId = randomUUID()
     const { items, totalAmount } = await this.buildOrderItems(body)
+
+    if (totalAmount === 0) {
+      return this.createFreeOrder(userId, eventId, body, orderId)
+    }
+
     const { checkout, checkoutLinks } = await this.createCheckout(userId, items, orderId)
 
     await this.ordersRepository.save({
@@ -62,7 +69,7 @@ export class OrdersService {
       gatewayTransactionId: checkout.id,
     })
 
-    const { qrCodes, ticketIds } = await this.createTicket(orderId, userId, eventId, body)
+    const { qrCodes, ticketIds } = await this.createTickets(orderId, userId, eventId, body)
     return { data: { orderId, checkoutLinks, qrCodes, ticketIds } }
   }
 
@@ -118,7 +125,7 @@ export class OrdersService {
 
     const [tickets, checkout] = await Promise.all([
       this.ticketsService.getByOrderId(orderId),
-      this.fetchCheckout(order.gatewayTransactionId),
+      order.gatewayTransactionId ? this.fetchCheckout(order.gatewayTransactionId) : Promise.resolve(null),
     ])
 
     return {
@@ -137,6 +144,15 @@ export class OrdersService {
 
   private mapOrderDetails(order: Orders, tickets: Tickets[], checkout: CheckoutResponse | null): OrderDetailsDataDto {
     const gatewayOrderIds = checkout?.orders?.map((gatewayOrder) => gatewayOrder.id)
+    const checkoutDetails = order.gatewayTransactionId
+      ? {
+          id: checkout?.id ?? order.gatewayTransactionId,
+          status: checkout?.status ?? 'UNKNOWN',
+          createdAt: checkout?.created_at ?? order.createdAt.toISOString(),
+          checkoutLinks: checkout?.links ?? [],
+          ...(gatewayOrderIds?.length ? { gatewayOrderIds } : {}),
+        }
+      : undefined
 
     return plainToInstance(OrderDetailsDataDto, {
       id: order.id,
@@ -150,13 +166,7 @@ export class OrdersService {
         startDate: order.event.startDate,
         endDate: order.event.endDate,
       },
-      checkout: {
-        id: checkout?.id ?? order.gatewayTransactionId,
-        status: checkout?.status ?? 'UNKNOWN',
-        createdAt: checkout?.created_at ?? order.createdAt.toISOString(),
-        checkoutLinks: checkout?.links ?? [],
-        ...(gatewayOrderIds?.length ? { gatewayOrderIds } : {}),
-      },
+      ...(checkoutDetails ? { checkout: checkoutDetails } : {}),
       tickets: tickets.map((ticket) => ({
         id: ticket.id,
         ticketTypeId: ticket.ticketTypeId,
@@ -189,6 +199,61 @@ export class OrdersService {
     return null
   }
 
+  private async createFreeOrder(
+    userId: string,
+    eventId: string,
+    body: CreateOrderDto,
+    orderId: string,
+  ): Promise<OrderResponseDto> {
+    const ticketTypeQuantities = body.items.map(({ ticketTypeId, quantity }) => ({ ticketTypeId, quantity }))
+
+    const { qrCodes, ticketIds } = await this.dataSource.transaction(async (manager) => {
+      await manager.save(Orders, {
+        id: orderId,
+        userId,
+        eventId,
+        totalAmount: 0,
+        status: OrderStatus.PAID,
+        gatewayTransactionId: null,
+      })
+
+      await this.ticketTypesService.decreaseAvailableQuantity(ticketTypeQuantities, manager)
+      return this.createTickets(orderId, userId, eventId, body, manager)
+    })
+
+    return { data: { orderId, checkoutLinks: [], qrCodes, ticketIds } }
+  }
+
+  private async validateFreeTicketRules(userId: string, items: CreateOrderDto['items']): Promise<void> {
+    let hasFreeTicket = false
+    let hasPaidTicket = false
+
+    for (const item of items) {
+      const { data: ticketType } = await this.ticketTypesService.getById(item.ticketTypeId)
+      const isFree = Number(ticketType.price) === 0
+
+      if (!isFree) {
+        hasPaidTicket = true
+        continue
+      }
+
+      hasFreeTicket = true
+
+      if (item.quantity !== 1) {
+        throw new BadRequestException(`Free ticket "${ticketType.name}" is limited to 1 per user`)
+      }
+
+      const hasExistingTicket = await this.ticketsService.hasUserTicketForTicketType(userId, item.ticketTypeId)
+      if (hasExistingTicket) {
+        throw new BadRequestException(`You already have a ticket for "${ticketType.name}"`)
+      }
+    }
+
+    if (hasFreeTicket && hasPaidTicket) {
+      throw new BadRequestException('Cannot mix free and paid tickets in the same order')
+    }
+  }
+
   private async validateTicketAvailability(items: CreateOrderDto['items']): Promise<void> {
     const quantityByTicketType = items.reduce<Map<string, number>>((acc, item) => {
       acc.set(item.ticketTypeId, (acc.get(item.ticketTypeId) ?? 0) + item.quantity)
@@ -215,7 +280,7 @@ export class OrdersService {
         quantity,
         unit_amount: ticketType.price * 100,
       })
-      totalAmount += ticketType.price * quantity
+      totalAmount += Number(ticketType.price) * quantity
     }
 
     return { items, totalAmount }
@@ -251,11 +316,12 @@ export class OrdersService {
     return { checkout, checkoutLinks: checkout.links }
   }
 
-  private async createTicket(
+  private async createTickets(
     orderId: string,
     userId: string,
     eventId: string,
     body: CreateOrderDto,
+    manager?: EntityManager,
   ): Promise<{ qrCodes: string[]; ticketIds: string[] }> {
     const qrCodes: string[] = []
     const ticketIds: string[] = []
@@ -264,15 +330,18 @@ export class OrdersService {
         const qrToken = randomBytes(32).toString('hex')
         const qrCodeHash = createHash('sha256').update(qrToken).digest('hex')
         const qrCodeEncryptedToken = this.encryptQrToken(qrToken)
-        const ticket = await this.ticketsService.createTicket({
-          orderId,
-          userId,
-          ticketTypeId: item.ticketTypeId,
-          eventId,
-          status: TicketStatus.PENDING,
-          qrCodeHash,
-          qrCodeEncryptedToken,
-        })
+        const ticket = await this.ticketsService.createTicket(
+          {
+            orderId,
+            userId,
+            ticketTypeId: item.ticketTypeId,
+            eventId,
+            status: TicketStatus.PENDING,
+            qrCodeHash,
+            qrCodeEncryptedToken,
+          },
+          manager,
+        )
         qrCodes.push(qrToken)
         ticketIds.push(ticket.id)
       }

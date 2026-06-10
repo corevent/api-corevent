@@ -21,6 +21,7 @@ export class CheckinTicketTypeDto {
   name: string
 
   @ApiProperty({ description: 'Ticket type price', example: 100 })
+  @Type(() => Number)
   price: number
 }
 
@@ -39,8 +40,8 @@ export class CheckinOrderDto {
   @ApiProperty({ description: 'Order status', example: OrderStatus.PAID })
   status: OrderStatus
 
-  @ApiProperty({ description: 'Gateway transaction ID', example: 'ORDE_1234567890' })
-  gatewayTransactionId: string
+  @ApiPropertyOptional({ description: 'Gateway transaction ID. Omitted for free orders.', example: 'ORDE_1234567890' })
+  gatewayTransactionId?: string | null
 }
 
 export class CheckinUserDto {
@@ -116,6 +117,7 @@ export class UserTicketTypeDto {
   name: string
 
   @ApiProperty({ description: 'Ticket type price', example: 100 })
+  @Type(() => Number)
   price: number
 }
 

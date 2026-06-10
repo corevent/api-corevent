@@ -11,6 +11,7 @@ export class CreateTicketTypeDto {
 
   @ApiProperty({ description: 'Price of the ticket type', example: 100 })
   @IsNumber()
+  @Type(() => Number)
   price: number
 
   @ApiProperty({ description: 'Total quantity of tickets for this ticket type', example: 100 })
