@@ -15,6 +15,7 @@ import { PagBankModule } from '~/modules/pagbank/pagbank.module'
 import { PasswordRecoveryCodesModule } from '~/modules/password-recovery-codes/password-recovery-codes.module'
 import { RegistrationCodesModule } from '~/modules/registration-codes/registration-codes.module'
 import { StatesModule } from '~/modules/states/states.module'
+import { StorageModule } from '~/modules/storage/storage.module'
 import { TicketTypesModule } from '~/modules/ticket-types/ticket-types.module'
 import { TicketsModule } from '~/modules/tickets/tickets.module'
 import { UsersModule } from '~/modules/users/users.module'
@@ -40,4 +41,5 @@ export const modules = [
   PagBankModule,
   FavoritesModule,
   EventRatingsModule,
+  StorageModule,
 ]

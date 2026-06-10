@@ -95,6 +95,11 @@ export class EventsService {
     }
   }
 
+  async assertUserIsOrganizer(userId: string, eventId: string): Promise<void> {
+    const { data: event } = await this.getById(eventId)
+    this.validateOrganizer(userId, event)
+  }
+
   async delete(organizerId: string, id: string): Promise<void> {
     const { data: event } = await this.getById(id)
     this.validateOrganizer(organizerId, event)
