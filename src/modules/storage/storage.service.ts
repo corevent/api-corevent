@@ -1,6 +1,6 @@
-import { DeleteObjectCommand, HeadObjectCommand, NotFound, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { DeleteObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { randomUUID } from 'node:crypto'
 import {
@@ -21,6 +21,7 @@ export class StorageService {
 
   constructor(
     private readonly configService: ConfigService,
+    @Inject(forwardRef(() => EventsService))
     private readonly eventsService: EventsService,
   ) {
     const accessKeyId = this.getRequiredEnv('AWS_ACCESS_KEY_ID')
@@ -90,13 +91,41 @@ export class StorageService {
     return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`
   }
 
+  // Validates an avatar upload key, ensures the object exists, and returns its public URL.
+  async confirmAvatarUpload(userId: string, key: string): Promise<string> {
+    if (!this.isAvatarKeyOwnedByUser(key, userId)) {
+      throw new BadRequestException('Invalid avatar upload key')
+    }
+    return this.assertObjectExistsAndGetPublicUrl(key)
+  }
+
+  // Validates an event banner upload key, ensures the object exists, and returns its public URL.
+  async confirmEventBannerUpload(eventId: string, key: string): Promise<string> {
+    if (!this.isEventBannerKeyForEvent(key, eventId)) {
+      throw new BadRequestException('Invalid event banner upload key')
+    }
+    return this.assertObjectExistsAndGetPublicUrl(key)
+  }
+
+  // Deletes a previously stored image when its public URL points to this bucket.
+  async deleteStoredImageByUrl(publicUrl?: string | null): Promise<void> {
+    if (!publicUrl) {
+      return
+    }
+    const key = this.extractKeyFromPublicUrl(publicUrl)
+    if (!key) {
+      return
+    }
+    await this.deleteObject(key)
+  }
+
   // Checks whether an object exists in the bucket (used to confirm uploads).
   async objectExists(key: string): Promise<boolean> {
     try {
       await this.s3.send(new HeadObjectCommand({ Bucket: this.bucket, Key: key }))
       return true
-    } catch (error) {
-      if (error instanceof NotFound) {
+    } catch (error: unknown) {
+      if (this.isS3NotFoundError(error)) {
         return false
       }
       throw error
@@ -143,6 +172,22 @@ export class StorageService {
 
     await this.eventsService.assertUserIsOrganizer(userId, dto.eventId)
     return this.buildEventBannerKey(dto.eventId, contentType)
+  }
+
+  private async assertObjectExistsAndGetPublicUrl(key: string): Promise<string> {
+    const exists = await this.objectExists(key)
+    if (!exists) {
+      throw new BadRequestException('Uploaded image not found in storage')
+    }
+    return this.buildPublicUrl(key)
+  }
+
+  private isS3NotFoundError(error: unknown): boolean {
+    if (typeof error !== 'object' || error === null) {
+      return false
+    }
+    const s3Error = error as { name?: string; $metadata?: { httpStatusCode?: number } }
+    return s3Error.name === 'NotFound' || s3Error.$metadata?.httpStatusCode === 404
   }
 
   // Reads a required environment variable or throws at startup if missing.

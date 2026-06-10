@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common'
+import { Body, Controller, HttpCode, Post, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
@@ -12,6 +12,7 @@ export class StorageController {
   constructor(private readonly storageService: StorageService) {}
 
   @Post('presign')
+  @HttpCode(201)
   @ApiOperation({ summary: 'Generate a presigned URL for direct image upload to S3' })
   @ApiBody({ type: PresignUploadDto })
   @ApiResponse({ status: 201, type: PresignUploadResponseDto })

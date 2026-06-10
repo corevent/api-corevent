@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
 import { Repository } from 'typeorm'
@@ -19,6 +19,7 @@ import {
 import { EventRatings } from '~/modules/event-ratings/event-ratings.entity'
 import { EventLocationType, Events, EventStatus } from '~/modules/events-module/events.entity'
 import { OrganizerPaymentInfoService } from '~/modules/organizer-payment-info/organizer-payment-info.service'
+import { StorageService } from '~/modules/storage/storage.service'
 
 const relevantAddressFields = ['cityId', 'zipCode', 'neighborhood', 'street', 'number', 'locationName']
 type EventListRawRow = {
@@ -34,6 +35,8 @@ export class EventsService {
     private readonly eventsRepository: Repository<Events>,
     private readonly eventChangesService: EventChangesService,
     private readonly organizerPaymentInfoService: OrganizerPaymentInfoService,
+    @Inject(forwardRef(() => StorageService))
+    private readonly storageService: StorageService,
   ) {}
 
   async create(organizerId: string, body: CreateEventDto): Promise<EventResponseDto> {
@@ -49,6 +52,20 @@ export class EventsService {
     await this.validateBeforeUpdate(organizerId, id, body)
     await this.eventsRepository.update(id, body)
     return this.getById(id)
+  }
+
+  async updateBanner(organizerId: string, eventId: string, key: string): Promise<EventResponseDto> {
+    await this.assertUserIsOrganizer(organizerId, eventId)
+    const publicUrl = await this.storageService.confirmEventBannerUpload(eventId, key)
+    const event = await this.eventsRepository.findOne({ where: { id: eventId } })
+    if (!event) {
+      throw new NotFoundException('Event not found')
+    }
+    if (event.bannerUrl && event.bannerUrl !== publicUrl) {
+      await this.storageService.deleteStoredImageByUrl(event.bannerUrl)
+    }
+    await this.eventsRepository.update(eventId, { bannerUrl: publicUrl })
+    return this.getById(eventId)
   }
 
   async getAll(
@@ -271,6 +288,7 @@ export class EventsService {
         'e.startDate',
         'e.endDate',
         'e.category',
+        'e.bannerUrl',
         'e.isAdultOnly',
         'e.status',
         'o.id',

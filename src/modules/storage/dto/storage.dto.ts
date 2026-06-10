@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsEnum, IsIn, IsNotEmpty, IsUUID, ValidateIf } from 'class-validator'
+import { IsEnum, IsIn, IsNotEmpty, IsString, IsUUID, ValidateIf } from 'class-validator'
 import { ALLOWED_IMAGE_CONTENT_TYPES } from '~/modules/storage/constants/storage.constants'
 
 export enum StorageUploadPurpose {
@@ -39,4 +39,11 @@ export class PresignUploadDataDto {
 export class PresignUploadResponseDto {
   @ApiProperty({ description: 'The data of the presigned upload' })
   data: PresignUploadDataDto
+}
+
+export class ConfirmImageUploadDto {
+  @ApiProperty({ description: 'S3 object key returned from the presign endpoint' })
+  @IsNotEmpty()
+  @IsString()
+  key: string
 }
