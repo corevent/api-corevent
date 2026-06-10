@@ -9,7 +9,7 @@ import { ConfigService } from '@nestjs/config'
 import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
 import { createHash } from 'crypto'
-import { FindOptionsWhere, Repository } from 'typeorm'
+import { EntityManager, FindOptionsWhere, Repository } from 'typeorm'
 import { createPaginationMeta } from '~/common/pagination/pagination-meta.factory'
 import { getOffset } from '~/common/utils/get-offset.util'
 import { decryptQrToken } from '~/common/utils/qr-code-crypto.util'
@@ -94,9 +94,23 @@ export class TicketsService {
     }
   }
 
-  async createTicket(body: CreateTicket): Promise<Tickets> {
-    const ticket = this.ticketsRepository.create(body)
-    return this.ticketsRepository.save(ticket)
+  async createTicket(body: CreateTicket, manager?: EntityManager): Promise<Tickets> {
+    const repository = manager ? manager.getRepository(Tickets) : this.ticketsRepository
+    const ticket = repository.create(body)
+    return repository.save(ticket)
+  }
+
+  async hasUserTicketForTicketType(userId: string, ticketTypeId: string): Promise<boolean> {
+    const count = await this.ticketsRepository
+      .createQueryBuilder('ticket')
+      .innerJoin('ticket.order', 'order')
+      .where('ticket.userId = :userId', { userId })
+      .andWhere('ticket.ticketTypeId = :ticketTypeId', { ticketTypeId })
+      .andWhere('order.status != :cancelledOrder', { cancelledOrder: OrderStatus.CANCELLED })
+      .andWhere('ticket.status != :cancelledTicket', { cancelledTicket: TicketStatus.CANCELLED })
+      .getCount()
+
+    return count > 0
   }
 
   async checkin(staffUserId: string, eventId: string, qrToken: string): Promise<CheckinResponseDto> {

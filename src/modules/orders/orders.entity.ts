@@ -26,8 +26,8 @@ export class Orders {
   @Column({ type: 'enum', enum: OrderStatus })
   status: OrderStatus
 
-  @Column({ type: 'text' })
-  gatewayTransactionId: string
+  @Column({ type: 'text', nullable: true })
+  gatewayTransactionId: string | null
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
   createdAt: Date
