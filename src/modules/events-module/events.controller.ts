@@ -11,6 +11,7 @@ import {
   UpdateEventDto,
 } from '~/modules/events-module/dto/events.dto'
 import { EventsService } from '~/modules/events-module/events.service'
+import { ConfirmImageUploadDto } from '~/modules/storage/dto/storage.dto'
 
 @ApiTags('Events')
 @UseGuards(AuthGuard('jwt'))
@@ -35,6 +36,21 @@ export class EventsController {
   @ApiResponse({ status: 404, description: 'Event not found.' })
   async cancel(@Req() req: AuthenticatedRequest, @Param('id') id: string): Promise<void> {
     return this.eventsService.cancel(req.user.id, id)
+  }
+
+  @Patch(':id/banner')
+  @ApiOperation({ summary: 'Confirm event banner upload and save the image URL' })
+  @ApiParam({ name: 'id', description: 'The ID of the event' })
+  @ApiBody({ type: ConfirmImageUploadDto })
+  @ApiResponse({ status: 200, type: EventResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid key, image not found, or user is not the organizer' })
+  @ApiResponse({ status: 404, description: 'Event not found' })
+  async updateBanner(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() body: ConfirmImageUploadDto,
+  ): Promise<EventResponseDto> {
+    return this.eventsService.updateBanner(req.user.id, id, body.key)
   }
 
   @Patch(':id')

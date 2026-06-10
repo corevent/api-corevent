@@ -1,4 +1,11 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
+import {
+  BadRequestException,
+  ForbiddenException,
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
 import { Repository } from 'typeorm'
@@ -27,7 +34,8 @@ export class OrganizerPaymentInfoService {
   constructor(
     @InjectRepository(OrganizerPaymentInfo)
     private organizerPaymentInfoRepository: Repository<OrganizerPaymentInfo>,
-    private usersService: UsersService,
+    @Inject(forwardRef(() => UsersService))
+    private readonly usersService: UsersService,
   ) {}
 
   async create(userId: string, body: CreateOrganizerPaymentInfoDto): Promise<OrganizerPaymentInfoResDto> {

@@ -3,6 +3,7 @@ import { AuthGuard } from '@nestjs/passport'
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
 import { MessageDto } from '~/common/dto/message.dto'
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
+import { ConfirmImageUploadDto } from '~/modules/storage/dto/storage.dto'
 import { UpdatePassDto, UpdateUserDto, UserResponseDto } from '~/modules/users/dto/users.dto'
 import { UsersService } from '~/modules/users/users.service'
 
@@ -29,6 +30,19 @@ export class UsersController {
   @ApiResponse({ status: 500, type: InternalServerErrorException })
   async updatePass(@Req() req: AuthenticatedRequest, @Body() body: UpdatePassDto): Promise<{ message: string }> {
     return this.usersService.updatePass(req.user.id, body)
+  }
+
+  @Patch('me/avatar')
+  @ApiOperation({ summary: 'Confirm avatar upload and save the image URL' })
+  @ApiBody({ type: ConfirmImageUploadDto })
+  @ApiResponse({ status: 200, type: UserResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid key or image not found in storage' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async updateAvatar(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: ConfirmImageUploadDto,
+  ): Promise<UserResponseDto> {
+    return this.usersService.updateAvatar(req.user.id, body.key)
   }
 
   // same endpoint as /users/:id, but with the current user's ID

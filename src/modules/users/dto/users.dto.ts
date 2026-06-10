@@ -1,4 +1,4 @@
-import { ApiProperty, PartialType } from '@nestjs/swagger'
+import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger'
 import { Expose } from 'class-transformer'
 import { IsDateString, IsEmail, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, Length } from 'class-validator'
 
@@ -47,7 +47,7 @@ export class CreateUserDto extends BaseUserDto {
   verifyEmailCode: string
 }
 
-export class UpdateUserDto extends PartialType(BaseUserDto) {}
+export class UpdateUserDto extends PartialType(OmitType(BaseUserDto, ['avatarUrl'])) {}
 
 export class UpdatePassDto {
   @ApiProperty({ description: 'User current password', example: '@Password123' })

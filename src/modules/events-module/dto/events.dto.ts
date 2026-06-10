@@ -93,11 +93,6 @@ export class CreateEventDto {
   @IsEnum(EventCategory)
   category: EventCategory
 
-  @ApiProperty({ description: 'Event banner URL', example: 'https://example.com/banner.jpg' })
-  @IsString()
-  @IsOptional()
-  bannerUrl?: string
-
   @ApiProperty({ description: 'Event is adult only', example: false })
   @IsBoolean()
   isAdultOnly: boolean
@@ -277,6 +272,9 @@ export class ListEventsDto {
 
   @ApiProperty({ description: 'Event category', example: EventCategory.MUSIC })
   category: EventCategory
+
+  @ApiProperty({ description: 'Event banner URL', example: 'https://example.com/banner.jpg', required: false })
+  bannerUrl?: string
 
   @ApiProperty({ description: 'Event is adult only', example: false })
   isAdultOnly: boolean
