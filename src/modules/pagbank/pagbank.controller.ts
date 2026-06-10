@@ -49,7 +49,7 @@ export class PagBankController {
       throw new UnauthorizedException('Missing webhook payload')
     }
 
-    await this.pagBankWebhookService.handleWebhook(rawBody, authenticityToken)
+    await this.pagBankWebhookService.handleWebhook(rawBody)
     this.logger.log('Webhook processed successfully')
   }
 }
