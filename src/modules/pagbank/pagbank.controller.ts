@@ -26,8 +26,10 @@ export class PagBankController {
   async handleWebhook(
     @Req() req: RawBodyRequest<Request>,
     @Headers('x-authenticity-token') authenticityToken: string | undefined,
+    @Headers('x-payload-signature') payloadSignature: string | undefined,
   ): Promise<void> {
     const rawBody = req.rawBody?.toString('utf8')
+    const headerNames = Object.keys(req.headers).sort().join(', ')
 
     this.logger.log(
       [
@@ -35,6 +37,10 @@ export class PagBankController {
         `hasRawBody=${Boolean(rawBody)}`,
         `rawBodyLength=${rawBody?.length ?? 0}`,
         `hasAuthenticityToken=${Boolean(authenticityToken)}`,
+        `authenticityTokenLength=${authenticityToken?.length ?? 0}`,
+        `hasPayloadSignature=${Boolean(payloadSignature)}`,
+        `payloadSignatureLength=${payloadSignature?.length ?? 0}`,
+        `headerNames=[${headerNames}]`,
       ].join(' '),
     )
 
