@@ -1,8 +1,6 @@
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from 'typeorm'
-import {
-  EventStaffAccessLevel,
-  EventStaffInvitations,
-} from '~/modules/event-staff-invitations/event-staff-invitations.entity'
+import { EventStaffAccessLevel } from '~/modules/event-staff-invitations/enums/event-staff-invitation.enums'
+import { EventStaffInvitations } from '~/modules/event-staff-invitations/event-staff-invitations.entity'
 import { Events } from '~/modules/events-module/events.entity'
 import { Users } from '~/modules/users/users.entity'
 
@@ -17,7 +15,11 @@ export class EventStaff {
   @Column({ name: 'user_id' })
   userId: string
 
-  @Column({ type: 'enum', enum: EventStaffAccessLevel })
+  @Column({
+    type: 'enum',
+    enum: EventStaffAccessLevel,
+    enumName: 'event_staff_access_level_enum',
+  })
   accessLevel: EventStaffAccessLevel
 
   @Column({ name: 'staff_invitation_id' })

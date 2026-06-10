@@ -14,7 +14,7 @@ import {
 } from 'class-validator'
 import { PaginationMetaDto, QueryPaginationDto } from '~/common/pagination/pagination.dto'
 import { EventCategory, EventLocationType, EventStatus } from '~/modules/events-module/events.entity'
-import { EventStaffAccessLevel } from '~/modules/event-staff-invitations/event-staff-invitations.entity'
+import { EventStaffAccessLevel } from '~/modules/event-staff-invitations/enums/event-staff-invitation.enums'
 
 export class CreateEventDto {
   @ApiProperty({ description: 'Title of the event', example: 'Event Title' })

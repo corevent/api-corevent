@@ -4,7 +4,7 @@ import { PaginationMetaDto, QueryPaginationDto } from '~/common/pagination/pagin
 import {
   EventStaffAccessLevel,
   EventStaffInvitationStatus,
-} from '~/modules/event-staff-invitations/event-staff-invitations.entity'
+} from '~/modules/event-staff-invitations/enums/event-staff-invitation.enums'
 
 export class CreateEventStaffInvitationDto {
   @ApiProperty({ description: 'User email', example: 'john.doe@example.com' })

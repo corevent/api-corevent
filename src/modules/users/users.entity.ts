@@ -10,6 +10,7 @@ import { Orders } from '~/modules/orders/orders.entity'
 import { Favorites } from '~/modules/favorites/favorites.entity'
 import { EventRatings } from '~/modules/event-ratings/event-ratings.entity'
 import { Tickets } from '~/modules/tickets/tickets.entity'
+import { AgePolicyAcceptances } from '~/modules/age-policy-acceptances/age-policy-acceptances.entity'
 
 @Entity()
 export class Users {
@@ -75,4 +76,7 @@ export class Users {
 
   @OneToMany(() => Tickets, (ticket) => ticket.checkedInByUser)
   checkedInTickets: Tickets[]
+
+  @OneToMany(() => AgePolicyAcceptances, (agePolicyAcceptance) => agePolicyAcceptance.user)
+  agePolicyAcceptances: AgePolicyAcceptances[]
 }

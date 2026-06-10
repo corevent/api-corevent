@@ -1,4 +1,4 @@
-import { EventStaffAccessLevel } from '~/modules/event-staff-invitations/event-staff-invitations.entity'
+import { EventStaffAccessLevel } from '~/modules/event-staff-invitations/enums/event-staff-invitation.enums'
 
 export interface CreateEventStaff {
   userId: string

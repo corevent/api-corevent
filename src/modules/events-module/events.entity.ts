@@ -1,15 +1,15 @@
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
+import { Attractions } from '~/modules/attractions/attractions.entity'
 import { Cities } from '~/modules/cities/cities.entity'
 import { EventChanges } from '~/modules/event-changes/event-changes.entity'
-import { Users } from '~/modules/users/users.entity'
-import { EventStaff } from '~/modules/event-staff/event-staff.entity'
-import { EventStaffInvitations } from '~/modules/event-staff-invitations/event-staff-invitations.entity'
-import { Attractions } from '~/modules/attractions/attractions.entity'
-import { TicketTypes } from '~/modules/ticket-types/ticket-types.entity'
-import { Orders } from '~/modules/orders/orders.entity'
-import { Favorites } from '~/modules/favorites/favorites.entity'
 import { EventRatings } from '~/modules/event-ratings/event-ratings.entity'
+import { EventStaffInvitations } from '~/modules/event-staff-invitations/event-staff-invitations.entity'
+import { EventStaff } from '~/modules/event-staff/event-staff.entity'
+import { Favorites } from '~/modules/favorites/favorites.entity'
+import { Orders } from '~/modules/orders/orders.entity'
+import { TicketTypes } from '~/modules/ticket-types/ticket-types.entity'
 import { Tickets } from '~/modules/tickets/tickets.entity'
+import { Users } from '~/modules/users/users.entity'
 
 export enum EventStatus {
   DRAFT = 'draft',

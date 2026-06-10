@@ -16,10 +16,8 @@ import {
   QueryEventStaffInvitationsDto,
   QueryUserInvitationsDto,
 } from '~/modules/event-staff-invitations/dto/event-staff.invitations.dto'
-import {
-  EventStaffInvitations,
-  EventStaffInvitationStatus,
-} from '~/modules/event-staff-invitations/event-staff-invitations.entity'
+import { EventStaffInvitationStatus } from '~/modules/event-staff-invitations/enums/event-staff-invitation.enums'
+import { EventStaffInvitations } from '~/modules/event-staff-invitations/event-staff-invitations.entity'
 import { EventStaffResponseDto } from '~/modules/event-staff/dto/event-staff.dto'
 import { EventStaffService } from '~/modules/event-staff/event-staff.service'
 import { EventDataDto } from '~/modules/events-module/dto/events.dto'

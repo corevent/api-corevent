@@ -7,7 +7,7 @@ import { getOffset } from '~/common/utils/get-offset.util'
 import {
   EventStaffAccessLevel,
   EventStaffInvitationStatus,
-} from '~/modules/event-staff-invitations/event-staff-invitations.entity'
+} from '~/modules/event-staff-invitations/enums/event-staff-invitation.enums'
 import {
   EventStaffDataDto,
   EventStaffResponseDto,

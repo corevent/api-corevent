@@ -1,4 +1,6 @@
 import { DatabaseModule } from '~/database/database.module'
+import { AgePoliciesModule } from '~/modules/age-policies/age-policies.module'
+import { AgePolicyAcceptancesModule } from '~/modules/age-policy-acceptances/age-policy-acceptances.module'
 import { AttractionsModule } from '~/modules/attractions/attractions.module'
 import { AuthModule } from '~/modules/auth/auth.module'
 import { CitiesModule } from '~/modules/cities/cities.module'
@@ -42,4 +44,6 @@ export const modules = [
   FavoritesModule,
   EventRatingsModule,
   StorageModule,
+  AgePoliciesModule,
+  AgePolicyAcceptancesModule,
 ]
