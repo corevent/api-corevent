@@ -82,6 +82,7 @@ export class OrdersService {
     }
 
     if (order.status === OrderStatus.PAID || order.status === OrderStatus.CANCELLED) {
+      this.logger.log(`Webhook skipped: order ${order.id} already has status ${order.status}`)
       return
     }
 
@@ -91,6 +92,8 @@ export class OrdersService {
       await this.ticketTypesService.decreaseAvailableQuantity(ticketTypeQuantities, manager)
       await manager.update(Orders, order.id, { status: OrderStatus.PAID })
     })
+
+    this.logger.log(`Order ${order.id} marked as PAID via webhook`)
   }
 
   async getMyOrders(userId: string, queryParams: QueryPaginationDto): Promise<PaginateMyOrdersDto> {

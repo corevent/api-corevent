@@ -1,10 +1,21 @@
-import { Controller, Headers, HttpCode, Post, Req, UnauthorizedException, type RawBodyRequest } from '@nestjs/common'
+import {
+  Controller,
+  Headers,
+  HttpCode,
+  Logger,
+  Post,
+  Req,
+  UnauthorizedException,
+  type RawBodyRequest,
+} from '@nestjs/common'
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
 import { PagBankWebhookService } from '~/modules/pagbank/pagbank-webhook.service'
 
 @ApiTags('PagBank')
 @Controller('pagbank')
 export class PagBankController {
+  private readonly logger = new Logger(PagBankController.name)
+
   constructor(private readonly pagBankWebhookService: PagBankWebhookService) {}
 
   @Post('webhooks')
@@ -16,13 +27,23 @@ export class PagBankController {
     @Req() req: RawBodyRequest<Request>,
     @Headers('x-authenticity-token') authenticityToken: string | undefined,
   ): Promise<void> {
-    console.log('webhook received')
     const rawBody = req.rawBody?.toString('utf8')
 
+    this.logger.log(
+      [
+        'Webhook received',
+        `hasRawBody=${Boolean(rawBody)}`,
+        `rawBodyLength=${rawBody?.length ?? 0}`,
+        `hasAuthenticityToken=${Boolean(authenticityToken)}`,
+      ].join(' '),
+    )
+
     if (!rawBody) {
+      this.logger.warn('Webhook rejected: missing raw body')
       throw new UnauthorizedException('Missing webhook payload')
     }
 
     await this.pagBankWebhookService.handleWebhook(rawBody, authenticityToken)
+    this.logger.log('Webhook processed successfully')
   }
 }
