@@ -1,6 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { OrdersController } from '~/modules/orders/orders.controller'
+import { OrdersSuccessController } from '~/modules/orders/orders-success.controller'
 import { Orders } from '~/modules/orders/orders.entity'
 import { OrdersService } from '~/modules/orders/orders.service'
 import { PagBankModule } from '~/modules/pagbank/pagbank.module'
@@ -16,7 +17,7 @@ import { UsersModule } from '~/modules/users/users.module'
     UsersModule,
     TicketsModule,
   ],
-  controllers: [OrdersController],
+  controllers: [OrdersController, OrdersSuccessController],
   providers: [OrdersService],
   exports: [OrdersService],
 })
