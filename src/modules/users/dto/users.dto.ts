@@ -1,6 +1,16 @@
 import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger'
 import { Expose } from 'class-transformer'
-import { IsDateString, IsEmail, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, Length } from 'class-validator'
+import {
+  IsDateString,
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsPhoneNumber,
+  IsString,
+  Length,
+} from 'class-validator'
+import { DocumentType } from '~/modules/users/enums/document-type.enum'
 
 // Base dto to set common fields for user creation and update
 export class BaseUserDto {
@@ -36,10 +46,15 @@ export class CreateUserDto extends BaseUserDto {
   @IsNotEmpty()
   birthDate: string
 
-  @ApiProperty({ description: 'User CPF', example: '12345678900' })
+  @ApiProperty({ description: 'User document type', example: DocumentType.CPF, enum: DocumentType })
+  @IsEnum(DocumentType)
+  documentType: DocumentType
+
+  @ApiProperty({ description: 'User document number (CPF or CNPJ)', example: '12345678900' })
   @IsString()
-  @Length(11, 11)
-  cpf: string
+  @IsNotEmpty()
+  @Length(11, 14)
+  document: string
 
   @ApiProperty({ description: 'User verify email code', example: '123456' })
   @IsString()
@@ -74,9 +89,13 @@ export class UserDataDto {
   @Expose()
   email: string
 
-  @ApiProperty({ description: 'User CPF', example: '12345678900' })
+  @ApiProperty({ description: 'User document type', example: DocumentType.CPF, enum: DocumentType })
   @Expose()
-  cpf: string
+  documentType: DocumentType
+
+  @ApiProperty({ description: 'User document number', example: '12345678900' })
+  @Expose()
+  document: string
 
   @ApiProperty({ description: 'User birth date', example: '1990-01-01' })
   @Expose()

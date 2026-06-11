@@ -1,5 +1,6 @@
 import { DataSource } from 'typeorm'
 import * as bcrypt from 'bcryptjs'
+import { DocumentType } from '~/modules/users/enums/document-type.enum'
 import { Users } from '~/modules/users/users.entity'
 import { OrganizerPaymentInfo } from '~/modules/organizer-payment-info/organizer-payment-info.entity'
 import { PixType } from '~/modules/organizer-payment-info/dto/organizer-payment-info.dto'
@@ -16,7 +17,8 @@ export async function seedUser(dataSource: DataSource) {
     .values({
       name: 'User',
       email: 'user@email.com',
-      cpf: '17666789041',
+      documentType: DocumentType.CPF,
+      document: '17666789041',
       birthDate: '2000-01-01',
       passwordHash: await bcrypt.hash('@Teste123', 10),
       avatarUrl: 'https://corevent.com/avatar.png',

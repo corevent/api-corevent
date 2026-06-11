@@ -85,6 +85,23 @@ export class EventStaffService {
     await this.eventStaffRepository.delete(staffId)
   }
 
+  async validateOrganizerOrStaff(userId: string, eventId: string): Promise<void> {
+    const { data: event } = await this.eventsService.getById(eventId)
+    if (event.organizer.id === userId) return
+
+    const staff = await this.eventStaffRepository.findOne({
+      where: { userId, eventId },
+      relations: ['staffInvitation'],
+    })
+
+    const hasStaffAccess =
+      staff != null && staff.staffInvitation?.invitationStatus === EventStaffInvitationStatus.ACCEPTED
+
+    if (!hasStaffAccess) {
+      throw new ForbiddenException('You do not have permission to access this event')
+    }
+  }
+
   // used on tickets service
   async validateStaff(userId: string, eventId: string): Promise<void> {
     const staff = await this.eventStaffRepository.findOne({

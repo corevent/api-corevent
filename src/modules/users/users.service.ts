@@ -3,7 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm'
 import * as bcrypt from 'bcryptjs'
 import { plainToInstance } from 'class-transformer'
 import { Repository } from 'typeorm'
-import { isValidCpf } from '~/common/utils/cpf-cnpj.util'
+import { isValidDocument } from '~/common/utils/cpf-cnpj.util'
+import { DocumentType } from '~/modules/users/enums/document-type.enum'
 import { RegistrationCodesService } from '~/modules/registration-codes/registration-codes.service'
 import { StorageService } from '~/modules/storage/storage.service'
 import {
@@ -26,7 +27,7 @@ export class UsersService {
 
   async create(body: CreateUserDto): Promise<UserResponseDto> {
     await this.registrationCodesService.validateCode(body.email, body.verifyEmailCode)
-    await this.validateCpfAndEmail(body.cpf, body.email)
+    await this.validateDocumentAndEmail(body.document, body.documentType, body.email)
     const passwordHash = await this.validateAndHashPassword(body.password)
 
     const user = this.usersRepository.create({ ...body, passwordHash })
@@ -106,14 +107,18 @@ export class UsersService {
     return await bcrypt.hash(password, 10)
   }
 
-  private async validateCpfAndEmail(cpf: string, email: string): Promise<void> {
-    if (!isValidCpf(cpf)) {
-      throw new BadRequestException('Invalid CPF')
+  private async validateDocumentAndEmail(
+    document: string,
+    documentType: DocumentType,
+    email: string,
+  ): Promise<void> {
+    if (!isValidDocument(document, documentType)) {
+      throw new BadRequestException(`Invalid ${documentType.toUpperCase()}`)
     }
 
-    const cpfUser = await this.usersRepository.findOne({ where: { cpf } })
-    if (cpfUser) {
-      throw new BadRequestException('CPF already used by another user')
+    const documentUser = await this.usersRepository.findOne({ where: { document } })
+    if (documentUser) {
+      throw new BadRequestException('Document already used by another user')
     }
 
     const emailUser = await this.usersRepository.findOne({ where: { email } })

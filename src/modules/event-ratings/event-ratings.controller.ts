@@ -1,8 +1,13 @@
-import { Body, Controller, Delete, HttpCode, Param, Patch, Post, Req, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
-import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
-import { CreateEventRatingDto, EventRatingResponseDto } from '~/modules/event-ratings/dto/event-ratings.dto'
+import {
+  CreateEventRatingDto,
+  EventRatingResponseDto,
+  PaginateMyEventRatingsDto,
+  QueryMyEventRatingsDto,
+} from '~/modules/event-ratings/dto/event-ratings.dto'
 import { EventRatingsService } from '~/modules/event-ratings/event-ratings.service'
 
 @ApiTags('Event - Ratings')
@@ -10,6 +15,18 @@ import { EventRatingsService } from '~/modules/event-ratings/event-ratings.servi
 @Controller('events')
 export class EventRatingsController {
   constructor(private readonly eventRatingsService: EventRatingsService) {}
+
+  @Get('my/ratings')
+  @ApiOperation({ summary: 'Get the events rated by the current user' })
+  @ApiQuery({ type: QueryMyEventRatingsDto })
+  @ApiResponse({ status: 200, type: PaginateMyEventRatingsDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  async getMyRatings(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: QueryMyEventRatingsDto,
+  ): Promise<PaginateMyEventRatingsDto> {
+    return this.eventRatingsService.getMyRatings(req.user.id, query)
+  }
 
   @Post(':eventId/ratings')
   @ApiOperation({ summary: 'Set a rating for an event' })

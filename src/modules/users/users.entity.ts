@@ -11,6 +11,7 @@ import { Favorites } from '~/modules/favorites/favorites.entity'
 import { EventRatings } from '~/modules/event-ratings/event-ratings.entity'
 import { Tickets } from '~/modules/tickets/tickets.entity'
 import { AgePolicyAcceptances } from '~/modules/age-policy-acceptances/age-policy-acceptances.entity'
+import { DocumentType } from '~/modules/users/enums/document-type.enum'
 
 @Entity()
 export class Users {
@@ -23,8 +24,11 @@ export class Users {
   @Column({ type: 'text', unique: true })
   email: string
 
-  @Column({ type: 'char', length: 11, unique: true })
-  cpf: string
+  @Column({ name: 'document_type', type: 'enum', enum: DocumentType })
+  documentType: DocumentType
+
+  @Column({ type: 'char', length: 14, unique: true })
+  document: string
 
   @Column({ type: 'date' })
   birthDate: string

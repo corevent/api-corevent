@@ -184,3 +184,68 @@ export class PaginateMyTicketsDto {
   @ApiProperty({ description: 'Pagination metadata', type: PaginationMetaDto })
   meta: PaginationMetaDto
 }
+
+export class QueryEventParticipantsDto extends QueryPaginationDto {}
+
+export class EventParticipantDto {
+  @ApiProperty({ description: 'User ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  id: string
+
+  @ApiProperty({ description: 'User name', example: 'John Doe' })
+  name: string
+
+  @ApiProperty({ description: 'User email', example: 'john.doe@example.com' })
+  email: string
+
+  @ApiProperty({ description: 'Number of tickets owned by the user for this event', example: 2 })
+  @Type(() => Number)
+  ticketsCount: number
+}
+
+export class PaginateEventParticipantsDto {
+  @ApiProperty({ description: 'Event participants', type: [EventParticipantDto] })
+  @Type(() => EventParticipantDto)
+  data: EventParticipantDto[]
+
+  @ApiProperty({ description: 'Pagination metadata', type: PaginationMetaDto })
+  @Type(() => PaginationMetaDto)
+  meta: PaginationMetaDto
+}
+
+export class EventParticipantTicketDto {
+  @ApiProperty({ description: 'Ticket ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  id: string
+
+  @ApiProperty({ description: 'Ticket status', example: TicketStatus.PENDING })
+  status: TicketStatus
+
+  @ApiPropertyOptional({ description: 'Check-in date', example: '2026-01-01T00:00:00.000Z' })
+  checkinAt?: Date
+
+  @ApiProperty({ description: 'Ticket creation date', example: '2026-01-01T00:00:00.000Z' })
+  createdAt: Date
+
+  @ApiProperty({ description: 'Ticket type', type: UserTicketTypeDto })
+  @Type(() => UserTicketTypeDto)
+  ticketType: UserTicketTypeDto
+
+  @ApiProperty({ description: 'Order', type: UserTicketOrderDto })
+  @Type(() => UserTicketOrderDto)
+  order: UserTicketOrderDto
+}
+
+export class EventParticipantDetailsDataDto {
+  @ApiProperty({ description: 'Participant user', type: CheckinUserDto })
+  @Type(() => CheckinUserDto)
+  user: CheckinUserDto
+
+  @ApiProperty({ description: 'Participant tickets', type: [EventParticipantTicketDto] })
+  @Type(() => EventParticipantTicketDto)
+  tickets: EventParticipantTicketDto[]
+}
+
+export class EventParticipantDetailsResponseDto {
+  @ApiProperty({ description: 'Participant details', type: EventParticipantDetailsDataDto })
+  @Type(() => EventParticipantDetailsDataDto)
+  data: EventParticipantDetailsDataDto
+}

@@ -2,12 +2,25 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
 import { Repository } from 'typeorm'
+import { createPaginationMeta } from '~/common/pagination/pagination-meta.factory'
+import { getOffset } from '~/common/utils/get-offset.util'
 import {
   CreateEventRatingDto,
   EventRatingDataDto,
   EventRatingResponseDto,
+  MyEventRatingDto,
+  PaginateMyEventRatingsDto,
+  QueryMyEventRatingsDto,
 } from '~/modules/event-ratings/dto/event-ratings.dto'
 import { EventRatings } from '~/modules/event-ratings/event-ratings.entity'
+
+interface MyEventRatingRawRow {
+  eventId: string
+  eventTitle: string
+  bannerUrl: string | null
+  userRating: string
+  averageRating: string | null
+}
 
 @Injectable()
 export class EventRatingsService {
@@ -35,6 +48,35 @@ export class EventRatingsService {
     }
   }
 
+  async getMyRatings(userId: string, queryParams: QueryMyEventRatingsDto): Promise<PaginateMyEventRatingsDto> {
+    const { page, limit } = queryParams
+    const total = await this.eventRatingsRepository.count({ where: { userId } })
+
+    const rows = await this.eventRatingsRepository
+      .createQueryBuilder('er')
+      .innerJoin('er.event', 'e')
+      .select('e.id', 'eventId')
+      .addSelect('e.title', 'eventTitle')
+      .addSelect('e.bannerUrl', 'bannerUrl')
+      .addSelect('er.rating', 'userRating')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('AVG(eventRating.rating)', 'averageRating')
+          .from(EventRatings, 'eventRating')
+          .where('eventRating.eventId = e.id')
+      }, 'averageRating')
+      .where('er.userId = :userId', { userId })
+      .orderBy('er.createdAt', 'DESC')
+      .offset(getOffset(page, limit))
+      .limit(limit)
+      .getRawMany<MyEventRatingRawRow>()
+
+    return {
+      data: rows.map((row) => this.mapMyEventRating(row)),
+      meta: createPaginationMeta(page, limit, total),
+    }
+  }
+
   private async getById(userId: string, eventRatingId: string): Promise<EventRatingResponseDto> {
     const eventRating = await this.eventRatingsRepository.findOne({ where: { userId, id: eventRatingId } })
     if (!eventRating) {
@@ -48,5 +90,15 @@ export class EventRatingsService {
     if (rating) {
       throw new BadRequestException('You have already rated this event')
     }
+  }
+
+  private mapMyEventRating(row: MyEventRatingRawRow): MyEventRatingDto {
+    return plainToInstance(MyEventRatingDto, {
+      eventId: row.eventId,
+      eventTitle: row.eventTitle,
+      bannerUrl: row.bannerUrl ?? undefined,
+      userRating: Number(row.userRating),
+      averageRating: Number(row.averageRating),
+    })
   }
 }

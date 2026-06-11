@@ -1,3 +1,13 @@
+import { DocumentType } from '~/modules/users/enums/document-type.enum'
+
+export function isValidDocument(document: string, documentType: DocumentType): boolean {
+  if (documentType === DocumentType.CPF) {
+    return isValidCpf(document)
+  }
+
+  return isValidCnpj(document)
+}
+
 export function isValidCpf(cpf: string): boolean {
   if (cpf.length !== 11) return false
 
@@ -55,8 +65,7 @@ export function isValidCnpj(cnpj: string): boolean {
     j = j < 2 ? 9 : j
   }
 
-  const firstRemainder = (sum * 10) % 11
-  const firstDigit = firstRemainder === 0 || firstRemainder === 1 ? 0 : 11 - firstRemainder
+  const firstDigit = calculateCnpjCheckDigit(sum)
 
   j = 6
   sum = 0
@@ -70,12 +79,16 @@ export function isValidCnpj(cnpj: string): boolean {
     j = j < 2 ? 9 : j
   }
 
-  const secondRemainder = (sum * 10) % 11
-  const secondDigit = secondRemainder === 0 || secondRemainder === 1 ? 0 : 11 - secondRemainder
+  const secondDigit = calculateCnpjCheckDigit(sum)
 
   if (firstDigit !== Number(cnpj[12]) || secondDigit !== Number(cnpj[13])) {
     return false
   }
 
   return true
+}
+
+function calculateCnpjCheckDigit(sum: number): number {
+  const remainder = sum % 11
+  return remainder < 2 ? 0 : 11 - remainder
 }
