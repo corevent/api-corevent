@@ -307,7 +307,7 @@ export class OrdersService {
       customer: {
         name: user.name,
         email: user.email,
-        tax_id: user.document,
+        tax_id: user.document.trim(),
       },
       customerModifiable: true,
       items,
