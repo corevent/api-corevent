@@ -24,5 +24,8 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false
+  },
+  "tsc-alias": {
+    "resolveFullPaths": true
   }
 }
