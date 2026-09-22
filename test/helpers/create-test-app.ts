@@ -9,6 +9,7 @@ import { AppModule } from '~/app.module'
 import { MailService } from '~/modules/mail/mail.service'
 import { CheckoutResponse, CreateCheckout } from '~/modules/pagbank/interface/pagbank.interface'
 import { PagBankService } from '~/modules/pagbank/pagbank.service'
+import { StorageHealthService } from '~/modules/storage/storage-health.service'
 import { DEFAULT_VERIFY_CODE } from './fixtures'
 
 config()
@@ -19,6 +20,7 @@ export interface TestApp {
     sendRecoveryCode: jest.Mock
     sendVerifyEmailCode: jest.Mock
     inviteStaff: jest.Mock
+    checkConnection: jest.Mock
   }
   pagBankService: {
     createCheckout: jest.Mock
@@ -57,6 +59,7 @@ function createMailMock() {
     sendRecoveryCode: jest.fn().mockResolvedValue(undefined),
     sendVerifyEmailCode: jest.fn().mockResolvedValue(undefined),
     inviteStaff: jest.fn().mockResolvedValue(undefined),
+    checkConnection: jest.fn().mockResolvedValue('OK'),
   }
 }
 
@@ -91,6 +94,8 @@ export async function createTestApp(options: CreateTestAppOptions = {}): Promise
     .useValue(mailService)
     .overrideProvider(PagBankService)
     .useValue(pagBankService)
+    .overrideProvider(StorageHealthService)
+    .useValue({ checkBucket: jest.fn().mockResolvedValue('OK') })
 
   if (!options.enableThrottle) {
     builder.overrideGuard(ThrottlerGuard).useValue({ canActivate: () => true })
