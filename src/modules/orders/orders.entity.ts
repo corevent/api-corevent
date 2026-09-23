@@ -1,5 +1,6 @@
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 import { Events } from '~/modules/events-module/events.entity'
+import { OrderItems } from '~/modules/orders/order-items.entity'
 import { Tickets } from '~/modules/tickets/tickets.entity'
 import { Users } from '~/modules/users/users.entity'
 
@@ -34,6 +35,9 @@ export class Orders {
 
   @OneToMany(() => Tickets, (ticket) => ticket.order)
   tickets: Tickets[]
+
+  @OneToMany(() => OrderItems, (item) => item.order)
+  items: OrderItems[]
 
   @ManyToOne(() => Users, (user) => user.orders)
   @JoinColumn({ name: 'user_id' })

@@ -24,6 +24,7 @@ import {
   OrderResponseDto,
   PaginateMyOrdersDto,
 } from '~/modules/orders/dto/orders.dto'
+import { OrderItems } from '~/modules/orders/order-items.entity'
 import { Orders, OrderStatus } from '~/modules/orders/orders.entity'
 import { CheckoutResponse, CreateCheckout, Item } from '~/modules/pagbank/interface/pagbank.interface'
 import { PagBankService } from '~/modules/pagbank/pagbank.service'
@@ -31,6 +32,11 @@ import { TicketTypesService } from '~/modules/ticket-types/ticket-types.service'
 import { Tickets, TicketStatus } from '~/modules/tickets/tickets.entity'
 import { TicketsService } from '~/modules/tickets/tickets.service'
 import { UsersService } from '~/modules/users/users.service'
+
+type OrderLineItem = {
+  ticketTypeId: string
+  quantity: number
+}
 
 @Injectable()
 export class OrdersService {
@@ -59,18 +65,9 @@ export class OrdersService {
     }
 
     const { checkout, checkoutLinks } = await this.createCheckout(userId, items, orderId)
+    await this.savePendingPaidOrder(orderId, userId, eventId, totalAmount, checkout.id, body.items)
 
-    await this.ordersRepository.save({
-      id: orderId,
-      userId,
-      eventId,
-      totalAmount,
-      status: OrderStatus.PENDING,
-      gatewayTransactionId: checkout.id,
-    })
-
-    const { qrCodes, ticketIds } = await this.createTickets(orderId, userId, eventId, body)
-    return { data: { orderId, checkoutLinks, qrCodes, ticketIds } }
+    return { data: { orderId, checkoutLinks, qrCodes: [], ticketIds: [] } }
   }
 
   async markAsPaidFromWebhook(checkoutId: string | null, referenceId: string | null): Promise<void> {
@@ -86,14 +83,10 @@ export class OrdersService {
       return
     }
 
-    const ticketTypeQuantities = await this.ticketsService.getTicketTypeQuantitiesByOrderId(order.id)
-
-    await this.dataSource.transaction(async (manager) => {
-      await this.ticketTypesService.decreaseAvailableQuantity(ticketTypeQuantities, manager)
-      await manager.update(Orders, order.id, { status: OrderStatus.PAID })
-    })
-
-    this.logger.log(`Order ${order.id} marked as PAID via webhook`)
+    const wasFulfilled = await this.fulfillPaidOrder(order.id)
+    if (wasFulfilled) {
+      this.logger.log(`Order ${order.id} marked as PAID via webhook`)
+    }
   }
 
   async getMyOrders(userId: string, queryParams: QueryPaginationDto): Promise<PaginateMyOrdersDto> {
@@ -221,7 +214,7 @@ export class OrdersService {
       })
 
       await this.ticketTypesService.decreaseAvailableQuantity(ticketTypeQuantities, manager)
-      return this.createTickets(orderId, userId, eventId, body, manager)
+      return this.createTickets(orderId, userId, eventId, body.items, manager)
     })
 
     return { data: { orderId, checkoutLinks: [], qrCodes, ticketIds } }
@@ -319,16 +312,68 @@ export class OrdersService {
     return { checkout, checkoutLinks: checkout.links }
   }
 
+  private async savePendingPaidOrder(
+    orderId: string,
+    userId: string,
+    eventId: string,
+    totalAmount: number,
+    gatewayTransactionId: string,
+    items: OrderLineItem[],
+  ): Promise<void> {
+    await this.dataSource.transaction(async (manager) => {
+      await manager.save(Orders, {
+        id: orderId,
+        userId,
+        eventId,
+        totalAmount,
+        status: OrderStatus.PENDING,
+        gatewayTransactionId,
+      })
+      await manager.save(
+        OrderItems,
+        items.map((item) => ({
+          orderId,
+          ticketTypeId: item.ticketTypeId,
+          quantity: item.quantity,
+        })),
+      )
+    })
+  }
+
+  private async fulfillPaidOrder(orderId: string): Promise<boolean> {
+    return this.dataSource.transaction(async (manager) => {
+      const order = await manager.findOne(Orders, {
+        where: { id: orderId },
+        lock: { mode: 'pessimistic_write' },
+      })
+
+      if (!order || order.status !== OrderStatus.PENDING) {
+        return false
+      }
+
+      const items = await manager.find(OrderItems, { where: { orderId } })
+      if (items.length === 0) {
+        throw new InternalServerErrorException('Paid order has no items')
+      }
+
+      const quantities = items.map(({ ticketTypeId, quantity }) => ({ ticketTypeId, quantity }))
+      await this.ticketTypesService.decreaseAvailableQuantity(quantities, manager)
+      await this.createTickets(order.id, order.userId, order.eventId, items, manager)
+      await manager.update(Orders, order.id, { status: OrderStatus.PAID })
+      return true
+    })
+  }
+
   private async createTickets(
     orderId: string,
     userId: string,
     eventId: string,
-    body: CreateOrderDto,
+    items: OrderLineItem[],
     manager?: EntityManager,
   ): Promise<{ qrCodes: string[]; ticketIds: string[] }> {
     const qrCodes: string[] = []
     const ticketIds: string[] = []
-    for (const item of body.items) {
+    for (const item of items) {
       for (let i = 0; i < item.quantity; i++) {
         const qrToken = randomBytes(32).toString('hex')
         const qrCodeHash = createHash('sha256').update(qrToken).digest('hex')

@@ -16,7 +16,6 @@ import { decryptQrToken } from '~/common/utils/qr-code-crypto.util'
 import { EventStaffService } from '~/modules/event-staff/event-staff.service'
 import { EventsService } from '~/modules/events-module/events.service'
 import { OrderStatus } from '~/modules/orders/orders.entity'
-import { DecreaseTicketTypeQuantityItem } from '~/modules/ticket-types/interfaces/decrease-ticket'
 import {
   CheckinDataDto,
   CheckinResponseDto,
@@ -52,20 +51,6 @@ export class TicketsService {
     private eventStaffService: EventStaffService,
     private usersService: UsersService,
   ) {}
-
-  async getTicketTypeQuantitiesByOrderId(orderId: string): Promise<DecreaseTicketTypeQuantityItem[]> {
-    const tickets = await this.ticketsRepository.find({
-      where: { orderId },
-      select: ['ticketTypeId'],
-    })
-
-    const quantityByTicketType = tickets.reduce<Map<string, number>>((acc, ticket) => {
-      acc.set(ticket.ticketTypeId, (acc.get(ticket.ticketTypeId) ?? 0) + 1)
-      return acc
-    }, new Map())
-
-    return Array.from(quantityByTicketType, ([ticketTypeId, quantity]) => ({ ticketTypeId, quantity }))
-  }
 
   async getByOrderId(orderId: string): Promise<Tickets[]> {
     return this.ticketsRepository.find({

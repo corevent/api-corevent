@@ -9,6 +9,7 @@ import { EventStaffInvitations } from '~/modules/event-staff-invitations/event-s
 import { EventStaff } from '~/modules/event-staff/event-staff.entity'
 import { Events } from '~/modules/events-module/events.entity'
 import { Favorites } from '~/modules/favorites/favorites.entity'
+import { OrderItems } from '~/modules/orders/order-items.entity'
 import { Orders } from '~/modules/orders/orders.entity'
 import { OrganizerPaymentInfo } from '~/modules/organizer-payment-info/organizer-payment-info.entity'
 import { PasswordRecoveryCodes } from '~/modules/password-recovery-codes/password-recovery-codes.entity'
@@ -34,6 +35,7 @@ export const entities = [
   TicketTypes,
   Tickets,
   Orders,
+  OrderItems,
   Favorites,
   EventRatings,
   AgePolicies,

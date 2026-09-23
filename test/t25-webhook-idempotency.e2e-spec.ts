@@ -32,6 +32,7 @@ describe('T25 - Webhook repetido (idempotência)', () => {
     const details = await getOrder(ctx.app, market.buyer.accessToken, orderId)
     expect(details.status).toBe(200)
     expect(details.body.data.status).toBe(OrderStatus.PAID)
+    expect(details.body.data.tickets).toHaveLength(1)
 
     const ticketType = await getTicketType(ctx.app, market.organizer.accessToken, market.paidTicketTypeId)
     expect(ticketType.status).toBe(200)

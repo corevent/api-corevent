@@ -18,18 +18,8 @@ describe('T51 - Dois pagamentos para o último ingresso', () => {
     const market = await setupMarketplace(ctx.app, { paidQuantity: 1 })
     const secondBuyer = await registerAndLogin(ctx.app)
 
-    const firstOrder = await createOrder(
-      ctx.app,
-      market.buyer.accessToken,
-      market.eventId,
-      market.paidTicketTypeId,
-    )
-    const secondOrder = await createOrder(
-      ctx.app,
-      secondBuyer.accessToken,
-      market.eventId,
-      market.paidTicketTypeId,
-    )
+    const firstOrder = await createOrder(ctx.app, market.buyer.accessToken, market.eventId, market.paidTicketTypeId)
+    const secondOrder = await createOrder(ctx.app, secondBuyer.accessToken, market.eventId, market.paidTicketTypeId)
     expect(firstOrder.status).toBe(201)
     expect(secondOrder.status).toBe(201)
 
@@ -43,11 +33,14 @@ describe('T51 - Dois pagamentos para o último ingresso', () => {
 
     const firstDetails = await getOrder(ctx.app, market.buyer.accessToken, firstOrder.body.data.orderId)
     const secondDetails = await getOrder(ctx.app, secondBuyer.accessToken, secondOrder.body.data.orderId)
-    const paidCount = [firstDetails.body.data.status, secondDetails.body.data.status].filter(
-      (status) => status === OrderStatus.PAID,
-    ).length
+    const details = [firstDetails.body.data, secondDetails.body.data]
+    const paidOrders = details.filter((order) => order.status === OrderStatus.PAID)
+    const pendingOrders = details.filter((order) => order.status === OrderStatus.PENDING)
 
-    expect(paidCount).toBe(1)
+    expect(paidOrders).toHaveLength(1)
+    expect(paidOrders[0].tickets).toHaveLength(1)
+    expect(pendingOrders).toHaveLength(1)
+    expect(pendingOrders[0].tickets).toEqual([])
 
     const ticketType = await getTicketType(ctx.app, market.organizer.accessToken, market.paidTicketTypeId)
     expect(ticketType.status).toBe(200)
