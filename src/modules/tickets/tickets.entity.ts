@@ -13,28 +13,28 @@ export enum TicketStatus {
 @Entity()
 export class Tickets {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id!: string
 
   @Column({ name: 'order_id' })
-  orderId: string
+  orderId!: string
 
   @Column({ name: 'user_id' })
-  userId: string
+  userId!: string
 
   @Column({ name: 'ticket_type_id' })
-  ticketTypeId: string
+  ticketTypeId!: string
 
   @Column({ name: 'event_id' })
-  eventId: string
+  eventId!: string
 
   @Column({ type: 'text' })
-  qrCodeHash: string
+  qrCodeHash!: string
 
   @Column({ type: 'text' })
-  qrCodeEncryptedToken: string
+  qrCodeEncryptedToken!: string
 
   @Column({ type: 'enum', enum: TicketStatus })
-  status: TicketStatus
+  status!: TicketStatus
 
   @Column({ type: 'timestamp with time zone', nullable: true })
   checkinAt?: Date
@@ -43,23 +43,23 @@ export class Tickets {
   checkinBy?: string
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
-  createdAt: Date
+  createdAt!: Date
 
   @ManyToOne(() => Orders, (order) => order.tickets)
   @JoinColumn({ name: 'order_id' })
-  order: Orders
+  order!: Orders
 
   @ManyToOne(() => Events, (event) => event.tickets)
   @JoinColumn({ name: 'event_id' })
-  event: Events
+  event!: Events
 
   @ManyToOne(() => Users, (user) => user.tickets)
   @JoinColumn({ name: 'user_id' })
-  user: Users
+  user!: Users
 
   @ManyToOne(() => TicketTypes, (ticketType) => ticketType.tickets)
   @JoinColumn({ name: 'ticket_type_id' })
-  ticketType: TicketTypes
+  ticketType!: TicketTypes
 
   @ManyToOne(() => Users, (user) => user.checkedInTickets)
   @JoinColumn({ name: 'checkin_by' })

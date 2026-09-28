@@ -45,22 +45,22 @@ export enum EventLocationType {
 @Entity()
 export class Events {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id!: string
 
   @Column({ name: 'organizer_id' })
-  organizerId: string
+  organizerId!: string
 
   @Column({ type: 'text' })
-  title: string
+  title!: string
 
   @Column({ type: 'text', nullable: true })
   description?: string
 
   @Column({ type: 'int', nullable: true })
-  maxParticipants: number
+  maxParticipants!: number
 
   @Column({ type: 'enum', enum: EventLocationType })
-  locationType: EventLocationType
+  locationType!: EventLocationType
 
   @Column({ type: 'text', nullable: true })
   locationName?: string
@@ -84,19 +84,19 @@ export class Events {
   complement?: string
 
   @Column({ type: 'timestamp with time zone' })
-  startDate: Date
+  startDate!: Date
 
   @Column({ type: 'timestamp with time zone' })
-  endDate: Date
+  endDate!: Date
 
   @Column({ type: 'enum', enum: EventCategory })
-  category: EventCategory
+  category!: EventCategory
 
   @Column({ type: 'text', nullable: true })
   bannerUrl?: string
 
   @Column({ type: 'boolean', default: false })
-  isAdultOnly: boolean
+  isAdultOnly!: boolean
 
   @Column({ name: 'event_changes_id', nullable: true })
   eventChangesId?: string
@@ -106,44 +106,44 @@ export class Events {
   changeRefundDeadline?: Date
 
   @Column({ type: 'enum', enum: EventStatus })
-  status: EventStatus
+  status!: EventStatus
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
-  createdAt: Date
+  createdAt!: Date
 
   @ManyToOne(() => Users, (user) => user.events)
   @JoinColumn({ name: 'organizer_id' })
-  organizer: Users
+  organizer!: Users
 
   @ManyToOne(() => Cities, (city) => city.events)
   @JoinColumn({ name: 'city_id' })
-  city: Cities
+  city!: Cities
 
   @OneToMany(() => EventChanges, (eventChange) => eventChange.event)
   @JoinColumn({ name: 'event_changes_id' })
-  eventChanges: EventChanges[]
+  eventChanges!: EventChanges[]
 
   @OneToMany(() => EventStaff, (eventStaff) => eventStaff.event)
-  eventStaff: EventStaff[]
+  eventStaff!: EventStaff[]
 
   @OneToMany(() => EventStaffInvitations, (eventStaffInvitation) => eventStaffInvitation.event)
-  eventStaffInvitations: EventStaffInvitations[]
+  eventStaffInvitations!: EventStaffInvitations[]
 
   @OneToMany(() => Attractions, (attraction) => attraction.event)
-  attractions: Attractions[]
+  attractions!: Attractions[]
 
   @OneToMany(() => TicketTypes, (ticketType) => ticketType.event)
-  ticketTypes: TicketTypes[]
+  ticketTypes!: TicketTypes[]
 
   @OneToMany(() => Orders, (order) => order.event)
-  orders: Orders[]
+  orders!: Orders[]
 
   @OneToMany(() => Favorites, (favorite) => favorite.event)
-  favorites: Favorites[]
+  favorites!: Favorites[]
 
   @OneToMany(() => EventRatings, (eventRating) => eventRating.event)
-  eventRatings: EventRatings[]
+  eventRatings!: EventRatings[]
 
   @OneToMany(() => Tickets, (ticket) => ticket.event)
-  tickets: Tickets[]
+  tickets!: Tickets[]
 }

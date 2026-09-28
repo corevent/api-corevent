@@ -5,22 +5,22 @@ import { TicketTypes } from '~/modules/ticket-types/ticket-types.entity'
 @Entity()
 export class OrderItems {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id!: string
 
   @Column({ name: 'order_id' })
-  orderId: string
+  orderId!: string
 
   @Column({ name: 'ticket_type_id' })
-  ticketTypeId: string
+  ticketTypeId!: string
 
   @Column({ type: 'int' })
-  quantity: number
+  quantity!: number
 
   @ManyToOne(() => Orders, (order) => order.items)
   @JoinColumn({ name: 'order_id' })
-  order: Orders
+  order!: Orders
 
   @ManyToOne(() => TicketTypes)
   @JoinColumn({ name: 'ticket_type_id' })
-  ticketType: TicketTypes
+  ticketType!: TicketTypes
 }

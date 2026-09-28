@@ -4,13 +4,13 @@ import { Users } from '~/modules/users/users.entity'
 @Entity()
 export class OrganizerPaymentInfo {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id!: string
 
   @Column({ name: 'user_id' })
-  userId: string
+  userId!: string
 
   @Column({ type: 'text', nullable: false })
-  description: string
+  description!: string
 
   @Column({ type: 'varchar', length: 4, nullable: true })
   branchNumber?: string
@@ -34,9 +34,9 @@ export class OrganizerPaymentInfo {
   bankCode?: string
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date
+  createdAt!: Date
 
   @JoinColumn({ name: 'user_id' })
   @ManyToOne(() => Users, (user) => user.organizerPaymentInfo)
-  user: Users
+  user!: Users
 }

@@ -17,7 +17,7 @@ export class BaseUserDto {
   @ApiProperty({ description: 'User name', example: 'John Doe' })
   @IsString()
   @IsNotEmpty()
-  name: string
+  name!: string
 
   @ApiProperty({ description: 'User phone number', example: '12345678900' })
   @IsPhoneNumber('BR')
@@ -34,32 +34,32 @@ export class CreateUserDto extends BaseUserDto {
   @ApiProperty({ description: 'User email', example: 'john.doe@example.com' })
   @IsEmail()
   @IsNotEmpty()
-  email: string
+  email!: string
 
   @ApiProperty({ description: 'User password', example: 'password' })
   @IsString()
   @IsNotEmpty()
-  password: string
+  password!: string
 
   @ApiProperty({ description: 'User birth date', example: '1990-01-01' })
   @IsDateString()
   @IsNotEmpty()
-  birthDate: string
+  birthDate!: string
 
   @ApiProperty({ description: 'User document type', example: DocumentType.CPF, enum: DocumentType })
   @IsEnum(DocumentType)
-  documentType: DocumentType
+  documentType!: DocumentType
 
   @ApiProperty({ description: 'User document number (CPF or CNPJ)', example: '12345678900' })
   @IsString()
   @IsNotEmpty()
   @Length(11, 14)
-  document: string
+  document!: string
 
   @ApiProperty({ description: 'User verify email code', example: '123456' })
   @IsString()
   @IsNotEmpty()
-  verifyEmailCode: string
+  verifyEmailCode!: string
 }
 
 export class UpdateUserDto extends PartialType(OmitType(BaseUserDto, ['avatarUrl'])) {}
@@ -68,38 +68,38 @@ export class UpdatePassDto {
   @ApiProperty({ description: 'User current password', example: '@Password123' })
   @IsString()
   @IsNotEmpty()
-  currentPassword: string
+  currentPassword!: string
 
   @ApiProperty({ description: 'User new password', example: '@Newpassword123' })
   @IsString()
   @IsNotEmpty()
-  newPassword: string
+  newPassword!: string
 }
 
 export class UserDataDto {
   @ApiProperty({ description: 'User ID', example: '123e4567-e89b-12d3-a456-426614174000' })
   @Expose()
-  id: string
+  id!: string
 
   @ApiProperty({ description: 'User name', example: 'John Doe' })
   @Expose()
-  name: string
+  name!: string
 
   @ApiProperty({ description: 'User email', example: 'john.doe@example.com' })
   @Expose()
-  email: string
+  email!: string
 
   @ApiProperty({ description: 'User document type', example: DocumentType.CPF, enum: DocumentType })
   @Expose()
-  documentType: DocumentType
+  documentType!: DocumentType
 
   @ApiProperty({ description: 'User document number', example: '12345678900' })
   @Expose()
-  document: string
+  document!: string
 
   @ApiProperty({ description: 'User birth date', example: '1990-01-01' })
   @Expose()
-  birthDate: string
+  birthDate!: string
 
   @ApiProperty({ description: 'User phone number', example: '12345678900' })
   @Expose()
@@ -111,10 +111,10 @@ export class UserDataDto {
 
   @ApiProperty({ description: 'User created at', example: '2021-01-01T00:00:00.000Z' })
   @Expose()
-  createdAt: Date
+  createdAt!: Date
 }
 
 export class UserResponseDto {
   @ApiProperty({ description: 'User data', type: UserDataDto })
-  data: UserDataDto
+  data!: UserDataDto
 }

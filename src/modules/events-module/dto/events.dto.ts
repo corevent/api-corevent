@@ -20,7 +20,7 @@ export class CreateEventDto {
   @ApiProperty({ description: 'Title of the event', example: 'Event Title' })
   @IsString()
   @IsNotEmpty()
-  title: string
+  title!: string
 
   @ApiProperty({ description: 'Description of the event', example: 'Event Description' })
   @IsString()
@@ -30,14 +30,14 @@ export class CreateEventDto {
 
   @ApiProperty({ description: 'Maximum number of participants', example: 100 })
   @IsInt()
-  maxParticipants: number
+  maxParticipants!: number
 
   @ApiProperty({
     description: 'Location type. Note: if the location type is not online, the address fields are required',
     example: EventLocationType.IN_PERSON,
   })
   @IsEnum(EventLocationType)
-  locationType: EventLocationType
+  locationType!: EventLocationType
 
   @ApiProperty({ description: 'Location name', example: 'Zézinho Magalhães Stadium' })
   @IsString()
@@ -83,36 +83,36 @@ export class CreateEventDto {
 
   @ApiProperty({ description: 'Event start date', example: '2026-01-01T00:00:00.000Z' })
   @IsDate()
-  startDate: Date
+  startDate!: Date
 
   @ApiProperty({ description: 'Event end date', example: '2026-01-01T00:00:00.000Z' })
   @IsDate()
-  endDate: Date
+  endDate!: Date
 
   @ApiProperty({ description: 'Event category', example: EventCategory.MUSIC })
   @IsEnum(EventCategory)
-  category: EventCategory
+  category!: EventCategory
 
   @ApiProperty({ description: 'Event is adult only', example: false })
   @IsBoolean()
-  isAdultOnly: boolean
+  isAdultOnly!: boolean
 
   @ApiProperty({ description: 'Event status', example: EventStatus.OPENED })
   @IsIn([EventStatus.DRAFT, EventStatus.OPENED])
-  status: EventStatus
+  status!: EventStatus
 }
 
 export class UpdateEventDto extends PartialType(CreateEventDto) {}
 
 class OrganizerInfoDto {
   @ApiProperty({ description: 'Organizer (user) ID', example: '123e4567-e89b-12d3-a456-4266141740423' })
-  id: string
+  id!: string
 
   @ApiProperty({ description: 'Organizer (user) name', example: 'John Doe' })
-  name: string
+  name!: string
 
   @ApiProperty({ description: 'Organizer (user) email', example: 'john.doe@example.com' })
-  email: string
+  email!: string
 
   @ApiProperty({ description: 'Organizer (user) avatar URL', example: 'https://example.com/avatar.png' })
   avatarUrl?: string
@@ -120,29 +120,29 @@ class OrganizerInfoDto {
 
 class StateInfoDto {
   @ApiProperty({ description: 'State ID', example: 35 })
-  id: number
+  id!: number
 
   @ApiProperty({ description: 'State name', example: 'São Paulo' })
-  name: string
+  name!: string
 
   @ApiProperty({ description: 'State acronym', example: 'SP' })
-  acronym: string
+  acronym!: string
 }
 
 class CityInfoDto {
   @ApiProperty({ description: 'City ID', example: 3525300 })
-  id: number
+  id!: number
 
   @ApiProperty({ description: 'City name', example: 'Jaú' })
-  name: string
+  name!: string
 
   @ApiProperty({ description: 'State information', type: StateInfoDto })
-  state: StateInfoDto
+  state!: StateInfoDto
 }
 
 export class EventDataDto extends OmitType(CreateEventDto, ['cityId']) {
   @ApiProperty({ description: 'Event ID', example: '123e4567-e89b-12d3-a456-426614174432' })
-  id: string
+  id!: string
 
   @ApiProperty({ description: 'Event changes ID', example: '123e4567-e89b-12d3-a456-426614174792' })
   eventChangesId?: string
@@ -151,13 +151,13 @@ export class EventDataDto extends OmitType(CreateEventDto, ['cityId']) {
   changeRefundDeadline?: Date
 
   @ApiProperty({ description: 'Event creation date', example: '2026-01-01T00:00:00.000Z' })
-  createdAt: Date
+  createdAt!: Date
 
   @ApiProperty({ description: 'Organizer (user) information', type: OrganizerInfoDto })
-  organizer: OrganizerInfoDto
+  organizer!: OrganizerInfoDto
 
   @ApiProperty({ description: 'City information', type: CityInfoDto })
-  city: CityInfoDto
+  city!: CityInfoDto
 
   @ApiProperty({ description: 'Average event rating', example: 4.5, required: false })
   averageRating?: number
@@ -165,7 +165,7 @@ export class EventDataDto extends OmitType(CreateEventDto, ['cityId']) {
 
 export class EventResponseDto {
   @ApiProperty({ description: 'Data of the event', example: EventDataDto })
-  data: EventDataDto
+  data!: EventDataDto
 }
 
 export class QueryEventsDto extends QueryPaginationDto {
@@ -197,7 +197,7 @@ export class QueryEventsDto extends QueryPaginationDto {
   @ApiProperty({ description: 'Filter by event status', example: EventStatus.OPENED })
   @IsIn([EventStatus.OPENED, EventStatus.GOING, EventStatus.FINISHED])
   @IsLowercase()
-  status: EventStatus
+  status!: EventStatus
 
   @ApiProperty({ description: 'Filter by event is adult only', example: false, required: false })
   @IsBoolean()
@@ -234,7 +234,7 @@ export class OrganizerQueryEventsDto extends QueryPaginationDto {
   @ApiProperty({ description: 'Filter by event status', example: EventStatus.DRAFT })
   @IsEnum(EventStatus)
   @IsLowercase()
-  status: EventStatus
+  status!: EventStatus
 
   @ApiProperty({ description: 'Filter by event is adult only', example: false, required: false })
   @IsBoolean()
@@ -244,49 +244,49 @@ export class OrganizerQueryEventsDto extends QueryPaginationDto {
 
 export class ListEventsDto {
   @ApiProperty({ description: 'Event ID', example: '123e4567-e89b-12d3-a456-426614174432' })
-  id: string
+  id!: string
 
   @ApiProperty({ description: 'Event title', example: 'Event Title' })
-  title: string
+  title!: string
 
   @ApiProperty({ description: 'Maximum number of participants', example: 100 })
-  maxParticipants: number
+  maxParticipants!: number
 
   @ApiProperty({ description: 'City and state name', example: 'Jaú' })
-  cityName: string
+  cityName!: string
 
   @ApiProperty({ description: 'State acronym', example: 'SP' })
-  stateAcronym: string
+  stateAcronym!: string
 
   @ApiProperty({
     description: 'All info about the location',
     example: 'Zézinho Magalhães Stadium, Rua Zézinho Magalhães, 123, Vila XV',
   })
-  locationName: string
+  locationName!: string
 
   @ApiProperty({ description: 'Event start date', example: '2026-01-01T00:00:00.000Z' })
-  startDate: Date
+  startDate!: Date
 
   @ApiProperty({ description: 'Event end date', example: '2026-01-01T00:00:00.000Z' })
-  endDate: Date
+  endDate!: Date
 
   @ApiProperty({ description: 'Event category', example: EventCategory.MUSIC })
-  category: EventCategory
+  category!: EventCategory
 
   @ApiProperty({ description: 'Event banner URL', example: 'https://example.com/banner.jpg', required: false })
   bannerUrl?: string
 
   @ApiProperty({ description: 'Event is adult only', example: false })
-  isAdultOnly: boolean
+  isAdultOnly!: boolean
 
   @ApiProperty({ description: 'Event status', example: EventStatus.OPENED })
-  status: EventStatus
+  status!: EventStatus
 
   @ApiProperty({ description: 'Location type', enum: EventLocationType, example: EventLocationType.IN_PERSON })
-  locationType: EventLocationType
+  locationType!: EventLocationType
 
   @ApiProperty({ description: 'Organizer (user) information', type: OrganizerInfoDto })
-  organizer: OrganizerInfoDto
+  organizer!: OrganizerInfoDto
 
   @ApiProperty({ description: 'Average event rating', example: 4.5, required: false })
   averageRating?: number
@@ -304,8 +304,8 @@ export class ListEventsDto {
 
 export class PaginateEventsDto {
   @ApiProperty({ description: 'List of events', type: [ListEventsDto] })
-  data: ListEventsDto[]
+  data!: ListEventsDto[]
 
   @ApiProperty({ description: 'Pagination meta', type: PaginationMetaDto })
-  meta: PaginationMetaDto
+  meta!: PaginationMetaDto
 }

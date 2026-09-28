@@ -5,22 +5,22 @@ import { Users } from '~/modules/users/users.entity'
 @Entity()
 export class Favorites {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id!: string
 
   @Column({ name: 'user_id' })
-  userId: string
+  userId!: string
 
   @Column({ name: 'event_id' })
-  eventId: string
+  eventId!: string
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
-  createdAt: Date
+  createdAt!: Date
 
   @ManyToOne(() => Users, (user) => user.favorites)
   @JoinColumn({ name: 'user_id' })
-  user: Users
+  user!: Users
 
   @ManyToOne(() => Events, (event) => event.favorites)
   @JoinColumn({ name: 'event_id' })
-  event: Events
+  event!: Events
 }

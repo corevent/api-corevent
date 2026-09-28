@@ -10,35 +10,35 @@ export class CheckinDto {
   @IsString()
   @IsNotEmpty()
   @Length(64, 64) // 32 bytes em hex
-  qrToken: string
+  qrToken!: string
 }
 
 export class CheckinTicketTypeDto {
   @ApiProperty({ description: 'Ticket type ID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  id: string
+  id!: string
 
   @ApiProperty({ description: 'Ticket type name', example: 'VIP' })
-  name: string
+  name!: string
 
   @ApiProperty({ description: 'Ticket type price', example: 100 })
   @Type(() => Number)
-  price: number
+  price!: number
 }
 
 export class CheckinEventDto {
   @ApiProperty({ description: 'Event ID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  id: string
+  id!: string
 
   @ApiProperty({ description: 'Event title', example: 'Summer Festival' })
-  title: string
+  title!: string
 }
 
 export class CheckinOrderDto {
   @ApiProperty({ description: 'Order ID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  id: string
+  id!: string
 
   @ApiProperty({ description: 'Order status', example: OrderStatus.PAID })
-  status: OrderStatus
+  status!: OrderStatus
 
   @ApiPropertyOptional({ description: 'Gateway transaction ID. Omitted for free orders.', example: 'ORDE_1234567890' })
   gatewayTransactionId?: string | null
@@ -46,60 +46,60 @@ export class CheckinOrderDto {
 
 export class CheckinUserDto {
   @ApiProperty({ description: 'User ID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  id: string
+  id!: string
 
   @ApiProperty({ description: 'User name', example: 'John Doe' })
-  name: string
+  name!: string
 
   @ApiProperty({ description: 'User email', example: 'john.doe@example.com' })
-  email: string
+  email!: string
 }
 
 export class CheckinStaffUserDto {
   @ApiProperty({ description: 'Staff user ID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  id: string
+  id!: string
 
   @ApiProperty({ description: 'Staff user name', example: 'Jane Staff' })
-  name: string
+  name!: string
 }
 
 export class CheckinDataDto {
   @ApiProperty({ description: 'Ticket ID', example: '1234567890' })
-  ticketId: string
+  ticketId!: string
 
   @ApiProperty({ description: 'Ticket type ID', example: '1234567890' })
-  ticketTypeId: string
+  ticketTypeId!: string
 
   @ApiProperty({ description: 'Ticket status', example: TicketStatus.CHECKED_IN })
-  status: TicketStatus
+  status!: TicketStatus
 
   @ApiProperty({ description: 'Checkin at', example: '2026-01-01T00:00:00.000Z' })
-  checkinAt: Date
+  checkinAt!: Date
 
   @ApiProperty({ description: 'Ticket type', type: CheckinTicketTypeDto })
   @Type(() => CheckinTicketTypeDto)
-  ticketType: CheckinTicketTypeDto
+  ticketType!: CheckinTicketTypeDto
 
   @ApiProperty({ description: 'Event', type: CheckinEventDto })
   @Type(() => CheckinEventDto)
-  event: CheckinEventDto
+  event!: CheckinEventDto
 
   @ApiProperty({ description: 'Order', type: CheckinOrderDto })
   @Type(() => CheckinOrderDto)
-  order: CheckinOrderDto
+  order!: CheckinOrderDto
 
   @ApiProperty({ description: 'User', type: CheckinUserDto })
   @Type(() => CheckinUserDto)
-  user: CheckinUserDto
+  user!: CheckinUserDto
 
   @ApiProperty({ description: 'Staff user who performed the checkin', type: CheckinStaffUserDto })
   @Type(() => CheckinStaffUserDto)
-  checkedInBy: CheckinStaffUserDto
+  checkedInBy!: CheckinStaffUserDto
 }
 
 export class CheckinResponseDto {
   @ApiProperty({ description: 'Checkin data', type: CheckinDataDto })
-  data: CheckinDataDto
+  data!: CheckinDataDto
 }
 
 export class QueryMyTicketsDto extends QueryPaginationDto {
@@ -111,44 +111,44 @@ export class QueryMyTicketsDto extends QueryPaginationDto {
 
 export class UserTicketTypeDto {
   @ApiProperty({ description: 'Ticket type ID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  id: string
+  id!: string
 
   @ApiProperty({ description: 'Ticket type name', example: 'VIP' })
-  name: string
+  name!: string
 
   @ApiProperty({ description: 'Ticket type price', example: 100 })
   @Type(() => Number)
-  price: number
+  price!: number
 }
 
 export class UserTicketEventDto {
   @ApiProperty({ description: 'Event ID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  id: string
+  id!: string
 
   @ApiProperty({ description: 'Event title', example: 'Summer Festival' })
-  title: string
+  title!: string
 }
 
 export class UserTicketOrderDto {
   @ApiProperty({ description: 'Order ID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  id: string
+  id!: string
 
   @ApiProperty({ description: 'Order status', example: OrderStatus.PAID })
-  status: OrderStatus
+  status!: OrderStatus
 }
 
 export class UserTicketDataDto {
   @ApiProperty({ description: 'Ticket ID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  id: string
+  id!: string
 
   @ApiProperty({ description: 'Event ID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  eventId: string
+  eventId!: string
 
   @ApiProperty({ description: 'Ticket type ID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  ticketTypeId: string
+  ticketTypeId!: string
 
   @ApiProperty({ description: 'Ticket status', example: TicketStatus.PENDING })
-  status: TicketStatus
+  status!: TicketStatus
 
   @ApiPropertyOptional({ description: 'Check-in date', example: '2026-01-01T00:00:00.000Z' })
   checkinAt?: Date
@@ -157,95 +157,95 @@ export class UserTicketDataDto {
     description: 'QR code token',
     example: 'a4174821114a75118c7ede39152b3f45523559ded1875d294ad1ce790a9d2bd8',
   })
-  qrToken: string
+  qrToken!: string
 
   @ApiProperty({ description: 'Ticket type', type: UserTicketTypeDto })
   @Type(() => UserTicketTypeDto)
-  ticketType: UserTicketTypeDto
+  ticketType!: UserTicketTypeDto
 
   @ApiProperty({ description: 'Event', type: UserTicketEventDto })
   @Type(() => UserTicketEventDto)
-  event: UserTicketEventDto
+  event!: UserTicketEventDto
 
   @ApiProperty({ description: 'Order', type: UserTicketOrderDto })
   @Type(() => UserTicketOrderDto)
-  order: UserTicketOrderDto
+  order!: UserTicketOrderDto
 }
 
 export class MyTicketsResponseDto {
   @ApiProperty({ description: 'Tickets', type: [UserTicketDataDto] })
-  data: UserTicketDataDto[]
+  data!: UserTicketDataDto[]
 }
 
 export class PaginateMyTicketsDto {
   @ApiProperty({ description: 'Tickets', type: [UserTicketDataDto] })
-  data: UserTicketDataDto[]
+  data!: UserTicketDataDto[]
 
   @ApiProperty({ description: 'Pagination metadata', type: PaginationMetaDto })
-  meta: PaginationMetaDto
+  meta!: PaginationMetaDto
 }
 
 export class QueryEventParticipantsDto extends QueryPaginationDto {}
 
 export class EventParticipantDto {
   @ApiProperty({ description: 'User ID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  id: string
+  id!: string
 
   @ApiProperty({ description: 'User name', example: 'John Doe' })
-  name: string
+  name!: string
 
   @ApiProperty({ description: 'User email', example: 'john.doe@example.com' })
-  email: string
+  email!: string
 
   @ApiProperty({ description: 'Number of tickets owned by the user for this event', example: 2 })
   @Type(() => Number)
-  ticketsCount: number
+  ticketsCount!: number
 }
 
 export class PaginateEventParticipantsDto {
   @ApiProperty({ description: 'Event participants', type: [EventParticipantDto] })
   @Type(() => EventParticipantDto)
-  data: EventParticipantDto[]
+  data!: EventParticipantDto[]
 
   @ApiProperty({ description: 'Pagination metadata', type: PaginationMetaDto })
   @Type(() => PaginationMetaDto)
-  meta: PaginationMetaDto
+  meta!: PaginationMetaDto
 }
 
 export class EventParticipantTicketDto {
   @ApiProperty({ description: 'Ticket ID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  id: string
+  id!: string
 
   @ApiProperty({ description: 'Ticket status', example: TicketStatus.PENDING })
-  status: TicketStatus
+  status!: TicketStatus
 
   @ApiPropertyOptional({ description: 'Check-in date', example: '2026-01-01T00:00:00.000Z' })
   checkinAt?: Date
 
   @ApiProperty({ description: 'Ticket creation date', example: '2026-01-01T00:00:00.000Z' })
-  createdAt: Date
+  createdAt!: Date
 
   @ApiProperty({ description: 'Ticket type', type: UserTicketTypeDto })
   @Type(() => UserTicketTypeDto)
-  ticketType: UserTicketTypeDto
+  ticketType!: UserTicketTypeDto
 
   @ApiProperty({ description: 'Order', type: UserTicketOrderDto })
   @Type(() => UserTicketOrderDto)
-  order: UserTicketOrderDto
+  order!: UserTicketOrderDto
 }
 
 export class EventParticipantDetailsDataDto {
   @ApiProperty({ description: 'Participant user', type: CheckinUserDto })
   @Type(() => CheckinUserDto)
-  user: CheckinUserDto
+  user!: CheckinUserDto
 
   @ApiProperty({ description: 'Participant tickets', type: [EventParticipantTicketDto] })
   @Type(() => EventParticipantTicketDto)
-  tickets: EventParticipantTicketDto[]
+  tickets!: EventParticipantTicketDto[]
 }
 
 export class EventParticipantDetailsResponseDto {
   @ApiProperty({ description: 'Participant details', type: EventParticipantDetailsDataDto })
   @Type(() => EventParticipantDetailsDataDto)
-  data: EventParticipantDetailsDataDto
+  data!: EventParticipantDetailsDataDto
 }

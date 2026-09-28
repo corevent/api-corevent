@@ -5,18 +5,18 @@ import { States } from '~/modules/states/states.entity'
 @Entity()
 export class Cities {
   @PrimaryColumn({ type: 'int' })
-  id: number
+  id!: number
 
   @Column({ name: 'state_id' })
-  stateId: number
+  stateId!: number
 
   @Column({ type: 'text' })
-  name: string
+  name!: string
 
   @ManyToOne(() => States, (state) => state.cities)
   @JoinColumn({ name: 'state_id' })
-  state: States
+  state!: States
 
   @OneToMany(() => Events, (event) => event.city)
-  events: Events[]
+  events!: Events[]
 }

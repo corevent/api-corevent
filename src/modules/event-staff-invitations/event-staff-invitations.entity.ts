@@ -10,39 +10,39 @@ import { Users } from '~/modules/users/users.entity'
 @Entity()
 export class EventStaffInvitations {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id!: string
 
   @Column({ name: 'event_id' })
-  eventId: string
+  eventId!: string
 
   @Column({ name: 'user_id' })
-  userId: string
+  userId!: string
 
   @Column({
     type: 'enum',
     enum: EventStaffInvitationStatus,
     enumName: 'event_staff_invitations_invitation_status_enum',
   })
-  invitationStatus: EventStaffInvitationStatus
+  invitationStatus!: EventStaffInvitationStatus
 
   @Column({
     type: 'enum',
     enum: EventStaffAccessLevel,
     enumName: 'event_staff_invitations_original_access_level_enum',
   })
-  originalAccessLevel: EventStaffAccessLevel
+  originalAccessLevel!: EventStaffAccessLevel
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
-  createdAt: Date
+  createdAt!: Date
 
   @OneToOne(() => EventStaff, (eventStaff) => eventStaff.staffInvitation)
-  eventStaff: EventStaff
+  eventStaff!: EventStaff
 
   @ManyToOne(() => Users, (user) => user.eventStaffInvitations)
   @JoinColumn({ name: 'user_id' })
-  user: Users
+  user!: Users
 
   @ManyToOne(() => Events, (event) => event.eventStaffInvitations)
   @JoinColumn({ name: 'event_id' })
-  event: Events
+  event!: Events
 }

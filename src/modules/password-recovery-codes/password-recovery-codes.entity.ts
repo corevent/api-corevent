@@ -4,27 +4,27 @@ import { Users } from '~/modules/users/users.entity'
 @Entity()
 export class PasswordRecoveryCodes {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id!: string
 
   @Column({ name: 'user_id' })
-  userId: string
+  userId!: string
 
   @Column({ type: 'text' })
-  codeHash: string
+  codeHash!: string
 
   @Column({ type: 'timestamp with time zone' })
-  expiresAt: Date
+  expiresAt!: Date
 
   @Column({ type: 'int', default: 0 })
-  attempts: number
+  attempts!: number
 
   @Column({ type: 'boolean', default: false })
-  used: boolean
+  used!: boolean
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
-  createdAt: Date
+  createdAt!: Date
 
   @JoinColumn({ name: 'user_id' })
   @ManyToOne(() => Users, (user) => user.passwordRecoveryCodes)
-  user: Users
+  user!: Users
 }

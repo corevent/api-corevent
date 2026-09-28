@@ -6,21 +6,21 @@ export class HealthDependenciesDto {
     example: 'OK',
     type: String,
   })
-  database: string
+  database!: string
 
   @ApiProperty({
     description: 'The status of the Resend SMTP connection',
     example: 'OK',
     type: String,
   })
-  mail: string
+  mail!: string
 
   @ApiProperty({
     description: 'The status of the S3 bucket health check',
     example: 'OK',
     type: String,
   })
-  s3: string
+  s3!: string
 }
 
 export class HealthCheckResponseDto {
@@ -29,25 +29,25 @@ export class HealthCheckResponseDto {
     example: 'OK',
     type: String,
   })
-  status: string
+  status!: string
 
   @ApiProperty({
     description: 'The version of the application',
     example: '1.0.0',
     type: String,
   })
-  version: string
+  version!: string
 
   @ApiProperty({
     description: 'The uptime of the application',
     example: 1000,
     type: Number,
   })
-  uptime: number
+  uptime!: number
 
   @ApiProperty({
     description: 'The status of each external dependency',
     type: HealthDependenciesDto,
   })
-  dependencies: HealthDependenciesDto
+  dependencies!: HealthDependenciesDto
 }

@@ -7,25 +7,25 @@ export class CreateTicketTypeDto {
   @ApiProperty({ description: 'Name of the ticket type', example: 'Ticket Type Name' })
   @IsString()
   @IsNotEmpty()
-  name: string
+  name!: string
 
   @ApiProperty({ description: 'Price of the ticket type', example: 100 })
   @IsNumber()
   @Type(() => Number)
-  price: number
+  price!: number
 
   @ApiProperty({ description: 'Total quantity of tickets for this ticket type', example: 100 })
   @IsInt()
   @Min(1)
-  totalQuantity: number
+  totalQuantity!: number
 
   @ApiProperty({ description: 'Start date of the ticket type', example: '2026-01-01T00:00:00.000Z' })
   @IsDate()
-  startDate: Date
+  startDate!: Date
 
   @ApiProperty({ description: 'End date of the ticket type', example: '2026-01-01T00:00:00.000Z' })
   @IsDate()
-  endDate: Date
+  endDate!: Date
 }
 
 // Only update for draft events
@@ -33,33 +33,33 @@ export class UpdateTicketTypeDto extends PartialType(CreateTicketTypeDto) {}
 
 export class TicketTypeDataDto extends CreateTicketTypeDto {
   @ApiProperty({ description: 'Ticket type ID', example: '123e4567-e89b-12d3-a456-426614174432' })
-  id: string
+  id!: string
 
   @ApiProperty({ description: 'Event ID', example: '123e4567-e89b-12d3-a456-426614174432' })
-  eventId: string
+  eventId!: string
 
   @ApiProperty({ description: 'Available quantity of tickets for this ticket type', example: 100 })
-  availableQuantity: number
+  availableQuantity!: number
 }
 
 export class TicketTypeResponseDto {
   @ApiProperty({ description: 'Ticket type data', type: TicketTypeDataDto })
-  data: TicketTypeDataDto
+  data!: TicketTypeDataDto
 }
 
 export class PaginatedTicketTypesListDto {
   @ApiProperty({ description: 'List of ticket types', type: [TicketTypeDataDto] })
-  data: TicketTypeDataDto[]
+  data!: TicketTypeDataDto[]
 
   @ApiProperty({ description: 'Pagination meta', type: PaginationMetaDto })
-  meta: PaginationMetaDto
+  meta!: PaginationMetaDto
 }
 
 export class QueryTicketTypesDto extends QueryPaginationDto {
   @Type(() => String)
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
-  availableOnly: boolean
+  availableOnly!: boolean
 
   @ApiProperty({ description: 'Search by name', example: 'Ticket Type Name', required: false })
   @IsString()

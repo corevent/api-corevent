@@ -16,7 +16,7 @@ export class CreateOrganizerPaymentInfoDto {
   @IsString()
   @IsNotEmpty()
   @Expose()
-  description: string
+  description!: string
 
   @ApiProperty({ description: 'Bank branch number', example: '1234', required: false })
   @IsNumberString()
@@ -71,30 +71,30 @@ export class UpdateOrganizerPaymentInfoDto extends PartialType(CreateOrganizerPa
 export class OrganizerPaymentInfoDataDto extends CreateOrganizerPaymentInfoDto {
   @ApiProperty({ description: 'Organizer payment info ID', example: '123e4567-e89b-12d3-a456-426614174000' })
   @Expose()
-  id: string
+  id!: string
 
   @ApiProperty({ description: 'User ID', example: '123e4567-e89b-12d3-a456-426614174000' })
   @Expose()
-  userId: string
+  userId!: string
 }
 
 export class OrganizerPaymentInfoResDto {
   @ApiProperty({ description: 'Organizer payment info', type: OrganizerPaymentInfoDataDto })
-  data: OrganizerPaymentInfoDataDto
+  data!: OrganizerPaymentInfoDataDto
 }
 
 export class ListOrganizerPaymentInfoDto {
   @ApiProperty({ description: 'Organizer payment info ID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  id: string
+  id!: string
 
   @ApiProperty({ description: 'Description of the payment info', example: 'Main bank account' })
-  description: string
+  description!: string
 }
 
 export class OrganizerPaymentInfoPageDto {
   @ApiProperty({ description: 'Organizer payment info list', type: [ListOrganizerPaymentInfoDto] })
-  data: ListOrganizerPaymentInfoDto[]
+  data!: ListOrganizerPaymentInfoDto[]
 
   @ApiProperty({ description: 'Pagination meta', type: PaginationMetaDto })
-  meta: PaginationMetaDto
+  meta!: PaginationMetaDto
 }

@@ -10,11 +10,11 @@ export enum StorageUploadPurpose {
 export class PresignUploadDto {
   @ApiProperty({ description: 'The purpose of the upload', enum: StorageUploadPurpose })
   @IsEnum(StorageUploadPurpose)
-  purpose: StorageUploadPurpose
+  purpose!: StorageUploadPurpose
 
   @ApiProperty({ description: 'The content type of the upload' })
   @IsIn(ALLOWED_IMAGE_CONTENT_TYPES)
-  contentType: string
+  contentType!: string
 
   @ValidateIf((dto: PresignUploadDto) => dto.purpose === StorageUploadPurpose.EVENT_BANNER)
   @IsUUID()
@@ -24,26 +24,26 @@ export class PresignUploadDto {
 
 export class PresignUploadDataDto {
   @ApiProperty({ description: 'The presigned upload URL' })
-  uploadUrl: string
+  uploadUrl!: string
 
   @ApiProperty({ description: 'The key of the uploaded object' })
-  key: string
+  key!: string
 
   @ApiProperty({ description: 'The public URL of the uploaded object' })
-  publicUrl: string
+  publicUrl!: string
 
   @ApiProperty({ description: 'The expiration time of the presigned upload URL' })
-  expiresIn: number
+  expiresIn!: number
 }
 
 export class PresignUploadResponseDto {
   @ApiProperty({ description: 'The data of the presigned upload' })
-  data: PresignUploadDataDto
+  data!: PresignUploadDataDto
 }
 
 export class ConfirmImageUploadDto {
   @ApiProperty({ description: 'S3 object key returned from the presign endpoint' })
   @IsNotEmpty()
   @IsString()
-  key: string
+  key!: string
 }

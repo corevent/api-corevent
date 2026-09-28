@@ -8,38 +8,38 @@ import {
 
 export class EventStaffDataDto {
   @ApiProperty({ description: 'Event staff ID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  id: string
+  id!: string
 
   @ApiProperty({ description: 'User ID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  userId: string
+  userId!: string
 
   @ApiProperty({ description: 'Access level', example: EventStaffAccessLevel.READONLY })
-  accessLevel: EventStaffAccessLevel
+  accessLevel!: EventStaffAccessLevel
 
   @ApiProperty({ description: 'Invitation status', example: EventStaffInvitationStatus.PENDING })
-  invitationStatus: EventStaffInvitationStatus
+  invitationStatus!: EventStaffInvitationStatus
 
   @ApiProperty({ description: 'Staff invitation ID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  staffInvitationId: string
+  staffInvitationId!: string
 
   @ApiProperty({ description: 'Created at', example: '2026-01-01T00:00:00.000Z' })
-  createdAt: Date
+  createdAt!: Date
 }
 
 export class EventStaffResponseDto {
   @ApiProperty({ description: 'Event staff data', type: EventStaffDataDto })
-  data: EventStaffDataDto
+  data!: EventStaffDataDto
 }
 
 class UserInfoDto {
   @ApiProperty({ description: 'User ID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  id: string
+  id!: string
 
   @ApiProperty({ description: 'User name', example: 'John Doe' })
-  name: string
+  name!: string
 
   @ApiProperty({ description: 'User email', example: 'john.doe@example.com' })
-  email: string
+  email!: string
 
   @ApiProperty({ description: 'User avatar URL', example: 'https://example.com/avatar.png' })
   avatarUrl?: string
@@ -49,15 +49,15 @@ class EventStaffWithoutUserIdDto extends OmitType(EventStaffDataDto, ['userId'])
 
 export class ListEventStaffDto extends EventStaffWithoutUserIdDto {
   @ApiProperty({ description: 'User information', type: UserInfoDto })
-  user: UserInfoDto
+  user!: UserInfoDto
 }
 
 export class PaginateEventStaffDto {
   @ApiProperty({ description: 'List of event staff', type: [ListEventStaffDto] })
-  data: ListEventStaffDto[]
+  data!: ListEventStaffDto[]
 
   @ApiProperty({ description: 'Pagination meta', type: PaginationMetaDto })
-  meta: PaginationMetaDto
+  meta!: PaginationMetaDto
 }
 
 export class QueryEventStaffDto extends QueryPaginationDto {
@@ -96,5 +96,5 @@ export class UpdateAccessLevelDto {
   @ApiProperty({ description: 'Access level', example: EventStaffAccessLevel.CHECKIN })
   @IsEnum(EventStaffAccessLevel)
   @IsLowercase()
-  accessLevel: EventStaffAccessLevel
+  accessLevel!: EventStaffAccessLevel
 }

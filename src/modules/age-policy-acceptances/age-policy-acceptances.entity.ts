@@ -5,22 +5,22 @@ import { Users } from '~/modules/users/users.entity'
 @Entity()
 export class AgePolicyAcceptances {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id!: string
 
   @Column({ name: 'user_id' })
-  userId: string
+  userId!: string
 
   @Column({ name: 'age_policy_id' })
-  agePolicyId: string
+  agePolicyId!: string
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
-  createdAt: Date
+  createdAt!: Date
 
   @ManyToOne(() => Users, (user) => user.agePolicyAcceptances)
   @JoinColumn({ name: 'user_id' })
-  user: Users
+  user!: Users
 
   @ManyToOne(() => AgePolicies, (agePolicy) => agePolicy.agePolicyAcceptances)
   @JoinColumn({ name: 'age_policy_id' })
-  agePolicy: AgePolicies
+  agePolicy!: AgePolicies
 }

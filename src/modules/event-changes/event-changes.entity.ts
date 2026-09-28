@@ -5,31 +5,31 @@ import { Users } from '~/modules/users/users.entity'
 @Entity()
 export class EventChanges {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id!: string
 
   @Column({ name: 'event_id' })
-  eventId: string
+  eventId!: string
 
   @Column({ type: 'text', array: true })
-  changedFields: string[]
+  changedFields!: string[]
 
   @Column({ type: 'jsonb' })
-  oldValue: Record<string, any>
+  oldValue!: Record<string, any>
 
   @Column({ type: 'jsonb' })
-  newValue: Record<string, any>
+  newValue!: Record<string, any>
 
   @Column({ name: 'changed_by' })
-  changedByUserId: string
+  changedByUserId!: string
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
-  createdAt: Date
+  createdAt!: Date
 
   @ManyToOne(() => Events, (event) => event.eventChanges)
   @JoinColumn({ name: 'event_id' })
-  event: Events
+  event!: Events
 
   @ManyToOne(() => Users, (user) => user.eventChanges)
   @JoinColumn({ name: 'changed_by' })
-  changedByUser: Users
+  changedByUser!: Users
 }

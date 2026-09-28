@@ -4,21 +4,21 @@ import { Users } from '~/modules/users/users.entity'
 @Entity()
 export class RefreshTokens {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id!: string
 
   @Column({ type: 'text' })
-  tokenHash: string
+  tokenHash!: string
 
   @Column({ type: 'uuid' })
-  jti: string
+  jti!: string
 
   @Column({ type: 'timestamp with time zone' })
-  expiresAt: Date
+  expiresAt!: Date
 
   @Column({ name: 'user_id' })
-  userId: string
+  userId!: string
 
   @JoinColumn({ name: 'user_id' })
   @ManyToOne(() => Users, (user) => user.refreshTokens, { onDelete: 'CASCADE' })
-  user: Users
+  user!: Users
 }

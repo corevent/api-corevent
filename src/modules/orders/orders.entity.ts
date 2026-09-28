@@ -13,37 +13,37 @@ export enum OrderStatus {
 @Entity()
 export class Orders {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id!: string
 
   @Column({ name: 'user_id' })
-  userId: string
+  userId!: string
 
   @Column({ name: 'event_id' })
-  eventId: string
+  eventId!: string
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
-  totalAmount: number
+  totalAmount!: number
 
   @Column({ type: 'enum', enum: OrderStatus })
-  status: OrderStatus
+  status!: OrderStatus
 
   @Column({ type: 'text', nullable: true })
-  gatewayTransactionId: string | null
+  gatewayTransactionId!: string | null
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
-  createdAt: Date
+  createdAt!: Date
 
   @OneToMany(() => Tickets, (ticket) => ticket.order)
-  tickets: Tickets[]
+  tickets!: Tickets[]
 
   @OneToMany(() => OrderItems, (item) => item.order)
-  items: OrderItems[]
+  items!: OrderItems[]
 
   @ManyToOne(() => Users, (user) => user.orders)
   @JoinColumn({ name: 'user_id' })
-  user: Users
+  user!: Users
 
   @ManyToOne(() => Events, (event) => event.orders)
   @JoinColumn({ name: 'event_id' })
-  event: Events
+  event!: Events
 }

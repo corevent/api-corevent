@@ -16,25 +16,25 @@ import { DocumentType } from '~/modules/users/enums/document-type.enum'
 @Entity()
 export class Users {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id!: string
 
   @Column({ type: 'text' })
-  name: string
+  name!: string
 
   @Column({ type: 'text', unique: true })
-  email: string
+  email!: string
 
   @Column({ name: 'document_type', type: 'enum', enum: DocumentType })
-  documentType: DocumentType
+  documentType!: DocumentType
 
   @Column({ type: 'char', length: 14, unique: true })
-  document: string
+  document!: string
 
   @Column({ type: 'date' })
-  birthDate: string
+  birthDate!: string
 
   @Column({ type: 'text' })
-  passwordHash: string
+  passwordHash!: string
 
   @Column({ type: 'text', nullable: true })
   phoneNumber?: string
@@ -43,44 +43,44 @@ export class Users {
   avatarUrl?: string
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date
+  createdAt!: Date
 
   @OneToMany(() => RefreshTokens, (refreshToken) => refreshToken.user)
-  refreshTokens: RefreshTokens[]
+  refreshTokens!: RefreshTokens[]
 
   @OneToMany(() => OrganizerPaymentInfo, (organizerPaymentInfo) => organizerPaymentInfo.user)
-  organizerPaymentInfo: OrganizerPaymentInfo[]
+  organizerPaymentInfo!: OrganizerPaymentInfo[]
 
   @OneToMany(() => Events, (event) => event.organizer)
-  events: Events[]
+  events!: Events[]
 
   @OneToMany(() => EventChanges, (eventChange) => eventChange.changedByUser)
-  eventChanges: EventChanges[]
+  eventChanges!: EventChanges[]
 
   @OneToMany(() => PasswordRecoveryCodes, (passwordRecoveryCode) => passwordRecoveryCode.user)
-  passwordRecoveryCodes: PasswordRecoveryCodes[]
+  passwordRecoveryCodes!: PasswordRecoveryCodes[]
 
   @OneToMany(() => EventStaff, (eventStaff) => eventStaff.user)
-  eventStaff: EventStaff[]
+  eventStaff!: EventStaff[]
 
   @OneToMany(() => EventStaffInvitations, (eventStaffInvitation) => eventStaffInvitation.user)
-  eventStaffInvitations: EventStaffInvitations[]
+  eventStaffInvitations!: EventStaffInvitations[]
 
   @OneToMany(() => Orders, (order) => order.user)
-  orders: Orders[]
+  orders!: Orders[]
 
   @OneToMany(() => Favorites, (favorite) => favorite.user)
-  favorites: Favorites[]
+  favorites!: Favorites[]
 
   @OneToMany(() => EventRatings, (eventRating) => eventRating.user)
-  eventRatings: EventRatings[]
+  eventRatings!: EventRatings[]
 
   @OneToMany(() => Tickets, (ticket) => ticket.user)
-  tickets: Tickets[]
+  tickets!: Tickets[]
 
   @OneToMany(() => Tickets, (ticket) => ticket.checkedInByUser)
-  checkedInTickets: Tickets[]
+  checkedInTickets!: Tickets[]
 
   @OneToMany(() => AgePolicyAcceptances, (agePolicyAcceptance) => agePolicyAcceptance.user)
-  agePolicyAcceptances: AgePolicyAcceptances[]
+  agePolicyAcceptances!: AgePolicyAcceptances[]
 }
