@@ -1,5 +1,6 @@
 import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger'
-import { IsString, IsNotEmpty, IsDate, IsOptional } from 'class-validator'
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator'
+import { IsStrictDate } from '~/common/decorators/is-strict-date.decorator'
 import { PaginationMetaDto, QueryPaginationDto } from '~/common/pagination/pagination.dto'
 
 export class CreateAttractionDto {
@@ -14,11 +15,11 @@ export class CreateAttractionDto {
   guest!: string
 
   @ApiProperty({ description: 'Attraction start date', example: '2026-01-01T00:00:00.000Z' })
-  @IsDate()
+  @IsStrictDate()
   startDate!: Date
 
   @ApiProperty({ description: 'Attraction end date', example: '2026-01-01T00:00:00.000Z' })
-  @IsDate()
+  @IsStrictDate()
   endDate!: Date
 }
 
@@ -59,12 +60,12 @@ export class QueryAttractionsDto extends QueryPaginationDto {
   guest?: string
 
   @ApiProperty({ description: 'Filter by start date', example: '2026-01-01T00:00:00.000Z', required: false })
-  @IsDate()
+  @IsStrictDate()
   @IsOptional()
   startDate?: Date
 
   @ApiProperty({ description: 'Filter by end date', example: '2026-01-01T00:00:00.000Z', required: false })
-  @IsDate()
+  @IsStrictDate()
   @IsOptional()
   endDate?: Date
 }

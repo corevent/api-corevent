@@ -1,7 +1,6 @@
 import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger'
 import {
   IsBoolean,
-  IsDate,
   IsEnum,
   IsIn,
   IsInt,
@@ -12,6 +11,7 @@ import {
   Length,
   Min,
 } from 'class-validator'
+import { IsStrictDate } from '~/common/decorators/is-strict-date.decorator'
 import { PaginationMetaDto, QueryPaginationDto } from '~/common/pagination/pagination.dto'
 import { EventCategory, EventLocationType, EventStatus } from '~/modules/events-module/events.entity'
 import { EventStaffAccessLevel } from '~/modules/event-staff-invitations/enums/event-staff-invitation.enums'
@@ -82,11 +82,11 @@ export class CreateEventDto {
   complement?: string
 
   @ApiProperty({ description: 'Event start date', example: '2026-01-01T00:00:00.000Z' })
-  @IsDate()
+  @IsStrictDate()
   startDate!: Date
 
   @ApiProperty({ description: 'Event end date', example: '2026-01-01T00:00:00.000Z' })
-  @IsDate()
+  @IsStrictDate()
   endDate!: Date
 
   @ApiProperty({ description: 'Event category', example: EventCategory.MUSIC })
@@ -190,7 +190,7 @@ export class QueryEventsDto extends QueryPaginationDto {
   category?: EventCategory
 
   @ApiProperty({ description: 'Filter by event start date', example: '2026-01-01T00:00:00.000Z', required: false })
-  @IsDate()
+  @IsStrictDate()
   @IsOptional()
   startDate?: Date
 
@@ -227,7 +227,7 @@ export class OrganizerQueryEventsDto extends QueryPaginationDto {
   category?: EventCategory
 
   @ApiProperty({ description: 'Filter by event start date', example: '2026-01-01T00:00:00.000Z', required: false })
-  @IsDate()
+  @IsStrictDate()
   @IsOptional()
   startDate?: Date
 
