@@ -1,8 +1,19 @@
 import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
-import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger'
 import { MessageDto } from '~/common/dto/message.dto'
+import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
 import {
   CreateEventStaffInvitationDto,
   EventStaffInvitationResponseDto,
@@ -20,12 +31,16 @@ export class StaffInvitesController {
   @Post('events/:eventId')
   @ApiOperation({ summary: 'Invite a user to be a staff for an event' })
   @ApiBody({ type: CreateEventStaffInvitationDto })
-  @ApiResponse({
-    status: 201,
+  @ApiCreatedResponse({
     type: EventStaffInvitationResponseDto,
     description: 'The staff has been successfully invited.',
   })
-  @ApiResponse({ status: 400, description: 'Bad request.' })
+  @ApiBadRequestResponse({
+    description: 'Can only add staff to opened event. You cannot add yourself as staff. Invitation already exists.',
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiForbiddenResponse({ description: 'You are not the organizer of this event' })
+  @ApiNotFoundResponse({ description: 'User not found. Event not found' })
   async create(
     @Req() req: AuthenticatedRequest,
     @Param('eventId') eventId: string,
@@ -37,11 +52,13 @@ export class StaffInvitesController {
   @Post(':invitationId/cancel')
   @ApiOperation({ summary: 'Cancel an invitation' })
   @ApiParam({ name: 'invitationId', type: String, description: 'The ID of the invitation' })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     type: MessageDto,
     description: 'The invitation has been canceled.',
   })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiForbiddenResponse({ description: 'You are not the organizer of this event' })
+  @ApiNotFoundResponse({ description: 'Event staff invitation not found. Event not found' })
   async cancelInvitation(
     @Req() req: AuthenticatedRequest,
     @Param('invitationId') invitationId: string,
@@ -52,12 +69,12 @@ export class StaffInvitesController {
   @Get('events/:eventId')
   @ApiOperation({ summary: 'Get all invitations for an event' })
   @ApiParam({ name: 'eventId', type: String, description: 'The ID of the event' })
-  @ApiQuery({ type: QueryEventStaffInvitationsDto })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     type: PaginateEventStaffInvitationsDto,
     description: 'The list of invitations for the event.',
   })
+  @ApiBadRequestResponse({ description: 'Invalid query parameters. Page number is out of range.' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   async getAll(
     @Param('eventId') eventId: string,
     @Query() query: QueryEventStaffInvitationsDto,

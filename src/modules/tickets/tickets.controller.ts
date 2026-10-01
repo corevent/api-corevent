@@ -1,6 +1,17 @@
 import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiConflictResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger'
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
 import {
   CheckinDto,
@@ -22,7 +33,14 @@ export class TicketsController {
   @ApiOperation({ summary: 'Check in a ticket by QR code' })
   @ApiParam({ name: 'eventId', type: String, description: 'The ID of the event' })
   @ApiBody({ type: CheckinDto })
-  @ApiResponse({ status: 200, type: CheckinResponseDto })
+  @ApiOkResponse({ type: CheckinResponseDto, description: 'The ticket has been checked in.' })
+  @ApiBadRequestResponse({
+    description: 'Ticket does not belong to this event. Ticket is cancelled. Order is not paid.',
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiForbiddenResponse({ description: 'You do not have permission to check in tickets for this event' })
+  @ApiNotFoundResponse({ description: 'Invalid QR code. Event not found' })
+  @ApiConflictResponse({ description: 'Ticket already checked in' })
   async checkin(
     @Req() req: AuthenticatedRequest,
     @Param('eventId') eventId: string,
@@ -34,9 +52,11 @@ export class TicketsController {
   @Get(':eventId/participants')
   @ApiOperation({ summary: 'List event participants with ticket count' })
   @ApiParam({ name: 'eventId', type: String, description: 'The ID of the event' })
-  @ApiQuery({ type: QueryEventParticipantsDto })
-  @ApiResponse({ status: 200, type: PaginateEventParticipantsDto })
-  @ApiResponse({ status: 403, description: 'Forbidden.' })
+  @ApiOkResponse({ type: PaginateEventParticipantsDto, description: 'The list of event participants.' })
+  @ApiBadRequestResponse({ description: 'Invalid query parameters. Page number is out of range.' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiForbiddenResponse({ description: 'You do not have permission to access this event' })
+  @ApiNotFoundResponse({ description: 'Event not found' })
   async getEventParticipants(
     @Req() req: AuthenticatedRequest,
     @Param('eventId') eventId: string,
@@ -49,9 +69,10 @@ export class TicketsController {
   @ApiOperation({ summary: 'Get participant ticket details for an event' })
   @ApiParam({ name: 'eventId', type: String, description: 'The ID of the event' })
   @ApiParam({ name: 'userId', type: String, description: 'The ID of the participant user' })
-  @ApiResponse({ status: 200, type: EventParticipantDetailsResponseDto })
-  @ApiResponse({ status: 403, description: 'Forbidden.' })
-  @ApiResponse({ status: 404, description: 'Participant not found.' })
+  @ApiOkResponse({ type: EventParticipantDetailsResponseDto, description: 'The participant ticket details.' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiForbiddenResponse({ description: 'You do not have permission to access this event' })
+  @ApiNotFoundResponse({ description: 'Participant not found. Event not found' })
   async getEventParticipantDetails(
     @Req() req: AuthenticatedRequest,
     @Param('eventId') eventId: string,
@@ -63,8 +84,8 @@ export class TicketsController {
   @Get(':eventId/my/tickets')
   @ApiOperation({ summary: 'Get my tickets for an event' })
   @ApiParam({ name: 'eventId', type: String, description: 'The ID of the event' })
-  @ApiResponse({ status: 200, type: MyTicketsResponseDto })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiOkResponse({ type: MyTicketsResponseDto, description: 'The tickets of the current user for this event.' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   async getMyTicketsByEvent(
     @Req() req: AuthenticatedRequest,
     @Param('eventId') eventId: string,

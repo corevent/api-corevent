@@ -1,13 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger'
 
 export class StateDataDto {
-  @ApiProperty({ description: 'The ID of the state based on the IBGE code', example: 35 })
+  @ApiProperty({ description: 'The ID of the state based on the IBGE code', type: Number, example: 35 })
   id!: number
 
-  @ApiProperty({ description: 'The name of the state', example: 'São Paulo' })
+  @ApiProperty({ description: 'The name of the state', type: String, example: 'São Paulo' })
   name!: string
 
-  @ApiProperty({ description: 'The UF of the state', example: 'SP' })
+  @ApiProperty({ description: 'The UF of the state', type: String, example: 'SP' })
   uf!: string
 }
 

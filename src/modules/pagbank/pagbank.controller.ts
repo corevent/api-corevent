@@ -8,7 +8,7 @@ import {
   UnauthorizedException,
   type RawBodyRequest,
 } from '@nestjs/common'
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { ApiOkResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger'
 import { PagBankWebhookService } from '~/modules/pagbank/pagbank-webhook.service'
 
 @ApiTags('PagBank')
@@ -21,8 +21,8 @@ export class PagBankController {
   @Post('webhooks')
   @HttpCode(200)
   @ApiOperation({ summary: 'Receive PagBank payment notifications' })
-  @ApiResponse({ status: 200, description: 'Webhook processed successfully.' })
-  @ApiResponse({ status: 401, description: 'Invalid webhook signature.' })
+  @ApiOkResponse({ description: 'Webhook processed successfully.' })
+  @ApiUnauthorizedResponse({ description: 'Missing webhook payload' })
   async handleWebhook(
     @Req() req: RawBodyRequest<Request>,
     @Headers('x-authenticity-token') authenticityToken: string | undefined,

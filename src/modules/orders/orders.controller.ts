@@ -1,6 +1,17 @@
 import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger'
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
 import { QueryPaginationDto } from '~/common/pagination/pagination.dto'
 import {
@@ -20,8 +31,17 @@ export class OrdersController {
   @Post(':eventId/orders')
   @ApiOperation({ summary: 'Create an order' })
   @ApiBody({ type: CreateOrderDto })
-  @ApiResponse({ status: 201, type: OrderResponseDto, description: 'The order has been successfully created.' })
-  @ApiResponse({ status: 400, description: 'Bad request.' })
+  @ApiCreatedResponse({ type: OrderResponseDto, description: 'The order has been successfully created.' })
+  @ApiBadRequestResponse({
+    description: [
+      'Free ticket is limited to 1 per user.',
+      'You already have a ticket for this type.',
+      'Cannot mix free and paid tickets in the same order.',
+      'Not enough tickets available.',
+    ].join(' '),
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiNotFoundResponse({ description: 'Ticket type not found' })
   async create(
     @Req() req: AuthenticatedRequest,
     @Param('eventId') eventId: string,
@@ -32,9 +52,9 @@ export class OrdersController {
 
   @Get('my/orders')
   @ApiOperation({ summary: 'Get my orders' })
-  @ApiQuery({ type: QueryPaginationDto })
-  @ApiResponse({ status: 200, type: PaginateMyOrdersDto })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiOkResponse({ type: PaginateMyOrdersDto, description: 'The orders of the current user.' })
+  @ApiBadRequestResponse({ description: 'Invalid query parameters. Page number is out of range.' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   async getMyOrders(
     @Req() req: AuthenticatedRequest,
     @Query() query: QueryPaginationDto,
@@ -45,9 +65,10 @@ export class OrdersController {
   @Get('orders/:orderId')
   @ApiOperation({ summary: 'Get order details by ID' })
   @ApiParam({ name: 'orderId', description: 'The ID of the order' })
-  @ApiResponse({ status: 200, type: OrderDetailsResponseDto })
-  @ApiResponse({ status: 403, description: 'Forbidden.' })
-  @ApiResponse({ status: 404, description: 'Order not found.' })
+  @ApiOkResponse({ type: OrderDetailsResponseDto, description: 'The order details.' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiForbiddenResponse({ description: 'You do not own this order' })
+  @ApiNotFoundResponse({ description: 'Order not found' })
   async getById(@Req() req: AuthenticatedRequest, @Param('orderId') orderId: string): Promise<OrderDetailsResponseDto> {
     return this.ordersService.getOrderById(req.user.id, orderId)
   }

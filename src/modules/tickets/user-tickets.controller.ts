@@ -1,6 +1,6 @@
 import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
-import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { ApiBadRequestResponse, ApiOkResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger'
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
 import { PaginateMyTicketsDto, QueryMyTicketsDto } from '~/modules/tickets/dto/tickets.dto'
 import { TicketsService } from '~/modules/tickets/tickets.service'
@@ -13,9 +13,9 @@ export class UserTicketsController {
 
   @Get('tickets')
   @ApiOperation({ summary: 'Get my tickets' })
-  @ApiQuery({ type: QueryMyTicketsDto })
-  @ApiResponse({ status: 200, type: PaginateMyTicketsDto })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiOkResponse({ type: PaginateMyTicketsDto, description: 'The tickets of the current user.' })
+  @ApiBadRequestResponse({ description: 'Invalid query parameters. Page number is out of range.' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   async getMyTickets(
     @Req() req: AuthenticatedRequest,
     @Query() query: QueryMyTicketsDto,

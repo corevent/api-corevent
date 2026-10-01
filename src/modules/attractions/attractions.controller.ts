@@ -3,12 +3,14 @@ import { AuthGuard } from '@nestjs/passport'
 import {
   ApiBadRequestResponse,
   ApiBody,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiParam,
-  ApiQuery,
-  ApiResponse,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger'
 import { AttractionsService } from '~/modules/attractions/attractions.service'
 import {
@@ -29,8 +31,9 @@ export class AttractionsController {
   @ApiOperation({ summary: 'Create an attraction' })
   @ApiParam({ name: 'eventId', type: String, description: 'The ID of the event' })
   @ApiBody({ type: CreateAttractionDto })
-  @ApiResponse({ status: 201, description: 'The attraction has been successfully created.' })
-  @ApiBadRequestResponse({ description: 'Bad request.' })
+  @ApiCreatedResponse({ type: AttractionResponseDto, description: 'The attraction has been successfully created.' })
+  @ApiBadRequestResponse({ description: 'Invalid request body.' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   async create(@Param('eventId') eventId: string, @Body() body: CreateAttractionDto): Promise<AttractionResponseDto> {
     return this.attractionsService.create(eventId, body)
   }
@@ -39,9 +42,10 @@ export class AttractionsController {
   @ApiOperation({ summary: 'Update an attraction' })
   @ApiParam({ name: 'attractionId', type: String, description: 'The ID of the attraction' })
   @ApiBody({ type: UpdateAttractionDto })
-  @ApiResponse({ status: 200, description: 'The attraction has been successfully updated.' })
-  @ApiBadRequestResponse({ description: 'Bad request.' })
-  @ApiNotFoundResponse({ description: 'Attraction not found.' })
+  @ApiOkResponse({ type: AttractionResponseDto, description: 'The attraction has been successfully updated.' })
+  @ApiBadRequestResponse({ description: 'Invalid request body.' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiNotFoundResponse({ description: 'Attraction not found' })
   async update(
     @Param('attractionId') attractionId: string,
     @Body() body: UpdateAttractionDto,
@@ -52,10 +56,9 @@ export class AttractionsController {
   @Get(':eventId/attractions')
   @ApiOperation({ summary: 'Get all attractions' })
   @ApiParam({ name: 'eventId', type: String, description: 'The ID of the event' })
-  @ApiQuery({ type: QueryAttractionsDto })
-  @ApiResponse({ status: 200, description: 'The attractions have been successfully retrieved.' })
-  @ApiBadRequestResponse({ description: 'Bad request.' })
-  @ApiNotFoundResponse({ description: 'Event not found.' })
+  @ApiOkResponse({ type: PaginatedAttractionsDto, description: 'The attractions have been successfully retrieved.' })
+  @ApiBadRequestResponse({ description: 'Invalid query parameters. Page number is out of range.' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   async getAll(
     @Param('eventId') eventId: string,
     @Query() query: QueryAttractionsDto,
@@ -66,9 +69,9 @@ export class AttractionsController {
   @Get('attractions/:attractionId')
   @ApiOperation({ summary: 'Get an attraction by ID' })
   @ApiParam({ name: 'attractionId', type: String, description: 'The ID of the attraction' })
-  @ApiResponse({ status: 200, description: 'The attraction has been successfully retrieved.' })
-  @ApiBadRequestResponse({ description: 'Bad request.' })
-  @ApiNotFoundResponse({ description: 'Attraction not found.' })
+  @ApiOkResponse({ type: AttractionResponseDto, description: 'The attraction has been successfully retrieved.' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiNotFoundResponse({ description: 'Attraction not found' })
   async getById(@Param('attractionId') attractionId: string): Promise<AttractionResponseDto> {
     return this.attractionsService.getById(attractionId)
   }
@@ -77,9 +80,8 @@ export class AttractionsController {
   @HttpCode(204)
   @ApiOperation({ summary: 'Delete an attraction' })
   @ApiParam({ name: 'attractionId', type: String, description: 'The ID of the attraction' })
-  @ApiResponse({ status: 204, description: 'The attraction has been successfully deleted.' })
-  @ApiBadRequestResponse({ description: 'Bad request.' })
-  @ApiNotFoundResponse({ description: 'Attraction not found.' })
+  @ApiNoContentResponse({ description: 'The attraction has been successfully deleted.' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   async delete(@Param('attractionId') attractionId: string): Promise<void> {
     return this.attractionsService.delete(attractionId)
   }

@@ -1,6 +1,6 @@
 import { Controller, Get, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { ApiOkResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger'
 import { StateResponseDto } from '~/modules/states/dto/states.dto'
 import { StatesService } from '~/modules/states/states.service'
 
@@ -12,7 +12,8 @@ export class StatesController {
 
   @Get()
   @ApiOperation({ summary: 'Get all states' })
-  @ApiResponse({ status: 200, description: 'The list of states', type: StateResponseDto })
+  @ApiOkResponse({ description: 'The list of states', type: StateResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   async getAll(): Promise<StateResponseDto> {
     return this.statesService.getAll()
   }

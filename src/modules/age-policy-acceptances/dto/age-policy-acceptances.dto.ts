@@ -1,16 +1,36 @@
 import { ApiProperty } from '@nestjs/swagger'
 
 export class AgePolicyAcceptanceDataDto {
-  @ApiProperty({ description: 'The ID of the age policy acceptance', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'The ID of the age policy acceptance',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   id!: string
 
-  @ApiProperty({ description: 'The ID of the user', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'The ID of the user',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   userId!: string
 
-  @ApiProperty({ description: 'The ID of the age policy', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'The ID of the age policy',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   agePolicyId!: string
 
-  @ApiProperty({ description: 'The created at', example: '2026-01-01T00:00:00.000Z' })
+  @ApiProperty({
+    description: 'The created at',
+    type: String,
+    format: 'date-time',
+    example: '2026-01-01T00:00:00.000Z',
+  })
   createdAt!: Date
 }
 
@@ -20,7 +40,7 @@ export class AgePolicyAcceptanceResponseDto {
 }
 
 export class CheckIfUserHasAcceptedDto {
-  @ApiProperty({ description: 'Whether the user has accepted the age policy', example: true })
+  @ApiProperty({ description: 'Whether the user has accepted the age policy', type: Boolean, example: true })
   userHasAccepted!: boolean
 }
 

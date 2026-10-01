@@ -1,6 +1,17 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger'
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
 import {
   CreateTicketTypeDto,
@@ -20,13 +31,21 @@ export class TicketTypesController {
   @Post(':eventId/ticket-types')
   @ApiOperation({ summary: 'Create a new ticket type' })
   @ApiBody({ type: CreateTicketTypeDto })
-  @ApiResponse({
-    status: 201,
+  @ApiCreatedResponse({
     description: 'The ticket type has been successfully created',
     type: TicketTypeResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Bad Request' })
-  @ApiResponse({ status: 404, description: 'Event not found' })
+  @ApiBadRequestResponse({
+    description: [
+      'Event capacity is not enough for the ticket types.',
+      'Start date must be before end date.',
+      'Ticket type dates must be within the event dates.',
+      'Cannot create because event is not draft.',
+      'You are not the organizer of this event.',
+    ].join(' '),
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiNotFoundResponse({ description: 'Event not found' })
   async create(
     @Req() req: AuthenticatedRequest,
     @Param('eventId') eventId: string,
@@ -39,13 +58,21 @@ export class TicketTypesController {
   @ApiOperation({ summary: 'Update a ticket type' })
   @ApiParam({ name: 'ticketTypeId', description: 'The ID of the ticket type to update' })
   @ApiBody({ type: UpdateTicketTypeDto })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'The ticket type has been successfully updated',
     type: TicketTypeResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Bad Request' })
-  @ApiResponse({ status: 404, description: 'Ticket type not found' })
+  @ApiBadRequestResponse({
+    description: [
+      'Event capacity is not enough for the ticket types.',
+      'Start date must be before end date.',
+      'Ticket type dates must be within the event dates.',
+      'Cannot update because event is not draft.',
+      'You are not the organizer of this event.',
+    ].join(' '),
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiNotFoundResponse({ description: 'Ticket type not found. Event not found' })
   async update(
     @Req() req: AuthenticatedRequest,
     @Param('ticketTypeId') ticketTypeId: string,
@@ -57,14 +84,12 @@ export class TicketTypesController {
   @Get(':eventId/ticket-types')
   @ApiOperation({ summary: 'Get all ticket types' })
   @ApiParam({ name: 'eventId', description: 'The ID of the event' })
-  @ApiQuery({ type: QueryTicketTypesDto })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'The ticket types have been successfully retrieved',
-    type: TicketTypeResponseDto,
+    type: PaginatedTicketTypesListDto,
   })
-  @ApiResponse({ status: 400, description: 'Bad Request' })
-  @ApiResponse({ status: 404, description: 'Ticket type not found' })
+  @ApiBadRequestResponse({ description: 'Invalid query parameters. Page number is out of range.' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   async getAll(
     @Param('eventId') eventId: string,
     @Query() query: QueryTicketTypesDto,
@@ -75,12 +100,12 @@ export class TicketTypesController {
   @Get('ticket-types/:ticketTypeId')
   @ApiOperation({ summary: 'Get a ticket type by ID' })
   @ApiParam({ name: 'ticketTypeId', description: 'The ID of the ticket type to get' })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'The ticket type has been successfully retrieved',
     type: TicketTypeResponseDto,
   })
-  @ApiResponse({ status: 404, description: 'Ticket type not found' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiNotFoundResponse({ description: 'Ticket type not found' })
   async getById(@Param('ticketTypeId') ticketTypeId: string): Promise<TicketTypeResponseDto> {
     return this.ticketTypesService.getById(ticketTypeId)
   }
@@ -89,8 +114,12 @@ export class TicketTypesController {
   @HttpCode(204)
   @ApiOperation({ summary: 'Delete a ticket type' })
   @ApiParam({ name: 'ticketTypeId', description: 'The ID of the ticket type to delete' })
-  @ApiResponse({ status: 204, description: 'The ticket type has been successfully deleted' })
-  @ApiResponse({ status: 404, description: 'Ticket type not found' })
+  @ApiNoContentResponse({ description: 'The ticket type has been successfully deleted' })
+  @ApiBadRequestResponse({
+    description: 'Cannot delete because event is not draft. You are not the organizer of this event.',
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiNotFoundResponse({ description: 'Ticket type not found. Event not found' })
   async delete(@Req() req: AuthenticatedRequest, @Param('ticketTypeId') ticketTypeId: string): Promise<void> {
     return this.ticketTypesService.delete(req.user.id, ticketTypeId)
   }

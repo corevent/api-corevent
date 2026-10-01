@@ -4,7 +4,7 @@ import { IsInt, Max, Min } from 'class-validator'
 import { PaginationMetaDto, QueryPaginationDto } from '~/common/pagination/pagination.dto'
 
 export class CreateEventRatingDto {
-  @ApiProperty({ description: 'Rating', example: 5 })
+  @ApiProperty({ description: 'Rating', type: Number, example: 5, minimum: 1, maximum: 5 })
   @IsInt()
   @Min(1)
   @Max(5)
@@ -12,19 +12,39 @@ export class CreateEventRatingDto {
 }
 
 export class EventRatingDataDto {
-  @ApiProperty({ description: 'Rating ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'Rating ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   id!: string
 
-  @ApiProperty({ description: 'User ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'User ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   userId!: string
 
-  @ApiProperty({ description: 'Event ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'Event ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   eventId!: string
 
-  @ApiProperty({ description: 'Rating', example: 5 })
+  @ApiProperty({ description: 'Rating', type: Number, example: 5 })
   rating!: number
 
-  @ApiProperty({ description: 'Created at', example: '2026-01-01T00:00:00.000Z' })
+  @ApiProperty({
+    description: 'Created at',
+    type: String,
+    format: 'date-time',
+    example: '2026-01-01T00:00:00.000Z',
+  })
   createdAt!: Date
 }
 
@@ -34,19 +54,24 @@ export class EventRatingResponseDto {
 }
 
 export class MyEventRatingDto {
-  @ApiProperty({ description: 'Event ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'Event ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   eventId!: string
 
-  @ApiProperty({ description: 'Event title', example: 'Summer Music Festival' })
+  @ApiProperty({ description: 'Event title', type: String, example: 'Summer Music Festival' })
   eventTitle!: string
 
-  @ApiPropertyOptional({ description: 'Event banner URL', example: 'https://example.com/banner.jpg' })
+  @ApiPropertyOptional({ description: 'Event banner URL', type: String, example: 'https://example.com/banner.jpg' })
   bannerUrl?: string
 
-  @ApiProperty({ description: 'Average event rating', example: 4.5 })
+  @ApiProperty({ description: 'Average event rating', type: Number, example: 4.5 })
   averageRating!: number
 
-  @ApiProperty({ description: 'Current user rating for this event', example: 5 })
+  @ApiProperty({ description: 'Current user rating for this event', type: Number, example: 5 })
   userRating!: number
 }
 

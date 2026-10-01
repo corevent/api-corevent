@@ -1,6 +1,17 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger'
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
 import {
   CreateEventRatingDto,
@@ -18,9 +29,9 @@ export class EventRatingsController {
 
   @Get('my/ratings')
   @ApiOperation({ summary: 'Get the events rated by the current user' })
-  @ApiQuery({ type: QueryMyEventRatingsDto })
-  @ApiResponse({ status: 200, type: PaginateMyEventRatingsDto })
-  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiOkResponse({ type: PaginateMyEventRatingsDto, description: 'The events rated by the current user.' })
+  @ApiBadRequestResponse({ description: 'Invalid query parameters. Page number is out of range.' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   async getMyRatings(
     @Req() req: AuthenticatedRequest,
     @Query() query: QueryMyEventRatingsDto,
@@ -31,12 +42,12 @@ export class EventRatingsController {
   @Post(':eventId/ratings')
   @ApiOperation({ summary: 'Set a rating for an event' })
   @ApiBody({ type: CreateEventRatingDto })
-  @ApiResponse({
-    status: 201,
+  @ApiCreatedResponse({
     type: EventRatingResponseDto,
     description: 'The event rating has been successfully created.',
   })
-  @ApiResponse({ status: 400, description: 'Bad request.' })
+  @ApiBadRequestResponse({ description: 'You have already rated this event' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   async create(
     @Req() req: AuthenticatedRequest,
     @Param('eventId') eventId: string,
@@ -48,12 +59,12 @@ export class EventRatingsController {
   @Patch('ratings/:eventRatingId')
   @ApiOperation({ summary: 'Update a rating for an event' })
   @ApiBody({ type: CreateEventRatingDto })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     type: EventRatingResponseDto,
     description: 'The event rating has been successfully updated.',
   })
-  @ApiResponse({ status: 400, description: 'Bad request.' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiNotFoundResponse({ description: 'Event rating not found' })
   async update(
     @Req() req: AuthenticatedRequest,
     @Param('eventRatingId') eventRatingId: string,
@@ -66,8 +77,9 @@ export class EventRatingsController {
   @HttpCode(204)
   @ApiOperation({ summary: 'Remove an event rating' })
   @ApiParam({ name: 'eventRatingId', type: String, description: 'The ID of the event rating' })
-  @ApiResponse({ status: 204, description: 'The event rating has been successfully removed.' })
-  @ApiResponse({ status: 404, description: 'Event rating not found.' })
+  @ApiNoContentResponse({ description: 'The event rating has been successfully removed.' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiNotFoundResponse({ description: 'Event rating not found' })
   async remove(@Req() req: AuthenticatedRequest, @Param('eventRatingId') eventRatingId: string): Promise<void> {
     return this.eventRatingsService.remove(req.user.id, eventRatingId)
   }

@@ -7,22 +7,50 @@ import {
 } from '~/modules/event-staff-invitations/enums/event-staff-invitation.enums'
 
 export class EventStaffDataDto {
-  @ApiProperty({ description: 'Event staff ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'Event staff ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   id!: string
 
-  @ApiProperty({ description: 'User ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'User ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   userId!: string
 
-  @ApiProperty({ description: 'Access level', example: EventStaffAccessLevel.READONLY })
+  @ApiProperty({
+    description: 'Access level',
+    enum: EventStaffAccessLevel,
+    example: EventStaffAccessLevel.READONLY,
+  })
   accessLevel!: EventStaffAccessLevel
 
-  @ApiProperty({ description: 'Invitation status', example: EventStaffInvitationStatus.PENDING })
+  @ApiProperty({
+    description: 'Invitation status',
+    enum: EventStaffInvitationStatus,
+    example: EventStaffInvitationStatus.PENDING,
+  })
   invitationStatus!: EventStaffInvitationStatus
 
-  @ApiProperty({ description: 'Staff invitation ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'Staff invitation ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   staffInvitationId!: string
 
-  @ApiProperty({ description: 'Created at', example: '2026-01-01T00:00:00.000Z' })
+  @ApiProperty({
+    description: 'Created at',
+    type: String,
+    format: 'date-time',
+    example: '2026-01-01T00:00:00.000Z',
+  })
   createdAt!: Date
 }
 
@@ -32,16 +60,31 @@ export class EventStaffResponseDto {
 }
 
 class UserInfoDto {
-  @ApiProperty({ description: 'User ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'User ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   id!: string
 
-  @ApiProperty({ description: 'User name', example: 'John Doe' })
+  @ApiProperty({ description: 'User name', type: String, example: 'John Doe' })
   name!: string
 
-  @ApiProperty({ description: 'User email', example: 'john.doe@example.com' })
+  @ApiProperty({
+    description: 'User email',
+    type: String,
+    format: 'email',
+    example: 'john.doe@example.com',
+  })
   email!: string
 
-  @ApiProperty({ description: 'User avatar URL', example: 'https://example.com/avatar.png' })
+  @ApiProperty({
+    description: 'User avatar URL',
+    type: String,
+    example: 'https://example.com/avatar.png',
+    required: false,
+  })
   avatarUrl?: string
 }
 
@@ -61,19 +104,20 @@ export class PaginateEventStaffDto {
 }
 
 export class QueryEventStaffDto extends QueryPaginationDto {
-  @ApiProperty({ description: 'Search by user name', example: 'John Doe', required: false })
+  @ApiProperty({ description: 'Search by user name', type: String, example: 'John Doe', required: false })
   @IsString()
   @IsOptional()
   name?: string
 
   // the decorator @IsEmail is not needed beacuse the search can be only the beginning of the email (e.g. john@)
-  @ApiProperty({ description: 'Search by user email', example: 'john.doe@example.com', required: false })
+  @ApiProperty({ description: 'Search by user email', type: String, example: 'john.doe@example.com', required: false })
   @IsString()
   @IsOptional()
   email?: string
 
   @ApiProperty({
     description: 'Filter by invitation status',
+    enum: EventStaffInvitationStatus,
     example: EventStaffInvitationStatus.PENDING,
     required: false,
   })
@@ -83,6 +127,7 @@ export class QueryEventStaffDto extends QueryPaginationDto {
 
   @ApiProperty({
     description: 'Filter by access level',
+    enum: EventStaffAccessLevel,
     example: EventStaffAccessLevel.READONLY,
     required: false,
   })
@@ -93,7 +138,11 @@ export class QueryEventStaffDto extends QueryPaginationDto {
 }
 
 export class UpdateAccessLevelDto {
-  @ApiProperty({ description: 'Access level', example: EventStaffAccessLevel.CHECKIN })
+  @ApiProperty({
+    description: 'Access level',
+    enum: EventStaffAccessLevel,
+    example: EventStaffAccessLevel.CHECKIN,
+  })
   @IsEnum(EventStaffAccessLevel)
   @IsLowercase()
   accessLevel!: EventStaffAccessLevel

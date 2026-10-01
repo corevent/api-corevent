@@ -1,6 +1,15 @@
 import { Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
-import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
+import {
+  ApiBadRequestResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger'
 import { MessageDto } from '~/common/dto/message.dto'
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
 import {
@@ -19,11 +28,14 @@ export class UserInvitationsController {
   @Post(':invitationId/accept')
   @ApiOperation({ summary: 'Accept an invitation' })
   @ApiParam({ name: 'invitationId', type: String, description: 'The ID of the invitation' })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     type: EventStaffResponseDto,
     description: 'The invitation has been accepted.',
   })
+  @ApiBadRequestResponse({ description: 'Can only accept invitation to opened event' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiForbiddenResponse({ description: 'This invitation is not for you' })
+  @ApiNotFoundResponse({ description: 'Event staff invitation not found. Event not found' })
   async acceptInvitation(
     @Req() req: AuthenticatedRequest,
     @Param('invitationId') invitationId: string,
@@ -34,11 +46,13 @@ export class UserInvitationsController {
   @Post(':invitationId/reject')
   @ApiOperation({ summary: 'Reject an invitation' })
   @ApiParam({ name: 'invitationId', type: String, description: 'The ID of the invitation' })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     type: MessageDto,
     description: 'The invitation has been rejected.',
   })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiForbiddenResponse({ description: 'This invitation is not for you' })
+  @ApiNotFoundResponse({ description: 'Event staff invitation not found' })
   async rejectInvitation(
     @Req() req: AuthenticatedRequest,
     @Param('invitationId') invitationId: string,
@@ -48,12 +62,12 @@ export class UserInvitationsController {
 
   @Get('me')
   @ApiOperation({ summary: 'Get all invitations for the current user' })
-  @ApiQuery({ type: QueryUserInvitationsDto })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     type: PaginateEventStaffInvitationsWithOrganizerDto,
     description: 'The list of invitations for the current user.',
   })
+  @ApiBadRequestResponse({ description: 'Invalid query parameters. Page number is out of range.' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   async getByUserId(
     @Req() req: AuthenticatedRequest,
     @Query() query: QueryUserInvitationsDto,

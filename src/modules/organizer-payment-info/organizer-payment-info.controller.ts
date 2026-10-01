@@ -1,6 +1,18 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger'
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
 import { QueryPaginationDto } from '~/common/pagination/pagination.dto'
 import {
@@ -23,17 +35,21 @@ export class OrganizerPaymentInfoController {
     description: `Note: All fields are optional because the user may choose, for example, only PIX. 
     Therefore, it is not possible to send all values as null. 
     \nAdditionally, if the user provides one field of a type and leaves the others null, 
-    a 403 error will be returned (e.g., "pixType": "cpf" and "pixKey": null).`,
+    a 400 error will be returned (e.g., "pixType": "cpf" and "pixKey": null).`,
   })
-  @ApiParam({ name: 'id', description: 'User ID' })
   @ApiBody({ type: CreateOrganizerPaymentInfoDto })
-  @ApiResponse({
-    status: 201,
+  @ApiCreatedResponse({
     description: 'Organizer payment info created successfully',
     type: OrganizerPaymentInfoResDto,
   })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
+  @ApiBadRequestResponse({
+    description: [
+      'Inform a complete payment method: bank data or PIX data (or both).',
+      'User must be at least 18 years old.',
+      'Invalid PIX key.',
+    ].join(' '),
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   async createOrganizerPaymentInfo(
     @Req() req: AuthenticatedRequest,
     @Body() body: CreateOrganizerPaymentInfoDto,
@@ -45,13 +61,20 @@ export class OrganizerPaymentInfoController {
   @ApiOperation({ summary: 'Update organizer payment info' })
   @ApiParam({ name: 'id', description: 'Organizer payment info ID' })
   @ApiBody({ type: UpdateOrganizerPaymentInfoDto })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Organizer payment info updated successfully',
     type: OrganizerPaymentInfoResDto,
   })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
+  @ApiBadRequestResponse({
+    description: [
+      'Inform a complete payment method: bank data or PIX data (or both).',
+      'User must be at least 18 years old.',
+      'Invalid PIX key.',
+    ].join(' '),
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiForbiddenResponse({ description: 'You do not own this payment info' })
+  @ApiNotFoundResponse({ description: 'Organizer payment info not found' })
   async updateOrganizerPaymentInfo(
     @Req() req: AuthenticatedRequest,
     @Param('id') id: string,
@@ -61,16 +84,13 @@ export class OrganizerPaymentInfoController {
   }
 
   @Get('organizer-payment-info')
-  @ApiOperation({ summary: 'Get all organizer payment infos by user ID' })
-  @ApiParam({ name: 'id', description: 'User ID' })
-  @ApiQuery({ type: QueryPaginationDto })
-  @ApiResponse({
-    status: 200,
+  @ApiOperation({ summary: 'Get all organizer payment infos of the current user' })
+  @ApiOkResponse({
     description: 'Organizer payment infos retrieved successfully',
     type: OrganizerPaymentInfoPageDto,
   })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
+  @ApiBadRequestResponse({ description: 'Invalid query parameters. Page number is out of range.' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   async getOrganizerPaymentInfosByUserId(
     @Req() req: AuthenticatedRequest,
     @Query() query: QueryPaginationDto,
@@ -81,13 +101,13 @@ export class OrganizerPaymentInfoController {
   @Get('organizer-payment-info/:id')
   @ApiOperation({ summary: 'Get organizer payment info by ID' })
   @ApiParam({ name: 'id', description: 'Organizer payment info ID' })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Organizer payment info retrieved successfully',
     type: OrganizerPaymentInfoResDto,
   })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiForbiddenResponse({ description: 'You do not own this payment info' })
+  @ApiNotFoundResponse({ description: 'Organizer payment info not found' })
   async getOrganizerPaymentInfoById(
     @Req() req: AuthenticatedRequest,
     @Param('id') id: string,
@@ -99,9 +119,10 @@ export class OrganizerPaymentInfoController {
   @HttpCode(204)
   @ApiParam({ name: 'id', description: 'Organizer payment info ID' })
   @ApiOperation({ summary: 'Delete organizer payment info by ID' })
-  @ApiResponse({ status: 200, description: 'Organizer payment info deleted successfully' })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
+  @ApiNoContentResponse({ description: 'Organizer payment info deleted successfully' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiForbiddenResponse({ description: 'You do not own this payment info' })
+  @ApiNotFoundResponse({ description: 'Organizer payment info not found' })
   async deleteOrganizerPaymentInfoById(@Req() req: AuthenticatedRequest, @Param('id') id: string): Promise<void> {
     return this.organizerPaymentInfoService.delete(req.user.id, id)
   }

@@ -1,6 +1,15 @@
 import { Controller, Delete, HttpCode, Param, Post, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
-import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger'
+import {
+  ApiBadRequestResponse,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger'
 import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
 import { FavoritesResponseDto } from '~/modules/favorites/dto/favorites.controller'
 import { FavoritesService } from '~/modules/favorites/favorites.service'
@@ -14,8 +23,9 @@ export class FavoritesController {
   @Post('events/:eventId')
   @ApiOperation({ summary: 'Create a favorite' })
   @ApiParam({ name: 'eventId', type: String, description: 'The ID of the event' })
-  @ApiResponse({ status: 201, type: FavoritesResponseDto, description: 'The favorite has been successfully created.' })
-  @ApiResponse({ status: 400, description: 'Bad request.' })
+  @ApiCreatedResponse({ type: FavoritesResponseDto, description: 'The favorite has been successfully created.' })
+  @ApiBadRequestResponse({ description: 'Favorite already exists' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   async create(@Req() req: AuthenticatedRequest, @Param('eventId') eventId: string): Promise<FavoritesResponseDto> {
     return this.favoritesService.create(req.user.id, eventId)
   }
@@ -24,8 +34,9 @@ export class FavoritesController {
   @HttpCode(204)
   @ApiOperation({ summary: 'Remove a favorite' })
   @ApiParam({ name: 'favoriteId', type: String, description: 'The ID of the favorite' })
-  @ApiResponse({ status: 204, description: 'The favorite has been successfully removed.' })
-  @ApiResponse({ status: 404, description: 'Favorite not found.' })
+  @ApiNoContentResponse({ description: 'The favorite has been successfully removed.' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiNotFoundResponse({ description: 'Favorite not found' })
   async remove(@Req() req: AuthenticatedRequest, @Param('favoriteId') favoriteId: string): Promise<void> {
     return this.favoritesService.remove(req.user.id, favoriteId)
   }

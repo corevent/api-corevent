@@ -1,6 +1,6 @@
 import { Controller, Get, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger'
 import { AgePoliciesService } from '~/modules/age-policies/age-policies.service'
 import { AgePolicyResponseDto } from '~/modules/age-policies/dto/age-policies.dto'
 
@@ -12,7 +12,9 @@ export class AgePoliciesController {
 
   @Get()
   @ApiOperation({ summary: 'Get the active age policy' })
-  @ApiResponse({ status: 200, description: 'The active age policy', type: AgePolicyResponseDto })
+  @ApiOkResponse({ description: 'The active age policy', type: AgePolicyResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiNotFoundResponse({ description: 'No active age policy found' })
   async getActivePolicy(): Promise<AgePolicyResponseDto> {
     return this.agePoliciesService.getActivePolicy()
   }

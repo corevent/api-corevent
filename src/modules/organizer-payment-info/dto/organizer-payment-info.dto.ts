@@ -12,53 +12,88 @@ export enum PixType {
 }
 
 export class CreateOrganizerPaymentInfoDto {
-  @ApiProperty({ description: 'Description of the payment info', example: 'Main bank account' })
+  @ApiProperty({ description: 'Description of the payment info', type: String, example: 'Main bank account' })
   @IsString()
   @IsNotEmpty()
   @Expose()
   description!: string
 
-  @ApiProperty({ description: 'Bank branch number', example: '1234', required: false })
+  @ApiProperty({
+    description: 'Bank branch number',
+    type: String,
+    example: '1234',
+    minLength: 4,
+    maxLength: 4,
+    required: false,
+  })
   @IsNumberString()
   @Length(4, 4)
   @IsOptional()
   @Expose()
   branchNumber?: string
 
-  @ApiProperty({ description: 'Bank branch digit', example: '5', required: false })
+  @ApiProperty({
+    description: 'Bank branch digit',
+    type: String,
+    example: '5',
+    minLength: 1,
+    maxLength: 1,
+    required: false,
+  })
   @IsNumberString()
   @Length(1, 1)
   @IsOptional()
   @Expose()
   branchDigit?: string
 
-  @ApiProperty({ description: 'Bank account number', example: '1234567890', required: false })
+  @ApiProperty({
+    description: 'Bank account number',
+    type: String,
+    example: '1234567890',
+    minLength: 5,
+    maxLength: 10,
+    required: false,
+  })
   @IsNumberString()
   @Length(5, 10)
   @IsOptional()
   @Expose()
   accountNumber?: string
 
-  @ApiProperty({ description: 'Bank account digit', example: '5', required: false })
+  @ApiProperty({
+    description: 'Bank account digit',
+    type: String,
+    example: '5',
+    minLength: 1,
+    maxLength: 1,
+    required: false,
+  })
   @IsNumberString()
   @Length(1, 1)
   @IsOptional()
   @Expose()
   accountDigit?: string
 
-  @ApiProperty({ description: 'Pix key', example: '1234567890', required: false })
+  @ApiProperty({ description: 'Pix key', type: String, example: '1234567890', required: false })
   @IsString()
   @IsOptional()
   @Expose()
   pixKey?: string
 
-  @ApiProperty({ description: 'Pix type', example: 'cpf', enum: PixType, required: false })
+  @ApiProperty({ description: 'Pix type', enum: PixType, example: 'cpf', required: false })
   @IsEnum(PixType)
   @IsOptional()
   @Expose()
   pixType?: PixType
 
-  @ApiProperty({ description: 'Bank code', example: '260', required: false })
+  @ApiProperty({
+    description: 'Bank code',
+    type: String,
+    example: '260',
+    minLength: 3,
+    maxLength: 3,
+    required: false,
+  })
   @IsNumberString()
   @Length(3, 3)
   @IsOptional()
@@ -69,11 +104,21 @@ export class CreateOrganizerPaymentInfoDto {
 export class UpdateOrganizerPaymentInfoDto extends PartialType(CreateOrganizerPaymentInfoDto) {}
 
 export class OrganizerPaymentInfoDataDto extends CreateOrganizerPaymentInfoDto {
-  @ApiProperty({ description: 'Organizer payment info ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'Organizer payment info ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @Expose()
   id!: string
 
-  @ApiProperty({ description: 'User ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'User ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @Expose()
   userId!: string
 }
@@ -84,10 +129,15 @@ export class OrganizerPaymentInfoResDto {
 }
 
 export class ListOrganizerPaymentInfoDto {
-  @ApiProperty({ description: 'Organizer payment info ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'Organizer payment info ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   id!: string
 
-  @ApiProperty({ description: 'Description of the payment info', example: 'Main bank account' })
+  @ApiProperty({ description: 'Description of the payment info', type: String, example: 'Main bank account' })
   description!: string
 }
 

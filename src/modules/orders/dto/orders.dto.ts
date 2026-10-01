@@ -6,11 +6,16 @@ import { OrderStatus } from '~/modules/orders/orders.entity'
 import { TicketStatus } from '~/modules/tickets/tickets.entity'
 
 class ItemsDto {
-  @ApiProperty({ description: 'Ticket type ID', example: '1234567890' })
+  @ApiProperty({
+    description: 'Ticket type ID',
+    type: String,
+    format: 'uuid',
+    example: '1234567890',
+  })
   @IsUUID()
   ticketTypeId!: string
 
-  @ApiProperty({ description: 'Quantity', example: 1 })
+  @ApiProperty({ description: 'Quantity', type: Number, example: 1 })
   @IsInt()
   quantity!: number
 }
@@ -24,21 +29,27 @@ export class CreateOrderDto {
 }
 
 export class CheckoutDataDto {
-  @ApiProperty({ description: 'Link relation', example: 'self' })
+  @ApiProperty({ description: 'Link relation', type: String, example: 'self' })
   rel!: string
 
   @ApiProperty({
     description: 'Link href',
+    type: String,
     example: 'https://api.pagbank.com/v1/checkouts/123e4567-e89b-12d3-a456-426614174000',
   })
   href!: string
 
-  @ApiProperty({ description: 'Link method', example: 'GET' })
+  @ApiProperty({ description: 'Link method', type: String, example: 'GET' })
   method!: string
 }
 
 export class OrderDataDto {
-  @ApiProperty({ description: 'Order ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'Order ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   orderId!: string
 
   @ApiProperty({ description: 'Checkout links', type: [CheckoutDataDto] })
@@ -57,32 +68,53 @@ export class OrderResponseDto {
 }
 
 export class OrderTicketTypeDto {
-  @ApiProperty({ description: 'Ticket type ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'Ticket type ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   id!: string
 
-  @ApiProperty({ description: 'Ticket type name', example: 'VIP' })
+  @ApiProperty({ description: 'Ticket type name', type: String, example: 'VIP' })
   name!: string
 
-  @ApiProperty({ description: 'Ticket type price', example: 100 })
+  @ApiProperty({ description: 'Ticket type price', type: Number, example: 100 })
   @Type(() => Number)
   price!: number
 }
 
 export class OrderTicketDto {
-  @ApiProperty({ description: 'Ticket ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'Ticket ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   id!: string
 
-  @ApiProperty({ description: 'Ticket type ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'Ticket type ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   ticketTypeId!: string
 
-  @ApiProperty({ description: 'Ticket status', example: TicketStatus.PENDING })
+  @ApiProperty({ description: 'Ticket status', enum: TicketStatus, example: TicketStatus.PENDING })
   status!: TicketStatus
 
-  @ApiPropertyOptional({ description: 'Check-in date', example: '2026-01-01T00:00:00.000Z' })
+  @ApiPropertyOptional({
+    description: 'Check-in date',
+    type: String,
+    format: 'date-time',
+    example: '2026-01-01T00:00:00.000Z',
+  })
   checkinAt?: Date
 
   @ApiProperty({
     description: 'QR code token',
+    type: String,
     example: 'a4174821114a75118c7ede39152b3f45523559ded1875d294ad1ce790a9d2bd8',
   })
   qrToken!: string
@@ -93,31 +125,55 @@ export class OrderTicketDto {
 }
 
 export class OrderEventDto {
-  @ApiProperty({ description: 'Event ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'Event ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @Expose()
   id!: string
 
-  @ApiProperty({ description: 'Event title', example: 'Summer Festival' })
+  @ApiProperty({ description: 'Event title', type: String, example: 'Summer Festival' })
   @Expose()
   title!: string
 
-  @ApiProperty({ description: 'Event start date', example: '2026-06-09T10:55:10.000Z' })
+  @ApiProperty({
+    description: 'Event start date',
+    type: String,
+    format: 'date-time',
+    example: '2026-06-09T10:55:10.000Z',
+  })
   @Expose()
   startDate!: Date
 
-  @ApiProperty({ description: 'Event end date', example: '2026-06-09T10:55:10.000Z' })
+  @ApiProperty({
+    description: 'Event end date',
+    type: String,
+    format: 'date-time',
+    example: '2026-06-09T10:55:10.000Z',
+  })
   @Expose()
   endDate!: Date
 }
 
 export class OrderCheckoutDto {
-  @ApiProperty({ description: 'PagBank checkout ID', example: 'CHEC_EAEDE53B-0BCB-4BF0-90AD-5703844FB9F9' })
+  @ApiProperty({
+    description: 'PagBank checkout ID',
+    type: String,
+    example: 'CHEC_EAEDE53B-0BCB-4BF0-90AD-5703844FB9F9',
+  })
   id!: string
 
-  @ApiProperty({ description: 'PagBank checkout status', example: 'ACTIVE' })
+  @ApiProperty({ description: 'PagBank checkout status', type: String, example: 'ACTIVE' })
   status!: string
 
-  @ApiProperty({ description: 'Checkout creation date', example: '2026-06-09T10:55:10-03:00' })
+  @ApiProperty({
+    description: 'Checkout creation date',
+    type: String,
+    format: 'date-time',
+    example: '2026-06-09T10:55:10-03:00',
+  })
   createdAt!: string
 
   @ApiProperty({ description: 'Checkout links', type: [CheckoutDataDto] })
@@ -132,19 +188,34 @@ export class OrderCheckoutDto {
 }
 
 export class OrderDetailsDataDto {
-  @ApiProperty({ description: 'Order ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'Order ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   id!: string
 
-  @ApiProperty({ description: 'Event ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'Event ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   eventId!: string
 
-  @ApiProperty({ description: 'Order status', example: OrderStatus.PENDING })
+  @ApiProperty({ description: 'Order status', enum: OrderStatus, example: OrderStatus.PENDING })
   status!: OrderStatus
 
-  @ApiProperty({ description: 'Total amount', example: 100 })
+  @ApiProperty({ description: 'Total amount', type: Number, example: 100 })
   totalAmount!: number
 
-  @ApiProperty({ description: 'Order creation date', example: '2026-06-09T10:55:10.000Z' })
+  @ApiProperty({
+    description: 'Order creation date',
+    type: String,
+    format: 'date-time',
+    example: '2026-06-09T10:55:10.000Z',
+  })
   createdAt!: Date
 
   @ApiProperty({ description: 'Event', type: OrderEventDto })
@@ -166,7 +237,12 @@ export class OrderDetailsResponseDto {
 }
 
 export class MyOrdersDataDto {
-  @ApiProperty({ description: 'Order ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'Order ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @Expose()
   id!: string
 
@@ -175,15 +251,20 @@ export class MyOrdersDataDto {
   @Expose()
   event!: OrderEventDto
 
-  @ApiProperty({ description: 'Total amount', example: 100 })
+  @ApiProperty({ description: 'Total amount', type: Number, example: 100 })
   @Expose()
   totalAmount!: number
 
-  @ApiProperty({ description: 'Order status', example: OrderStatus.PENDING })
+  @ApiProperty({ description: 'Order status', enum: OrderStatus, example: OrderStatus.PENDING })
   @Expose()
   status!: OrderStatus
 
-  @ApiProperty({ description: 'Order creation date', example: '2026-06-09T10:55:10.000Z' })
+  @ApiProperty({
+    description: 'Order creation date',
+    type: String,
+    format: 'date-time',
+    example: '2026-06-09T10:55:10.000Z',
+  })
   @Expose()
   createdAt!: Date
 }
