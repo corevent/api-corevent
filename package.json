@@ -28,7 +28,8 @@
     "migration:run:prod": "node ./node_modules/typeorm/cli.js migration:run -d dist/database/data-source.js",
     "migration:revert:prod": "node ./node_modules/typeorm/cli.js migration:revert -d dist/database/data-source.js",
     "migration:show:prod": "node ./node_modules/typeorm/cli.js migration:show -d dist/database/data-source.js",
-    "seed": "ts-node -r tsconfig-paths/register src/database/seeds/seed.ts"
+    "seed": "ts-node -r tsconfig-paths/register src/database/seeds/seed.ts",
+    "prepare:e2e": "ts-node -r tsconfig-paths/register src/database/seeds/prepare-e2e.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1065.0",
