@@ -56,15 +56,15 @@ export class EventsService {
 
   async updateBanner(organizerId: string, eventId: string, key: string): Promise<EventResponseDto> {
     await this.assertUserIsOrganizer(organizerId, eventId)
-    const publicUrl = await this.storageService.confirmEventBannerUpload(eventId, key)
+    const storedKey = await this.storageService.confirmEventBannerUpload(eventId, key)
     const event = await this.eventsRepository.findOne({ where: { id: eventId } })
     if (!event) {
       throw new NotFoundException('Event not found')
     }
-    if (event.bannerUrl && event.bannerUrl !== publicUrl) {
-      await this.storageService.deleteStoredImageByUrl(event.bannerUrl)
+    if (event.bannerKey && event.bannerKey !== storedKey) {
+      await this.storageService.deleteStoredImage(event.bannerKey)
     }
-    await this.eventsRepository.update(eventId, { bannerUrl: publicUrl })
+    await this.eventsRepository.update(eventId, { bannerKey: storedKey })
     return this.getById(eventId)
   }
 
@@ -288,13 +288,13 @@ export class EventsService {
         'e.startDate',
         'e.endDate',
         'e.category',
-        'e.bannerUrl',
+        'e.bannerKey',
         'e.isAdultOnly',
         'e.status',
         'o.id',
         'o.name',
         'o.email',
-        'o.avatarUrl',
+        'o.avatarKey',
       ])
       .innerJoin('e.organizer', 'o')
       .leftJoin('e.city', 'c')

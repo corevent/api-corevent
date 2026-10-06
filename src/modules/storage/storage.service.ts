@@ -1,41 +1,33 @@
-import { DeleteObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { File, Storage } from '@google-cloud/storage'
 import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { randomUUID } from 'node:crypto'
+import { EventsService } from '~/modules/events-module/events.service'
 import {
   ALLOWED_IMAGE_CONTENT_TYPES,
   AllowedImageContentType,
   CONTENT_TYPE_TO_EXTENSION,
   PRESIGNED_UPLOAD_EXPIRES_IN_SECONDS,
+  SIGNED_READ_EXPIRES_IN_SECONDS,
 } from '~/modules/storage/constants/storage.constants'
-import { EventsService } from '~/modules/events-module/events.service'
 import { PresignUploadDto, PresignUploadResponseDto, StorageUploadPurpose } from '~/modules/storage/dto/storage.dto'
 import { PresignedUploadResult } from '~/modules/storage/interfaces/storage.interface'
+import { isStoredObjectKey, signStoredImages } from '~/modules/storage/sign-stored-images'
+import { STORAGE_CLIENT } from '~/modules/storage/storage.client'
 
 @Injectable()
 export class StorageService {
-  private readonly s3: S3Client
-  private readonly bucket: string
-  private readonly region: string
+  private readonly bucketName: string
 
   constructor(
     private readonly configService: ConfigService,
+    @Inject(STORAGE_CLIENT) private readonly storage: Storage,
     @Inject(forwardRef(() => EventsService))
     private readonly eventsService: EventsService,
   ) {
-    const accessKeyId = this.getRequiredEnv('AWS_ACCESS_KEY_ID')
-    const secretAccessKey = this.getRequiredEnv('AWS_SECRET_ACCESS_KEY')
-    this.region = this.getRequiredEnv('AWS_REGION')
-    this.bucket = this.getRequiredEnv('AWS_S3_BUCKET')
-
-    this.s3 = new S3Client({
-      region: this.region,
-      credentials: { accessKeyId, secretAccessKey },
-    })
+    this.bucketName = this.getRequiredEnv('GCS_BUCKET')
   }
 
-  // Orchestrates presigned upload URL generation for avatar or event banner uploads.
   async presignUpload(userId: string, dto: PresignUploadDto): Promise<PresignUploadResponseDto> {
     this.assertAllowedContentType(dto.contentType)
     const contentType = dto.contentType
@@ -46,117 +38,83 @@ export class StorageService {
       data: {
         uploadUrl,
         key,
-        publicUrl: this.buildPublicUrl(key),
+        publicUrl: await this.getSignedReadUrl(key),
         expiresIn,
       },
     }
   }
 
-  // Validates that the provided MIME type is an allowed image format.
-  assertAllowedContentType(contentType: string): asserts contentType is AllowedImageContentType {
+  async signResponseImages<T>(payload: T): Promise<T> {
+    return signStoredImages(payload, (key) => this.getSignedReadUrl(key))
+  }
+
+  async confirmAvatarUpload(userId: string, key: string): Promise<string> {
+    if (!this.isAvatarKeyOwnedByUser(key, userId)) {
+      throw new BadRequestException('Invalid avatar upload key')
+    }
+    await this.assertObjectExists(key)
+    return key
+  }
+
+  async confirmEventBannerUpload(eventId: string, key: string): Promise<string> {
+    if (!this.isEventBannerKeyForEvent(key, eventId)) {
+      throw new BadRequestException('Invalid event banner upload key')
+    }
+    await this.assertObjectExists(key)
+    return key
+  }
+
+  async deleteStoredImage(stored?: string | null): Promise<void> {
+    if (!stored || !isStoredObjectKey(stored)) {
+      return
+    }
+    await this.file(stored).delete({ ignoreNotFound: true })
+  }
+
+  private assertAllowedContentType(contentType: string): asserts contentType is AllowedImageContentType {
     if (!ALLOWED_IMAGE_CONTENT_TYPES.includes(contentType as AllowedImageContentType)) {
       throw new BadRequestException('Unsupported image content type')
     }
   }
 
-  // Builds the S3 object key for a user avatar upload.
-  buildAvatarKey(userId: string, contentType: AllowedImageContentType): string {
+  private buildAvatarKey(userId: string, contentType: AllowedImageContentType): string {
     const extension = CONTENT_TYPE_TO_EXTENSION[contentType]
     return `avatars/${userId}/${randomUUID()}.${extension}`
   }
 
-  // Builds the S3 object key for an event banner upload.
-  buildEventBannerKey(eventId: string, contentType: AllowedImageContentType): string {
+  private buildEventBannerKey(eventId: string, contentType: AllowedImageContentType): string {
     const extension = CONTENT_TYPE_TO_EXTENSION[contentType]
     return `events/${eventId}/banner/${randomUUID()}.${extension}`
   }
 
-  // Generates a temporary presigned PUT URL so the client can upload directly to S3.
-  async getPresignedUploadUrl(key: string, contentType: AllowedImageContentType): Promise<PresignedUploadResult> {
-    const command = new PutObjectCommand({
-      Bucket: this.bucket,
-      Key: key,
-      ContentType: contentType,
-    })
-
-    const uploadUrl = await getSignedUrl(this.s3, command, {
-      expiresIn: PRESIGNED_UPLOAD_EXPIRES_IN_SECONDS,
+  private async getPresignedUploadUrl(
+    key: string,
+    contentType: AllowedImageContentType,
+  ): Promise<PresignedUploadResult> {
+    const [uploadUrl] = await this.file(key).getSignedUrl({
+      version: 'v4',
+      action: 'write',
+      expires: Date.now() + PRESIGNED_UPLOAD_EXPIRES_IN_SECONDS * 1000,
+      contentType,
     })
 
     return { uploadUrl, expiresIn: PRESIGNED_UPLOAD_EXPIRES_IN_SECONDS }
   }
 
-  // Builds the permanent public URL for an object stored in the bucket.
-  buildPublicUrl(key: string): string {
-    return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`
+  private async getSignedReadUrl(key: string): Promise<string> {
+    const expires = Date.now() + SIGNED_READ_EXPIRES_IN_SECONDS * 1000
+    const [url] = await this.file(key).getSignedUrl({ version: 'v4', action: 'read', expires })
+    return url
   }
 
-  // Validates an avatar upload key, ensures the object exists, and returns its public URL.
-  async confirmAvatarUpload(userId: string, key: string): Promise<string> {
-    if (!this.isAvatarKeyOwnedByUser(key, userId)) {
-      throw new BadRequestException('Invalid avatar upload key')
-    }
-    return this.assertObjectExistsAndGetPublicUrl(key)
-  }
-
-  // Validates an event banner upload key, ensures the object exists, and returns its public URL.
-  async confirmEventBannerUpload(eventId: string, key: string): Promise<string> {
-    if (!this.isEventBannerKeyForEvent(key, eventId)) {
-      throw new BadRequestException('Invalid event banner upload key')
-    }
-    return this.assertObjectExistsAndGetPublicUrl(key)
-  }
-
-  // Deletes a previously stored image when its public URL points to this bucket.
-  async deleteStoredImageByUrl(publicUrl?: string | null): Promise<void> {
-    if (!publicUrl) {
-      return
-    }
-    const key = this.extractKeyFromPublicUrl(publicUrl)
-    if (!key) {
-      return
-    }
-    await this.deleteObject(key)
-  }
-
-  // Checks whether an object exists in the bucket (used to confirm uploads).
-  async objectExists(key: string): Promise<boolean> {
-    try {
-      await this.s3.send(new HeadObjectCommand({ Bucket: this.bucket, Key: key }))
-      return true
-    } catch (error: unknown) {
-      if (this.isS3NotFoundError(error)) {
-        return false
-      }
-      throw error
-    }
-  }
-
-  // Removes an object from the bucket (e.g. when replacing an old image).
-  async deleteObject(key: string): Promise<void> {
-    await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }))
-  }
-
-  // Extracts the S3 object key from a public URL previously stored in the database.
-  extractKeyFromPublicUrl(publicUrl: string): string | null {
-    const prefix = `https://${this.bucket}.s3.${this.region}.amazonaws.com/`
-    if (!publicUrl.startsWith(prefix)) {
-      return null
-    }
-    return publicUrl.slice(prefix.length)
-  }
-
-  // Ensures the object key belongs to the given user (prevents cross-user key reuse).
-  isAvatarKeyOwnedByUser(key: string, userId: string): boolean {
+  private isAvatarKeyOwnedByUser(key: string, userId: string): boolean {
     return key.startsWith(`avatars/${userId}/`)
   }
 
-  // Ensures the object key belongs to the given event (prevents cross-event key reuse).
-  isEventBannerKeyForEvent(key: string, eventId: string): boolean {
+  private isEventBannerKeyForEvent(key: string, eventId: string): boolean {
     return key.startsWith(`events/${eventId}/banner/`)
   }
 
-  // Resolves the S3 object key based on upload purpose and validates access when required.
   private async resolveUploadKey(
     userId: string,
     dto: PresignUploadDto,
@@ -174,23 +132,17 @@ export class StorageService {
     return this.buildEventBannerKey(dto.eventId, contentType)
   }
 
-  private async assertObjectExistsAndGetPublicUrl(key: string): Promise<string> {
-    const exists = await this.objectExists(key)
+  private async assertObjectExists(key: string): Promise<void> {
+    const [exists] = await this.file(key).exists()
     if (!exists) {
       throw new BadRequestException('Uploaded image not found in storage')
     }
-    return this.buildPublicUrl(key)
   }
 
-  private isS3NotFoundError(error: unknown): boolean {
-    if (typeof error !== 'object' || error === null) {
-      return false
-    }
-    const s3Error = error as { name?: string; $metadata?: { httpStatusCode?: number } }
-    return s3Error.name === 'NotFound' || s3Error.$metadata?.httpStatusCode === 404
+  private file(key: string): File {
+    return this.storage.bucket(this.bucketName).file(key)
   }
 
-  // Reads a required environment variable or throws at startup if missing.
   private getRequiredEnv(key: string): string {
     const value = this.configService.get<string>(key)
     if (!value) {

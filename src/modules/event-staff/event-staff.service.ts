@@ -156,7 +156,7 @@ export class EventStaffService {
         'u.id',
         'u.name',
         'u.email',
-        'u.avatarUrl',
+        'u.avatarKey',
       ])
 
     return query

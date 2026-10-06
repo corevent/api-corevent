@@ -129,7 +129,7 @@ export class EventStaffInvitationsService {
         'o.id',
         'o.name',
         'o.email',
-        'o.avatarUrl',
+        'o.avatarKey',
       ])
       .where('esi.userId = :userId', { userId })
       .innerJoin('esi.event', 'e')
@@ -176,7 +176,7 @@ export class EventStaffInvitationsService {
         'u.id',
         'u.name',
         'u.email',
-        'u.avatarUrl',
+        'u.avatarKey',
       ])
       .innerJoin('esi.user', 'u')
   }

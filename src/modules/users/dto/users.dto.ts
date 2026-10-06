@@ -128,7 +128,7 @@ export class UserDataDto {
     example: 'https://example.com/avatar.png',
     required: false,
   })
-  @Expose()
+  @Expose({ name: 'avatarKey' })
   avatarUrl?: string
 
   @ApiProperty({

@@ -21,7 +21,7 @@ export async function seedUser(dataSource: DataSource) {
       document: '17666789041',
       birthDate: '2000-01-01',
       passwordHash: await bcrypt.hash('@Teste123', 10),
-      avatarUrl: 'https://corevent.com/avatar.png',
+      avatarKey: 'https://corevent.com/avatar.png',
     })
     .orIgnore() // avoid duplicates
     .execute()

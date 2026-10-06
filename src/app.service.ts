@@ -13,18 +13,18 @@ export class AppService {
   ) {}
 
   async health(): Promise<HealthCheckResponseDto> {
-    const [database, mail, s3] = await Promise.all([
+    const [database, mail, storage] = await Promise.all([
       this.checkDatabase(),
       this.mailService.checkConnection(),
       this.storageHealthService.checkBucket(),
     ])
-    const isHealthy = [database, mail, s3].every((dependency) => dependency === 'OK')
+    const isHealthy = [database, mail, storage].every((dependency) => dependency === 'OK')
 
     return {
       status: isHealthy ? 'OK' : 'error',
       version: process.env.npm_package_version ?? 'unknown',
       uptime: process.uptime(),
-      dependencies: { database, mail, s3 },
+      dependencies: { database, mail, storage },
     }
   }
 

@@ -1,4 +1,5 @@
 import { ApiProperty, OmitType } from '@nestjs/swagger'
+import { Expose, Type } from 'class-transformer'
 import { IsEnum, IsLowercase, IsOptional, IsString } from 'class-validator'
 import { PaginationMetaDto, QueryPaginationDto } from '~/common/pagination/pagination.dto'
 import {
@@ -85,6 +86,7 @@ class UserInfoDto {
     example: 'https://example.com/avatar.png',
     required: false,
   })
+  @Expose({ name: 'avatarKey' })
   avatarUrl?: string
 }
 
@@ -92,6 +94,7 @@ class EventStaffWithoutUserIdDto extends OmitType(EventStaffDataDto, ['userId'])
 
 export class ListEventStaffDto extends EventStaffWithoutUserIdDto {
   @ApiProperty({ description: 'User information', type: UserInfoDto })
+  @Type(() => UserInfoDto)
   user!: UserInfoDto
 }
 

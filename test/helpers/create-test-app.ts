@@ -9,8 +9,10 @@ import { AppModule } from '~/app.module'
 import { MailService } from '~/modules/mail/mail.service'
 import { CheckoutResponse, CreateCheckout } from '~/modules/pagbank/interface/pagbank.interface'
 import { PagBankService } from '~/modules/pagbank/pagbank.service'
+import { STORAGE_CLIENT } from '~/modules/storage/storage.client'
 import { StorageHealthService } from '~/modules/storage/storage-health.service'
 import { DEFAULT_VERIFY_CODE } from './fixtures'
+import { InMemoryObjectStorage } from './in-memory-object-storage'
 
 config()
 
@@ -26,6 +28,7 @@ export interface TestApp {
     createCheckout: jest.Mock
     getCheckoutById: jest.Mock
   }
+  objectStorage: InMemoryObjectStorage
 }
 
 export interface CreateTestAppOptions {
@@ -48,10 +51,7 @@ function applyTestEnvFallbacks(): void {
   ensureEnv('PAGBANK_TOKEN', 'e2e-pagbank-token')
   ensureEnv('PAGBANK_REDIRECT_URL', 'https://example.com/payment/success')
   ensureEnv('PAGBANK_API_URL', 'https://pagbank.test')
-  ensureEnv('AWS_ACCESS_KEY_ID', 'test-access-key')
-  ensureEnv('AWS_SECRET_ACCESS_KEY', 'test-secret-key')
-  ensureEnv('AWS_REGION', 'us-east-1')
-  ensureEnv('AWS_S3_BUCKET', 'test-bucket')
+  ensureEnv('GCS_BUCKET', 'test-bucket')
 }
 
 function createMailMock() {
@@ -86,6 +86,7 @@ export async function createTestApp(options: CreateTestAppOptions = {}): Promise
 
   const mailService = createMailMock()
   const pagBankService = createPagBankMock()
+  const objectStorage = new InMemoryObjectStorage()
 
   const builder = Test.createTestingModule({
     imports: [AppModule],
@@ -96,6 +97,8 @@ export async function createTestApp(options: CreateTestAppOptions = {}): Promise
     .useValue(pagBankService)
     .overrideProvider(StorageHealthService)
     .useValue({ checkBucket: jest.fn().mockResolvedValue('OK') })
+    .overrideProvider(STORAGE_CLIENT)
+    .useValue(objectStorage)
 
   if (!options.enableThrottle) {
     builder.overrideGuard(ThrottlerGuard).useValue({ canActivate: () => true })
@@ -131,5 +134,5 @@ export async function createTestApp(options: CreateTestAppOptions = {}): Promise
 
   await app.init()
 
-  return { app, mailService, pagBankService }
+  return { app, mailService, pagBankService, objectStorage }
 }

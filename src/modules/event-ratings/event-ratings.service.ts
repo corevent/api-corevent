@@ -17,7 +17,7 @@ import { EventRatings } from '~/modules/event-ratings/event-ratings.entity'
 interface MyEventRatingRawRow {
   eventId: string
   eventTitle: string
-  bannerUrl: string | null
+  bannerKey: string | null
   userRating: string
   averageRating: string | null
 }
@@ -57,7 +57,7 @@ export class EventRatingsService {
       .innerJoin('er.event', 'e')
       .select('e.id', 'eventId')
       .addSelect('e.title', 'eventTitle')
-      .addSelect('e.bannerUrl', 'bannerUrl')
+      .addSelect('e.bannerKey', 'bannerKey')
       .addSelect('er.rating', 'userRating')
       .addSelect((subQuery) => {
         return subQuery
@@ -96,7 +96,7 @@ export class EventRatingsService {
     return plainToInstance(MyEventRatingDto, {
       eventId: row.eventId,
       eventTitle: row.eventTitle,
-      bannerUrl: row.bannerUrl ?? undefined,
+      bannerKey: row.bannerKey ?? undefined,
       userRating: Number(row.userRating),
       averageRating: Number(row.averageRating),
     })

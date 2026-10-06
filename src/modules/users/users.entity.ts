@@ -40,7 +40,7 @@ export class Users {
   phoneNumber?: string
 
   @Column({ type: 'text', nullable: true })
-  avatarUrl?: string
+  avatarKey?: string
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date

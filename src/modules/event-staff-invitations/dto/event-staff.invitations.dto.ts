@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { Expose, Type } from 'class-transformer'
 import { IsEmail, IsEnum, IsLowercase, IsOptional, IsString } from 'class-validator'
 import { PaginationMetaDto, QueryPaginationDto } from '~/common/pagination/pagination.dto'
 import {
@@ -141,11 +142,13 @@ class UserInfoDto {
     example: 'https://example.com/avatar.png',
     required: false,
   })
+  @Expose({ name: 'avatarKey' })
   avatarUrl?: string
 }
 
 export class ListEventStaffInvitationsDto extends EventStaffInvitationDataDto {
   @ApiProperty({ description: 'User information', type: UserInfoDto })
+  @Type(() => UserInfoDto)
   user!: UserInfoDto
 }
 
@@ -160,13 +163,19 @@ class EventInfoDto {
 
   @ApiProperty({ description: 'Event title', type: String, example: 'Event Title' })
   title!: string
+
+  @ApiProperty({ description: 'Organizer information', type: UserInfoDto, required: false })
+  @Type(() => UserInfoDto)
+  organizer?: UserInfoDto
 }
 
 export class ListEventStaffInvitationsWithOrganizerDto extends EventStaffInvitationDataDto {
   @ApiProperty({ description: 'Event information', type: EventInfoDto })
+  @Type(() => EventInfoDto)
   event!: EventInfoDto
 
   @ApiProperty({ description: 'Organizer information', type: UserInfoDto })
+  @Type(() => UserInfoDto)
   organizer!: UserInfoDto
 }
 

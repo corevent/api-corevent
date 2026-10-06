@@ -42,15 +42,15 @@ export class UsersService {
   }
 
   async updateAvatar(userId: string, key: string): Promise<UserResponseDto> {
-    const publicUrl = await this.storageService.confirmAvatarUpload(userId, key)
+    const storedKey = await this.storageService.confirmAvatarUpload(userId, key)
     const user = await this.usersRepository.findOne({ where: { id: userId } })
     if (!user) {
       throw new NotFoundException('User not found')
     }
-    if (user.avatarUrl && user.avatarUrl !== publicUrl) {
-      await this.storageService.deleteStoredImageByUrl(user.avatarUrl)
+    if (user.avatarKey && user.avatarKey !== storedKey) {
+      await this.storageService.deleteStoredImage(user.avatarKey)
     }
-    await this.usersRepository.update(userId, { avatarUrl: publicUrl })
+    await this.usersRepository.update(userId, { avatarKey: storedKey })
     return this.getById(userId)
   }
 

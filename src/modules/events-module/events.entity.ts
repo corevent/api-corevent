@@ -93,7 +93,7 @@ export class Events {
   category!: EventCategory
 
   @Column({ type: 'text', nullable: true })
-  bannerUrl?: string
+  bannerKey?: string
 
   @Column({ type: 'boolean', default: false })
   isAdultOnly!: boolean

@@ -31,8 +31,9 @@ Corevent API is the backend service for the Corevent event management platform. 
    Edit `.env` and set:
    - **Database:** `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` so they match your PostgreSQL instance and database.
    - **Auth:** `JWT_SECRET` and `JWT_REFRESH_SECRET` (required for sign-in and protected routes).
+   - **Images:** `GCS_BUCKET` (private Cloud Storage bucket). For local development, also set `GOOGLE_APPLICATION_CREDENTIALS` to the absolute path of the service account JSON key. Do not commit that file.
 
-   Optional: `NODE_ENV`, `PORT` (defaults to `3000` if unset).
+   Optional: `NODE_ENV`, `PORT` (defaults to `3000` if unset). On Cloud Run, leave `GOOGLE_APPLICATION_CREDENTIALS` unset and attach the service account to the service.
 
 3. **Apply migrations** (creates and updates tables; run against the same database as in `.env`)
 
@@ -53,6 +54,16 @@ Corevent API is the backend service for the Corevent event management platform. 
    ```
 
    HTTP API base path: `/api`. Interactive docs: `/swagger` and `/docs`.
+
+### Image uploads
+
+Avatars and event banners go to a private Cloud Storage bucket. The database stores the object key (`avatar_key`, `banner_key`). JSON responses expose `avatarUrl` and `bannerUrl` as signed read URLs.
+
+1. `POST /api/storage/presign` returns `uploadUrl`, `key`, and a temporary `publicUrl`. `contentType` must be `image/jpeg`, `image/png`, or `image/webp`. Event banners also require `eventId`, and the caller must be the organizer.
+2. The client sends `PUT` to `uploadUrl` with that same `Content-Type` and the file as the raw body. `uploadUrl` expires in 10 minutes. Do not send the API bearer token on this request.
+3. `PATCH /api/users/me/avatar` or `PATCH /api/events/:id/banner` confirms the `key` after the object exists.
+
+Each API response signs a new read URL, valid for 6 hours. Opening an older URL after that returns 403; fetching the profile or event again returns a fresh one. The bucket needs CORS that allows `PUT` and the `Content-Type` header from the app origin. The service account needs permission to create, read, and delete objects. On Cloud Run it also needs `iam.serviceAccounts.signBlob` on itself.
 
 ### Schema changes (developers)
 

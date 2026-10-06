@@ -21,7 +21,7 @@ export class StorageController {
 
   @Post('presign')
   @HttpCode(201)
-  @ApiOperation({ summary: 'Generate a presigned URL for direct image upload to S3' })
+  @ApiOperation({ summary: 'Generate a signed URL for direct image upload to Cloud Storage' })
   @ApiBody({ type: PresignUploadDto })
   @ApiCreatedResponse({ type: PresignUploadResponseDto, description: 'The presigned upload URL.' })
   @ApiBadRequestResponse({

@@ -38,7 +38,10 @@ export class PresignUploadDataDto {
   @ApiProperty({ description: 'The key of the uploaded object', type: String })
   key!: string
 
-  @ApiProperty({ description: 'The public URL of the uploaded object', type: String })
+  @ApiProperty({
+    description: 'Temporary signed URL to read the object after the upload. It expires separately from the upload URL.',
+    type: String,
+  })
   publicUrl!: string
 
   @ApiProperty({ description: 'The expiration time of the presigned upload URL', type: Number })
@@ -51,7 +54,7 @@ export class PresignUploadResponseDto {
 }
 
 export class ConfirmImageUploadDto {
-  @ApiProperty({ description: 'S3 object key returned from the presign endpoint', type: String })
+  @ApiProperty({ description: 'Object key returned from the presign endpoint', type: String })
   @IsNotEmpty()
   @IsString()
   key!: string

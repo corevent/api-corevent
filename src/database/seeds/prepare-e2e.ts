@@ -37,7 +37,7 @@ async function run(): Promise<void> {
           document: '55718617031',
           birthDate: '2000-01-01',
           passwordHash,
-          avatarUrl: 'https://corevent.com/avatar.png',
+          avatarKey: 'https://corevent.com/avatar.png',
         },
         ['email'],
       )

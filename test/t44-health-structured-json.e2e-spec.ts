@@ -18,7 +18,7 @@ describe('T44 - Health check com contrato JSON estruturado', () => {
         dependencies: {
           database: healthy,
           mail: healthy,
-          s3: healthy,
+          storage: healthy,
         },
       }),
     )

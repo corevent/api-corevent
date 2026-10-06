@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { Type } from 'class-transformer'
+import { Expose, Type } from 'class-transformer'
 import { IsInt, Max, Min } from 'class-validator'
 import { PaginationMetaDto, QueryPaginationDto } from '~/common/pagination/pagination.dto'
 
@@ -66,6 +66,7 @@ export class MyEventRatingDto {
   eventTitle!: string
 
   @ApiPropertyOptional({ description: 'Event banner URL', type: String, example: 'https://example.com/banner.jpg' })
+  @Expose({ name: 'bannerKey' })
   bannerUrl?: string
 
   @ApiProperty({ description: 'Average event rating', type: Number, example: 4.5 })

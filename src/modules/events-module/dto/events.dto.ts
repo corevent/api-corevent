@@ -1,4 +1,5 @@
 import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger'
+import { Expose, Type } from 'class-transformer'
 import {
   IsBoolean,
   IsEnum,
@@ -162,6 +163,7 @@ class OrganizerInfoDto {
     example: 'https://example.com/avatar.png',
     required: false,
   })
+  @Expose({ name: 'avatarKey' })
   avatarUrl?: string
 }
 
@@ -222,7 +224,17 @@ export class EventDataDto extends OmitType(CreateEventDto, ['cityId']) {
   })
   createdAt!: Date
 
+  @ApiProperty({
+    description: 'Event banner URL',
+    type: String,
+    example: 'https://example.com/banner.jpg',
+    required: false,
+  })
+  @Expose({ name: 'bannerKey' })
+  bannerUrl?: string
+
   @ApiProperty({ description: 'Organizer (user) information', type: OrganizerInfoDto })
+  @Type(() => OrganizerInfoDto)
   organizer!: OrganizerInfoDto
 
   @ApiProperty({ description: 'City information', type: CityInfoDto })
@@ -390,6 +402,7 @@ export class ListEventsDto {
     example: 'https://example.com/banner.jpg',
     required: false,
   })
+  @Expose({ name: 'bannerKey' })
   bannerUrl?: string
 
   @ApiProperty({ description: 'Event is adult only', type: Boolean, example: false })
@@ -402,6 +415,7 @@ export class ListEventsDto {
   locationType!: EventLocationType
 
   @ApiProperty({ description: 'Organizer (user) information', type: OrganizerInfoDto })
+  @Type(() => OrganizerInfoDto)
   organizer!: OrganizerInfoDto
 
   @ApiProperty({ description: 'Average event rating', type: Number, example: 4.5, required: false })

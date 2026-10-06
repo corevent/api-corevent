@@ -16,11 +16,11 @@ export class HealthDependenciesDto {
   mail!: string
 
   @ApiProperty({
-    description: 'The status of the S3 bucket health check',
+    description: 'The status of the Cloud Storage bucket health check',
     example: 'OK',
     type: String,
   })
-  s3!: string
+  storage!: string
 }
 
 export class HealthCheckResponseDto {
