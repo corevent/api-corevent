@@ -1,98 +1,138 @@
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+  <a target="blank"><img src="assets/corevent.png" width="600" alt="Corevent Logo" /></a>
 </p>
-
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Corevent API is the backend service for the Corevent event management platform. Built with NestJS and TypeORM, it exposes a REST API (documented with Swagger and Scalar) for creating, managing, and joining events.
 
 ## Project setup
 
+### Prerequisites
+
+- Node.js (LTS recommended)
+- [pnpm](https://pnpm.io/installation)
+- PostgreSQL, with an empty database created for this project
+
+### Local flow
+
+1. **Install dependencies**
+
+   ```bash
+   pnpm install
+   ```
+
+2. **Configure environment**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Edit `.env` and set:
+   - **Database:** `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` so they match your PostgreSQL instance and database.
+   - **Auth:** `JWT_SECRET` and `JWT_REFRESH_SECRET` (required for sign-in and protected routes).
+   - **Images:** `GCS_BUCKET` (private Cloud Storage bucket). For local development, also set `GOOGLE_APPLICATION_CREDENTIALS` to the absolute path of the service account JSON key. Do not commit that file.
+
+   Optional: `NODE_ENV`, `PORT` (defaults to `3000` if unset). On Cloud Run, leave `GOOGLE_APPLICATION_CREDENTIALS` unset and attach the service account to the service.
+
+3. **Apply migrations** (creates and updates tables; run against the same database as in `.env`)
+
+   ```bash
+   pnpm migration:run
+   ```
+
+4. **Run database seeds** (populates states and cities; creates a base dev user when `NODE_ENV=development`)
+
+   ```bash
+   pnpm seed
+   ```
+
+5. **Run the API** (watch mode)
+
+   ```bash
+   pnpm start:dev
+   ```
+
+   HTTP API base path: `/api`. Interactive docs: `/swagger` and `/docs`.
+
+### Image uploads
+
+Avatars and event banners go to a private Cloud Storage bucket. The database stores the object key (`avatar_key`, `banner_key`). JSON responses expose `avatarUrl` and `bannerUrl` as signed read URLs.
+
+1. `POST /api/storage/presign` returns `uploadUrl`, `key`, and a temporary `publicUrl`. `contentType` must be `image/jpeg`, `image/png`, or `image/webp`. Event banners also require `eventId`, and the caller must be the organizer.
+2. The client sends `PUT` to `uploadUrl` with that same `Content-Type` and the file as the raw body. `uploadUrl` expires in 10 minutes. Do not send the API bearer token on this request.
+3. `PATCH /api/users/me/avatar` or `PATCH /api/events/:id/banner` confirms the `key` after the object exists.
+
+Each API response signs a new read URL, valid for 6 hours. Opening an older URL after that returns 403; fetching the profile or event again returns a fresh one. The bucket needs CORS that allows `PUT` and the `Content-Type` header from the app origin. The service account needs permission to create, read, and delete objects. On Cloud Run it also needs `iam.serviceAccounts.signBlob` on itself.
+
+### Schema changes (developers)
+
+When you change TypeORM entities and need a new migration:
+
 ```bash
-$ pnpm install
+pnpm migration:generate src/database/migrations/YourMigrationName
+pnpm migration:run
 ```
 
-## Compile and run the project
+Use `pnpm migration:create` instead of `migration:generate` when you want an empty migration file to edit by hand.
 
-```bash
-# development
-$ pnpm run start
+### Mobile E2E preparation (staging only)
 
-# watch mode
-$ pnpm run start:dev
+Configure `NODE_ENV=staging`, the staging database connection (`DB_URL` or
+`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`) and `QR_CODE_SECRET`
+with the same value used by the staging API. Apply migrations before preparing:
 
-# production mode
-$ pnpm run start:prod
+```sh
+pnpm prepare:e2e
 ```
 
-## Run tests
+This command refuses any other `NODE_ENV` before connecting. It writes directly
+to the database, without starting NestJS or contacting PagBank/email services.
+Each run creates or updates the e2e account, preserving its ID when the
+email already exists.
 
-```bash
-# unit tests
-$ pnpm run test
+Each run creates a new online music event starting in seven days, a free ticket
+type with stock for the purchase test and a paid ticket type. A confirmed order,
+order item and active ticket with an encrypted QR are inserted for the paid
+type, with stock reduced by one. This is prepared test data, not a payment;
+no gateway transaction is created. The free type remains unused by the account.
+Organizer payment info is inserted if the account does not already have it.
+Before creating the new dataset, the command removes all tickets, order items,
+orders, favorites and ratings belonging to the dedicated E2E account. It also
+removes previous events created by this preparator (account ownership plus the
+`Corevent Mobile E2E ` title prefix) and their dependent records. Other events and
+accounts are preserved. If a prepared event has purchases, interactions, staff
+or changes belonging to another user, preparation aborts and rolls back.
+This clears legacy QR tokens encrypted with previous keys. No favorites or
+ratings are created in the new dataset.
 
-# e2e tests
-$ pnpm run test:e2e
+All writes use one transaction. Conflicts such as the CPF belonging to a
+different account abort the transaction. Run suites sequentially: the account
+is shared and its profile fields/password are restored by every preparation.
+Do not prepare while a suite is running. API instances sharing this database
+must use the same `QR_CODE_SECRET` as the preparator; its presence is checked,
+but the script cannot compare its value with a deployed API.
 
-# test coverage
-$ pnpm run test:cov
+After commit, the final stdout line is a JSON object:
+
+```json
+{
+  "schemaVersion": 1,
+  "runId": "run-uuid",
+  "userId": "user-uuid",
+  "email": "e2e@email.com",
+  "eventId": "event-uuid",
+  "freeTicketName": "Ingresso gratuito E2E",
+  "freeTicketTypeId": "free-type-uuid",
+  "paidTicketTypeId": "paid-type-uuid",
+  "orderId": "order-uuid",
+  "ticketId": "ticket-uuid"
+}
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Use `eventId` as `COREVENT_E2E_EVENT_ID` and `freeTicketName` as
+`COREVENT_E2E_FREE_TICKET_NAME` in the mobile Flutter flags, with this account
+and the staging API URL. Prepare again before each complete suite; an already
+purchased free type cannot be purchased again by the same user. Errors are
+reported as JSON on stderr with a nonzero exit code. The log omits passwords,
+password hashes, QR tokens and database credentials.

@@ -1,0 +1,89 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { Expose, Type } from 'class-transformer'
+import { IsInt, Max, Min } from 'class-validator'
+import { PaginationMetaDto, QueryPaginationDto } from '~/common/pagination/pagination.dto'
+
+export class CreateEventRatingDto {
+  @ApiProperty({ description: 'Rating', type: Number, example: 5, minimum: 1, maximum: 5 })
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  rating!: number
+}
+
+export class EventRatingDataDto {
+  @ApiProperty({
+    description: 'Rating ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  id!: string
+
+  @ApiProperty({
+    description: 'User ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  userId!: string
+
+  @ApiProperty({
+    description: 'Event ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  eventId!: string
+
+  @ApiProperty({ description: 'Rating', type: Number, example: 5 })
+  rating!: number
+
+  @ApiProperty({
+    description: 'Created at',
+    type: String,
+    format: 'date-time',
+    example: '2026-01-01T00:00:00.000Z',
+  })
+  createdAt!: Date
+}
+
+export class EventRatingResponseDto {
+  @ApiProperty({ description: 'Rating data', type: EventRatingDataDto })
+  data!: EventRatingDataDto
+}
+
+export class MyEventRatingDto {
+  @ApiProperty({
+    description: 'Event ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  eventId!: string
+
+  @ApiProperty({ description: 'Event title', type: String, example: 'Summer Music Festival' })
+  eventTitle!: string
+
+  @ApiPropertyOptional({ description: 'Event banner URL', type: String, example: 'https://example.com/banner.jpg' })
+  @Expose({ name: 'bannerKey' })
+  bannerUrl?: string
+
+  @ApiProperty({ description: 'Average event rating', type: Number, example: 4.5 })
+  averageRating!: number
+
+  @ApiProperty({ description: 'Current user rating for this event', type: Number, example: 5 })
+  userRating!: number
+}
+
+export class PaginateMyEventRatingsDto {
+  @ApiProperty({ description: 'List of event ratings by the current user', type: [MyEventRatingDto] })
+  @Type(() => MyEventRatingDto)
+  data!: MyEventRatingDto[]
+
+  @ApiProperty({ description: 'Pagination meta', type: PaginationMetaDto })
+  @Type(() => PaginationMetaDto)
+  meta!: PaginationMetaDto
+}
+
+export class QueryMyEventRatingsDto extends QueryPaginationDto {}

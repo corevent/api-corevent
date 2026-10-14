@@ -1,12 +1,25 @@
 {
   "moduleFileExtensions": ["js", "json", "ts"],
-  "rootDir": ".",
+  "rootDir": "..",
+  "roots": ["<rootDir>/test"],
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
+  "testTimeout": 60000,
+  "maxWorkers": 1,
+  "setupFiles": ["dotenv/config"],
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
   "moduleNameMapper": {
     "^~/(.*)$": "<rootDir>/src/$1"
-  }
+  },
+  "coverageProvider": "v8",
+  "coverageDirectory": "<rootDir>/coverage",
+  "coverageReporters": ["text", "text-summary", "lcov", "html", "json-summary"],
+  "collectCoverageFrom": [
+    "<rootDir>/src/**/*.ts",
+    "!<rootDir>/src/main.ts",
+    "!<rootDir>/src/database/migrations/**",
+    "!<rootDir>/src/database/seeds/**"
+  ]
 }

@@ -1,0 +1,117 @@
+import { ApiProperty, PartialType } from '@nestjs/swagger'
+import { Transform, Type } from 'class-transformer'
+import { IsBoolean, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator'
+import { IsStrictDate } from '~/common/decorators/is-strict-date.decorator'
+import { PaginationMetaDto, QueryPaginationDto } from '~/common/pagination/pagination.dto'
+
+export class CreateTicketTypeDto {
+  @ApiProperty({ description: 'Name of the ticket type', type: String, example: 'Ticket Type Name' })
+  @IsString()
+  @IsNotEmpty()
+  name!: string
+
+  @ApiProperty({ description: 'Price of the ticket type', type: Number, example: 100 })
+  @IsNumber()
+  @Type(() => Number)
+  price!: number
+
+  @ApiProperty({
+    description: 'Total quantity of tickets for this ticket type',
+    type: Number,
+    example: 100,
+    minimum: 1,
+  })
+  @IsInt()
+  @Min(1)
+  totalQuantity!: number
+
+  @ApiProperty({
+    description: 'Start date of the ticket type',
+    type: String,
+    format: 'date-time',
+    example: '2026-01-01T00:00:00.000Z',
+  })
+  @IsStrictDate()
+  startDate!: Date
+
+  @ApiProperty({
+    description: 'End date of the ticket type',
+    type: String,
+    format: 'date-time',
+    example: '2026-01-01T00:00:00.000Z',
+  })
+  @IsStrictDate()
+  endDate!: Date
+}
+
+// Only update for draft events
+export class UpdateTicketTypeDto extends PartialType(CreateTicketTypeDto) {}
+
+export class TicketTypeDataDto extends CreateTicketTypeDto {
+  @ApiProperty({
+    description: 'Ticket type ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174432',
+  })
+  id!: string
+
+  @ApiProperty({
+    description: 'Event ID',
+    type: String,
+    format: 'uuid',
+    example: '123e4567-e89b-12d3-a456-426614174432',
+  })
+  eventId!: string
+
+  @ApiProperty({ description: 'Available quantity of tickets for this ticket type', type: Number, example: 100 })
+  availableQuantity!: number
+}
+
+export class TicketTypeResponseDto {
+  @ApiProperty({ description: 'Ticket type data', type: TicketTypeDataDto })
+  data!: TicketTypeDataDto
+}
+
+export class PaginatedTicketTypesListDto {
+  @ApiProperty({ description: 'List of ticket types', type: [TicketTypeDataDto] })
+  data!: TicketTypeDataDto[]
+
+  @ApiProperty({ description: 'Pagination meta', type: PaginationMetaDto })
+  meta!: PaginationMetaDto
+}
+
+export class QueryTicketTypesDto extends QueryPaginationDto {
+  @ApiProperty({ description: 'Return only ticket types that still have availability', type: Boolean })
+  @Type(() => String)
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  availableOnly!: boolean
+
+  @ApiProperty({ description: 'Search by name', type: String, example: 'Ticket Type Name', required: false })
+  @IsString()
+  @IsOptional()
+  name?: string
+
+  @ApiProperty({
+    description: 'Filter by start date',
+    type: String,
+    format: 'date-time',
+    example: '2026-01-01T00:00:00.000Z',
+    required: false,
+  })
+  @IsStrictDate()
+  @IsOptional()
+  startDate?: Date
+
+  @ApiProperty({
+    description: 'Filter by end date',
+    type: String,
+    format: 'date-time',
+    example: '2026-01-01T00:00:00.000Z',
+    required: false,
+  })
+  @IsStrictDate()
+  @IsOptional()
+  endDate?: Date
+}

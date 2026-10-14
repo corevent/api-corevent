@@ -1,0 +1,7 @@
+allowBuilds:
+  '@nestjs/core': true
+  '@scarf/scarf': false
+  unrs-resolver: true
+
+minimumReleaseAgeExclude:
+  - '@aws-sdk/*'
