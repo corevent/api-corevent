@@ -136,3 +136,7 @@ and the staging API URL. Prepare again before each complete suite; an already
 purchased free type cannot be purchased again by the same user. Errors are
 reported as JSON on stderr with a nonzero exit code. The log omits passwords,
 password hashes, QR tokens and database credentials.
+
+## APK downloads
+
+Private APK publication, endpoints and GCP/GitHub setup: [APK distribution guide](docs/apk-downloads.md).
