@@ -20,6 +20,10 @@ async function bootstrap() {
   )
 
   const configService = app.get(ConfigService)
+  const frontendUrl = configService.get<string>('FRONTEND_URL')?.trim()
+  app.enableCors({
+    origin: frontendUrl ? new URL(frontendUrl).origin : false,
+  })
 
   if (configService.get<string>('NODE_ENV') === 'development') {
     const config = new DocumentBuilder()
