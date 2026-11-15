@@ -35,7 +35,7 @@ Corevent API is the backend service for the Corevent event management platform. 
 
    Optional: `NODE_ENV`, `PORT` (defaults to `3000` if unset). On Cloud Run, leave `GOOGLE_APPLICATION_CREDENTIALS` unset and attach the service account to the service.
 
-   Set `FRONTEND_URL` to the browser application's URL allowed by CORS, for example `http://api.corevent.site/`. The API normalizes it to its origin (`http://api.corevent.site`), so a trailing slash is accepted. Without this variable, cross-origin browser access is disabled. Restart the API after changing it.
+   Set `FRONTEND_URL` to the browser application's URL allowed by CORS, for example `https://corevent.site/`. The API normalizes it to its origin (`https://corevent.site`), so a trailing slash is accepted. Without this variable, cross-origin browser access is disabled. Restart the API after changing it.
 
 3. **Apply migrations** (creates and updates tables; run against the same database as in `.env`)
 
