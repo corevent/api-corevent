@@ -36,6 +36,11 @@ export class AgePolicyAcceptancesService {
     return { data: plainToInstance(CheckIfUserHasAcceptedDto, { userHasAccepted }) }
   }
 
+  async revokeAgePolicy(userId: string): Promise<void> {
+    const { data: policy } = await this.agePoliciesService.getActivePolicy()
+    await this.agePolicyAcceptancesRepository.delete({ userId, agePolicyId: policy.id })
+  }
+
   private async getAcceptanceStatus(userId: string): Promise<CheckIfUserHasAccepted> {
     const { data: agePolicy } = await this.agePoliciesService.getActivePolicy()
     const acceptance = await this.agePolicyAcceptancesRepository.findOne({

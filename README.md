@@ -67,6 +67,12 @@ Avatars and event banners go to a private Cloud Storage bucket. The database sto
 
 Each API response signs a new read URL, valid for 6 hours. Opening an older URL after that returns 403; fetching the profile or event again returns a fresh one. The bucket needs CORS that allows `PUT` and the `Content-Type` header from the app origin. The service account needs permission to create, read, and delete objects. On Cloud Run it also needs `iam.serviceAccounts.signBlob` on itself.
 
+### Age policy acceptance
+
+Authenticated users can read the active policy with `GET /api/age-policies` and check their acceptance with `GET /api/age-policies/acceptances/check`. Acceptance is recorded once per user and active policy with `POST /api/age-policies/acceptances`.
+
+`DELETE /api/age-policies/acceptances` revokes only the authenticated user's acceptance of the active policy and returns `204`, including when it was already absent. Other users, previous policies and existing orders are unchanged. With no active policy, the endpoint returns `404`. Deploy this endpoint before releasing the mobile policy settings with revocation support.
+
 ### Schema changes (developers)
 
 When you change TypeORM entities and need a new migration:

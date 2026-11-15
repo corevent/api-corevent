@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Req, UseGuards } from '@nestjs/common'
+import { Controller, Delete, Get, HttpCode, Post, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import {
   ApiBadRequestResponse,
   ApiNotFoundResponse,
+  ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -20,6 +21,16 @@ import {
 @Controller('age-policies/acceptances')
 export class AgePolicyAcceptancesController {
   constructor(private readonly agePolicyAcceptancesService: AgePolicyAcceptancesService) {}
+
+  @Delete()
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Revoke acceptance of the current age policy' })
+  @ApiNoContentResponse({ description: 'Acceptance revoked, or no acceptance existed' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiNotFoundResponse({ description: 'No active age policy found' })
+  async revokeAgePolicy(@Req() req: AuthenticatedRequest): Promise<void> {
+    await this.agePolicyAcceptancesService.revokeAgePolicy(req.user.id)
+  }
 
   @Post()
   @ApiOperation({ summary: 'Accept the current age policy' })
