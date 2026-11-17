@@ -74,7 +74,6 @@ export class AuthController {
   @ApiOkResponse({ type: MessageDto, description: 'The password has been reset.' })
   @ApiBadRequestResponse({
     description: [
-      'User not found.',
       'Invalid code.',
       'Code expired.',
       'Code expired due to maximum attempts reached.',
@@ -91,7 +90,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Send a verify email code to the user before creating a new user' })
   @ApiBody({ type: EmailDto })
   @ApiOkResponse({ type: MessageDto, description: 'The verification code email has been requested.' })
-  @ApiBadRequestResponse({ description: 'Email already used by another user. Invalid email' })
+  @ApiBadRequestResponse({ description: 'Invalid email' })
   async verifyEmail(@Body() body: EmailDto): Promise<{ message: string }> {
     return this.authService.sendVerifyEmailCode(body.email)
   }

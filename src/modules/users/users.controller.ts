@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Req, UseGuards } from '@nestjs/common'
+import { Body, Controller, ForbiddenException, Get, Param, Patch, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import {
   ApiBadRequestResponse,
@@ -75,7 +75,10 @@ export class UsersController {
   @ApiOperation({ summary: 'Get a user by ID' })
   @ApiOkResponse({ type: UserResponseDto, description: 'The user profile.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
-  async findById(@Param('id') id: string): Promise<UserResponseDto> {
+  async findById(@Req() req: AuthenticatedRequest, @Param('id') id: string): Promise<UserResponseDto> {
+    if (req.user.id !== id) {
+      throw new ForbiddenException('You can only access your own profile')
+    }
     return this.usersService.getById(id)
   }
 }

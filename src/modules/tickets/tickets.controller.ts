@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, HttpCode, Param, Post, Query, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import {
   ApiBadRequestResponse,
@@ -30,6 +30,7 @@ export class TicketsController {
   constructor(private readonly ticketsService: TicketsService) {}
 
   @Post(':eventId/checkin')
+  @HttpCode(200)
   @ApiOperation({ summary: 'Check in a ticket by QR code' })
   @ApiParam({ name: 'eventId', type: String, description: 'The ID of the event' })
   @ApiBody({ type: CheckinDto })

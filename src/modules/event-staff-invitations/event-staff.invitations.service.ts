@@ -94,7 +94,16 @@ export class EventStaffInvitationsService {
   }
 
   // organizer list all invitations for his events
-  async getAll(eventId: string, queryParams: QueryEventStaffInvitationsDto): Promise<PaginateEventStaffInvitationsDto> {
+  async getAll(
+    organizerId: string,
+    eventId: string,
+    queryParams: QueryEventStaffInvitationsDto,
+  ): Promise<PaginateEventStaffInvitationsDto> {
+    const { data: event } = await this.eventsService.getById(eventId)
+    if (event.organizer.id !== organizerId) {
+      throw new ForbiddenException('You are not the organizer of this event')
+    }
+
     const { page, limit, ...filters } = queryParams
     const query = this.buildBaseQuery()
       .where('esi.eventId = :eventId', { eventId })

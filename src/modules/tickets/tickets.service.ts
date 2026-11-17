@@ -9,11 +9,12 @@ import { ConfigService } from '@nestjs/config'
 import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
 import { createHash } from 'crypto'
-import { EntityManager, FindOptionsWhere, Repository, SelectQueryBuilder } from 'typeorm'
+import { DataSource, EntityManager, FindOptionsWhere, Repository, SelectQueryBuilder } from 'typeorm'
 import { createPaginationMeta } from '~/common/pagination/pagination-meta.factory'
 import { getOffset } from '~/common/utils/get-offset.util'
 import { decryptQrToken } from '~/common/utils/qr-code-crypto.util'
 import { EventStaffService } from '~/modules/event-staff/event-staff.service'
+import { EventStatus } from '~/modules/events-module/events.entity'
 import { EventsService } from '~/modules/events-module/events.service'
 import { OrderStatus } from '~/modules/orders/orders.entity'
 import {
@@ -47,6 +48,7 @@ export class TicketsService {
     @InjectRepository(Tickets)
     private ticketsRepository: Repository<Tickets>,
     private configService: ConfigService,
+    private dataSource: DataSource,
     private eventsService: EventsService,
     private eventStaffService: EventStaffService,
     private usersService: UsersService,
@@ -172,8 +174,13 @@ export class TicketsService {
     return repository.save(ticket)
   }
 
-  async hasUserTicketForTicketType(userId: string, ticketTypeId: string): Promise<boolean> {
-    const count = await this.ticketsRepository
+  async hasUserTicketForTicketType(
+    userId: string,
+    ticketTypeId: string,
+    manager?: EntityManager,
+  ): Promise<boolean> {
+    const repository = manager ? manager.getRepository(Tickets) : this.ticketsRepository
+    const count = await repository
       .createQueryBuilder('ticket')
       .innerJoin('ticket.order', 'order')
       .where('ticket.userId = :userId', { userId })
@@ -189,27 +196,45 @@ export class TicketsService {
     await this.validateCheckinPermission(staffUserId, eventId)
 
     const qrCodeHash = createHash('sha256').update(qrToken).digest('hex')
-    const ticket = await this.ticketsRepository.findOne({
-      where: { qrCodeHash },
-      relations: ['order', 'order.user', 'order.event', 'ticketType'],
-    })
-
-    if (!ticket) {
-      throw new NotFoundException('Invalid QR code')
-    }
-
-    this.ticketValidations(eventId, ticket)
-
     const { data: staffUser } = await this.usersService.getById(staffUserId)
 
-    ticket.status = TicketStatus.CHECKED_IN
-    ticket.checkinAt = new Date()
-    ticket.checkinBy = staffUserId
+    return this.dataSource.transaction(async (manager) => {
+      const ticket = await manager.findOne(Tickets, {
+        where: { qrCodeHash },
+        relations: ['order', 'order.user', 'order.event', 'ticketType'],
+      })
 
-    const savedTicket = await this.ticketsRepository.save(ticket)
-    return {
-      data: this.mapCheckinResponse(savedTicket, { id: staffUser.id, name: staffUser.name }),
-    }
+      if (!ticket) {
+        throw new NotFoundException('Invalid QR code')
+      }
+
+      this.ticketValidations(eventId, ticket)
+
+      const checkinAt = new Date()
+      const result = await manager
+        .createQueryBuilder()
+        .update(Tickets)
+        .set({
+          status: TicketStatus.CHECKED_IN,
+          checkinAt,
+          checkinBy: staffUserId,
+        })
+        .where('id = :id', { id: ticket.id })
+        .andWhere('status = :pendingStatus', { pendingStatus: TicketStatus.PENDING })
+        .execute()
+
+      if (!result.affected) {
+        throw new ConflictException('Ticket already checked in')
+      }
+
+      ticket.status = TicketStatus.CHECKED_IN
+      ticket.checkinAt = checkinAt
+      ticket.checkinBy = staffUserId
+
+      return {
+        data: this.mapCheckinResponse(ticket, { id: staffUser.id, name: staffUser.name }),
+      }
+    })
   }
 
   private mapCheckinResponse(ticket: Tickets, checkedInByStaff: { id: string; name: string }): CheckinDataDto {
@@ -343,6 +368,11 @@ export class TicketsService {
       throw new BadRequestException('Ticket does not belong to this event')
     }
 
+    const eventStatus = ticket.order.event.status
+    if (eventStatus !== EventStatus.OPENED && eventStatus !== EventStatus.GOING) {
+      throw new BadRequestException('Check-in is only allowed for opened or going events')
+    }
+
     if (ticket.status === TicketStatus.CANCELLED) {
       throw new BadRequestException('Ticket is cancelled')
     }
@@ -351,7 +381,6 @@ export class TicketsService {
       throw new ConflictException('Ticket already checked in')
     }
 
-    // When the payment webhook exists
     if (ticket.order.status !== OrderStatus.PAID) {
       throw new BadRequestException('Order is not paid')
     }

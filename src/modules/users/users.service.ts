@@ -2,8 +2,9 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm'
 import * as bcrypt from 'bcryptjs'
 import { plainToInstance } from 'class-transformer'
-import { Repository } from 'typeorm'
+import { DataSource, Repository } from 'typeorm'
 import { isValidDocument } from '~/common/utils/cpf-cnpj.util'
+import { RefreshTokens } from '~/modules/auth/refresh-tokens.entity'
 import { DocumentType } from '~/modules/users/enums/document-type.enum'
 import { RegistrationCodesService } from '~/modules/registration-codes/registration-codes.service'
 import { StorageService } from '~/modules/storage/storage.service'
@@ -21,8 +22,11 @@ export class UsersService {
   constructor(
     @InjectRepository(Users)
     private usersRepository: Repository<Users>,
+    @InjectRepository(RefreshTokens)
+    private refreshTokensRepository: Repository<RefreshTokens>,
     private registrationCodesService: RegistrationCodesService,
     private storageService: StorageService,
+    private dataSource: DataSource,
   ) {}
 
   async create(body: CreateUserDto): Promise<UserResponseDto> {
@@ -66,13 +70,19 @@ export class UsersService {
     }
 
     const newPasswordHash = await this.validateAndHashPassword(body.newPassword)
-    await this.usersRepository.update(id, { passwordHash: newPasswordHash })
+    await this.dataSource.transaction(async (manager) => {
+      await manager.update(Users, id, { passwordHash: newPasswordHash })
+      await manager.delete(RefreshTokens, { userId: id })
+    })
     return { message: 'Password updated successfully' }
   }
 
   async resetPass(id: string, newPassword: string): Promise<void> {
     const newPasswordHash = await this.validateAndHashPassword(newPassword)
-    await this.usersRepository.update(id, { passwordHash: newPasswordHash })
+    await this.dataSource.transaction(async (manager) => {
+      await manager.update(Users, id, { passwordHash: newPasswordHash })
+      await manager.delete(RefreshTokens, { userId: id })
+    })
   }
 
   // used for authentication

@@ -3,11 +3,35 @@ import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { apiReference } from '@scalar/nestjs-api-reference'
+import helmet from 'helmet'
 import { AppModule } from '~/app.module'
+
+function resolveCorsOrigins(configService: ConfigService): string[] | false {
+  const corsOrigins = configService.get<string>('CORS_ORIGINS')
+  const frontendUrl = configService.get<string>('FRONTEND_URL')?.trim()
+  const origins = new Set<string>()
+
+  for (const origin of corsOrigins?.split(',') ?? []) {
+    const trimmed = origin.trim()
+    if (trimmed) origins.add(trimmed)
+  }
+
+  if (frontendUrl) origins.add(new URL(frontendUrl).origin)
+
+  return origins.size > 0 ? [...origins] : false
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true })
   app.setGlobalPrefix('api')
+  app.use(helmet())
+
+  const configService = app.get(ConfigService)
+  app.enableCors({
+    origin: resolveCorsOrigins(configService),
+    credentials: true,
+  })
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -18,12 +42,6 @@ async function bootstrap() {
       },
     }),
   )
-
-  const configService = app.get(ConfigService)
-  const frontendUrl = configService.get<string>('FRONTEND_URL')?.trim()
-  app.enableCors({
-    origin: frontendUrl ? new URL(frontendUrl).origin : false,
-  })
 
   if (configService.get<string>('NODE_ENV') === 'development') {
     const config = new DocumentBuilder()

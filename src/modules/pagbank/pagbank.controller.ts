@@ -6,12 +6,15 @@ import {
   Post,
   Req,
   UnauthorizedException,
+  UseGuards,
   type RawBodyRequest,
 } from '@nestjs/common'
 import { ApiOkResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger'
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler'
 import { PagBankWebhookService } from '~/modules/pagbank/pagbank-webhook.service'
 
 @ApiTags('PagBank')
+@UseGuards(ThrottlerGuard)
 @Controller('pagbank')
 export class PagBankController {
   private readonly logger = new Logger(PagBankController.name)
@@ -20,9 +23,10 @@ export class PagBankController {
 
   @Post('webhooks')
   @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @ApiOperation({ summary: 'Receive PagBank payment notifications' })
   @ApiOkResponse({ description: 'Webhook processed successfully.' })
-  @ApiUnauthorizedResponse({ description: 'Missing webhook payload' })
+  @ApiUnauthorizedResponse({ description: 'Missing webhook payload or invalid authenticity token' })
   async handleWebhook(
     @Req() req: RawBodyRequest<Request>,
     @Headers('x-authenticity-token') authenticityToken: string | undefined,
@@ -49,7 +53,7 @@ export class PagBankController {
       throw new UnauthorizedException('Missing webhook payload')
     }
 
-    await this.pagBankWebhookService.handleWebhook(rawBody)
+    await this.pagBankWebhookService.handleWebhook(rawBody, authenticityToken)
     this.logger.log('Webhook processed successfully')
   }
 }

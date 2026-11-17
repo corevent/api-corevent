@@ -156,8 +156,8 @@ export class EventsController {
   @ApiOkResponse({ type: EventResponseDto, description: 'The event has been successfully retrieved.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiNotFoundResponse({ description: 'Event not found' })
-  async getById(@Param('id') id: string): Promise<EventResponseDto> {
-    return this.eventsService.getById(id)
+  async getById(@Req() req: AuthenticatedRequest, @Param('id') id: string): Promise<EventResponseDto> {
+    return this.eventsService.getById(id, req.user.id)
   }
 
   @Delete(':id')

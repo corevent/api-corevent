@@ -14,6 +14,7 @@ import { QueryPaginationDto } from '~/common/pagination/pagination.dto'
 import { isValidCnpj, isValidCpf } from '~/common/utils/cpf-cnpj.util'
 import { getOffset } from '~/common/utils/get-offset.util'
 import { hasValue } from '~/common/utils/has-value.util'
+import { isAtLeastAge } from '~/common/utils/is-at-least-age.util'
 import { validateCelphone } from '~/common/utils/validate-celphone'
 import { validateEmail } from '~/common/utils/validate-email.utils'
 import { validateRandomKey } from '~/common/utils/validate-random-key.util'
@@ -117,13 +118,7 @@ export class OrganizerPaymentInfoService {
 
   private async validateUserAge(userId: string): Promise<void> {
     const { data: user } = await this.usersService.getById(userId)
-    const today = new Date()
-    const birthDate = new Date(user.birthDate)
-
-    const eighteenYearsLater = new Date(birthDate)
-    eighteenYearsLater.setFullYear(birthDate.getFullYear() + 18)
-
-    if (today < eighteenYearsLater) {
+    if (!isAtLeastAge(user.birthDate, 18)) {
       throw new BadRequestException('User must be at least 18 years old')
     }
   }
