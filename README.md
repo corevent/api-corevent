@@ -59,7 +59,9 @@ Course test automation suite (Jest + Supertest + Cypress): see [`pi-tests/`](pi-
    pnpm start:dev
    ```
 
-   HTTP API base path: `/api`. Interactive docs: `/swagger` and `/docs`.
+   HTTP API base path: `/api`. Interactive docs: `/swagger` and `/docs` when `NODE_ENV` is not `production`.
+   Only `/docs` receives a CSP exception for the Scalar jsDelivr bundle and its inline initializer;
+   API routes keep Helmet's default CSP. Documentation routes are disabled in production.
 
 ### Image uploads
 
