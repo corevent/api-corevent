@@ -1,0 +1,20 @@
+{
+  "name": "corevent-pi-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Suíte didática de testes automatizados do PI Corevent (Jest + Supertest + Cypress)",
+  "scripts": {
+    "test": "pnpm run test:unit",
+    "test:unit": "jest --testPathPatterns=tests/unit",
+    "test:api": "jest --testPathPatterns=tests/api",
+    "cypress:install": "cypress install",
+    "test:e2e": "cypress install && cypress run",
+    "cypress:open": "cypress install && cypress open",
+    "test:all": "pnpm run test:unit && pnpm run test:api && pnpm run test:e2e"
+  },
+  "devDependencies": {
+    "cypress": "^14.5.4",
+    "jest": "^30.0.0",
+    "supertest": "^7.0.0"
+  }
+}
