@@ -6,6 +6,8 @@
 
 Corevent API is the backend service for the Corevent event management platform. Built with NestJS and TypeORM, it exposes a REST API (documented with Swagger and Scalar) for creating, managing, and joining events.
 
+Course test automation suite (Jest + Supertest + Cypress): see [`pi-tests/`](pi-tests/).
+
 ## Project setup
 
 ### Prerequisites
