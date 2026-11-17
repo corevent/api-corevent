@@ -1,9 +1,10 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import {
   ApiBadRequestResponse,
   ApiBody,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -12,6 +13,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger'
+import type { AuthenticatedRequest } from '~/common/interfaces/req.interface'
 import { AttractionsService } from '~/modules/attractions/attractions.service'
 import {
   AttractionResponseDto,
@@ -34,8 +36,13 @@ export class AttractionsController {
   @ApiCreatedResponse({ type: AttractionResponseDto, description: 'The attraction has been successfully created.' })
   @ApiBadRequestResponse({ description: 'Invalid request body.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
-  async create(@Param('eventId') eventId: string, @Body() body: CreateAttractionDto): Promise<AttractionResponseDto> {
-    return this.attractionsService.create(eventId, body)
+  @ApiForbiddenResponse({ description: 'You do not have permission to access this event' })
+  async create(
+    @Req() req: AuthenticatedRequest,
+    @Param('eventId') eventId: string,
+    @Body() body: CreateAttractionDto,
+  ): Promise<AttractionResponseDto> {
+    return this.attractionsService.create(req.user.id, eventId, body)
   }
 
   @Patch('attractions/:attractionId')
@@ -45,12 +52,14 @@ export class AttractionsController {
   @ApiOkResponse({ type: AttractionResponseDto, description: 'The attraction has been successfully updated.' })
   @ApiBadRequestResponse({ description: 'Invalid request body.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiForbiddenResponse({ description: 'You do not have permission to access this event' })
   @ApiNotFoundResponse({ description: 'Attraction not found' })
   async update(
+    @Req() req: AuthenticatedRequest,
     @Param('attractionId') attractionId: string,
     @Body() body: UpdateAttractionDto,
   ): Promise<AttractionResponseDto> {
-    return this.attractionsService.update(attractionId, body)
+    return this.attractionsService.update(req.user.id, attractionId, body)
   }
 
   @Get(':eventId/attractions')
@@ -82,7 +91,8 @@ export class AttractionsController {
   @ApiParam({ name: 'attractionId', type: String, description: 'The ID of the attraction' })
   @ApiNoContentResponse({ description: 'The attraction has been successfully deleted.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
-  async delete(@Param('attractionId') attractionId: string): Promise<void> {
-    return this.attractionsService.delete(attractionId)
+  @ApiForbiddenResponse({ description: 'You do not have permission to access this event' })
+  async delete(@Req() req: AuthenticatedRequest, @Param('attractionId') attractionId: string): Promise<void> {
+    return this.attractionsService.delete(req.user.id, attractionId)
   }
 }

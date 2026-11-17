@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config'
 import { ConfigService } from '@nestjs/config'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies'
+import { resolvePostgresSsl } from '~/common/utils/postgres-ssl.util'
 import { entities } from '~/database/entities'
 
 @Module({
@@ -13,12 +14,17 @@ import { entities } from '~/database/entities'
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         const dbUrl = configService.get<string>('DB_URL')
+        const ssl = resolvePostgresSsl({
+          isSslEnabled: Boolean(dbUrl) || configService.get<string>('DB_SSL') === 'true',
+          rejectUnauthorizedEnv: configService.get<string>('DB_SSL_REJECT_UNAUTHORIZED'),
+          ca: configService.get<string>('DB_SSL_CA'),
+        })
 
         if (dbUrl) {
           return {
             type: 'postgres',
             url: dbUrl,
-            ssl: { rejectUnauthorized: false },
+            ssl,
             entities,
             migrations: [join(__dirname, 'migrations', '*.{js,ts}')],
             migrationsRun: false,
@@ -39,7 +45,7 @@ import { entities } from '~/database/entities'
           migrationsRun: false,
           synchronize: false,
           namingStrategy: new SnakeNamingStrategy(),
-          ssl: configService.get<string>('DB_SSL') === 'true' ? { rejectUnauthorized: false } : false,
+          ssl,
         }
       },
     }),

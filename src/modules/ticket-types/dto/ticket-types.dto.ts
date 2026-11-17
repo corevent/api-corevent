@@ -10,8 +10,9 @@ export class CreateTicketTypeDto {
   @IsNotEmpty()
   name!: string
 
-  @ApiProperty({ description: 'Price of the ticket type', type: Number, example: 100 })
+  @ApiProperty({ description: 'Price of the ticket type', type: Number, example: 100, minimum: 0 })
   @IsNumber()
+  @Min(0)
   @Type(() => Number)
   price!: number
 

@@ -1,7 +1,9 @@
 import { Module, forwardRef } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { EventChangesModule } from '~/modules/event-changes/event-changes.module'
+import { EventStaffModule } from '~/modules/event-staff/event-staff.module'
 import { StorageModule } from '~/modules/storage/storage.module'
+import { TicketTypesModule } from '~/modules/ticket-types/ticket-types.module'
 import { EventsController } from '~/modules/events-module/events.controller'
 import { Events } from '~/modules/events-module/events.entity'
 import { EventsService } from '~/modules/events-module/events.service'
@@ -14,6 +16,8 @@ import { OrganizerPaymentInfoModule } from '~/modules/organizer-payment-info/org
     EventChangesModule,
     forwardRef(() => OrganizerPaymentInfoModule),
     forwardRef(() => StorageModule),
+    forwardRef(() => EventStaffModule),
+    forwardRef(() => TicketTypesModule),
   ],
   controllers: [EventsController],
   providers: [EventsService, EventsCronService],

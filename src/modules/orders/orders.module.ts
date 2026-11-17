@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
+import { EventsModule } from '~/modules/events-module/events.module'
 import { OrdersController } from '~/modules/orders/orders.controller'
 import { OrdersSuccessController } from '~/modules/orders/orders-success.controller'
 import { OrderItems } from '~/modules/orders/order-items.entity'
@@ -14,6 +15,7 @@ import { UsersModule } from '~/modules/users/users.module'
   imports: [
     TypeOrmModule.forFeature([Orders, OrderItems]),
     TicketTypesModule,
+    EventsModule,
     forwardRef(() => PagBankModule),
     UsersModule,
     TicketsModule,

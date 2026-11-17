@@ -76,9 +76,10 @@ export class StaffInvitesController {
   @ApiBadRequestResponse({ description: 'Invalid query parameters. Page number is out of range.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   async getAll(
+    @Req() req: AuthenticatedRequest,
     @Param('eventId') eventId: string,
     @Query() query: QueryEventStaffInvitationsDto,
   ): Promise<PaginateEventStaffInvitationsDto> {
-    return this.eventStaffInvitationsService.getAll(eventId, query)
+    return this.eventStaffInvitationsService.getAll(req.user.id, eventId, query)
   }
 }

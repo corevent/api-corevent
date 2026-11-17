@@ -4,6 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { Test, TestingModule } from '@nestjs/testing'
 import { ThrottlerGuard } from '@nestjs/throttler'
 import { config } from 'dotenv'
+import helmet from 'helmet'
 import { randomUUID } from 'node:crypto'
 import { AppModule } from '~/app.module'
 import { MailService } from '~/modules/mail/mail.service'
@@ -111,6 +112,8 @@ export async function createTestApp(options: CreateTestAppOptions = {}): Promise
   })
 
   app.setGlobalPrefix('api')
+  app.use(helmet())
+  app.enableCors({ origin: true, credentials: true })
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

@@ -7,7 +7,7 @@ import { AuthTokensDto, LoginDto, RefreshTokenDto } from '~/modules/auth/dto/aut
 import { RefreshTokens } from '~/modules/auth/refresh-tokens.entity'
 import { UsersService } from '~/modules/users/users.service'
 import * as bcrypt from 'bcryptjs'
-import { randomUUID } from 'crypto'
+import { randomInt, randomUUID } from 'crypto'
 import { PasswordRecoveryCodesService } from '~/modules/password-recovery-codes/password-recovery-codes.service'
 import { MailService } from '~/modules/mail/mail.service'
 import { RegistrationCodesService } from '~/modules/registration-codes/registration-codes.service'
@@ -137,7 +137,7 @@ export class AuthService {
   async resetPassword(email: string, code: string, newPassword: string): Promise<{ message: string }> {
     const user = await this.usersService.findByEmail(email)
     if (!user) {
-      throw new BadRequestException('User not found')
+      throw new BadRequestException('Invalid code')
     }
     await this.passwordRecoveryCodesService.validateCode(user.id, code)
     await this.usersService.resetPass(user.id, newPassword)
@@ -148,7 +148,7 @@ export class AuthService {
   async sendVerifyEmailCode(email: string): Promise<{ message: string }> {
     const user = await this.usersService.findByEmail(email)
     if (user) {
-      throw new BadRequestException('Email already used by another user')
+      return { message: 'If the email exists, a code was sent' }
     }
     const { code, codeHash } = await this.generateCode()
     try {
@@ -208,7 +208,7 @@ export class AuthService {
   }
 
   private async generateCode(): Promise<{ code: string; codeHash: string }> {
-    const code = Math.floor(100000 + Math.random() * 900000).toString()
+    const code = randomInt(100000, 1000000).toString()
     const codeHash = await bcrypt.hash(code, 10)
     return { code, codeHash }
   }
