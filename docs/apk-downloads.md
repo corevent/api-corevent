@@ -10,7 +10,7 @@ Os aplicativos publicam no mesmo bucket usado pela API do respectivo ambiente.
 Cada bucket contém `downloads/app/` e `downloads/work/`. Os APKs são privados;
 avatars e imagens de eventos mantêm suas permissões existentes.
 
-## Contrato de publicação
+## Manifesto de release
 
 `downloads/<app>/latest.json` contém o mesmo documento de
 `downloads/<app>/releases/<releaseId>/release.json`:
@@ -34,13 +34,9 @@ avatars e imagens de eventos mantêm suas permissões existentes.
 }
 ```
 
-Exemplo ilustrativo. Cada release também contém `app.apk` e `app.apk.sha256`.
-O publicador valida a assinatura, pacote, versão, integridade e identidade do
-workflow; os objetos versionados não podem ser substituídos por conteúdo diferente.
-`latest.json` só é atualizado após os três uploads, com precondição de geração.
-Uma publicação antiga ou um versionCode reutilizado com outro APK é rejeitado.
-Os objetos recebem SHA-256 nos metadados; a API confere esse hash e o tamanho
-antes de assinar o download, fixando a geração do objeto.
+Os workflows mobile assinam e publicam os APKs e atualizam o manifesto.
+A API confere o SHA-256 registrado nos metadados do objeto e o tamanho antes
+de assinar o download, fixando a geração do objeto.
 
 ## Endpoints públicos
 
@@ -60,52 +56,17 @@ O bucket vem de `GCS_BUCKET`. `APK_DOWNLOADS_ENVIRONMENT` pode definir explicita
 `NODE_ENV=prod` selecionam produção, e outros valores selecionam staging.
 Isso contempla os valores atualmente usados pelos dois serviços Cloud Run.
 
-## Infraestrutura
+## Acesso ao bucket
 
-Os scripts em `ops/apk-publishing/` são executados por um operador autenticado
-com permissão de administrar WIF, contas de serviço, roles e IAM dos buckets,
-além de configurar Environments dos dois repositórios no GitHub.
-
-```powershell
-# Inspecionar o plano sem modificar recursos
-./ops/apk-publishing/configure.ps1 -Environment staging
-./ops/apk-publishing/configure.ps1 -Environment production
-
-# Aplicar configuração idempotente
-./ops/apk-publishing/configure.ps1 -Environment staging -Apply
-./ops/apk-publishing/configure.ps1 -Environment production -Apply
-./ops/apk-publishing/configure-staging-signing.ps1 -Apply
-```
-
-Cada projeto possui pool `github-apk` e provider `github`, limitado ao proprietário,
-IDs dos dois repositórios, branch e Environment esperados. Cada app usa sua própria
-conta `github-apk-app` ou `github-apk-work`, com acesso condicionado ao prefixo
-correspondente. A identidade E2E existente permanece independente.
-
-A API recebe leitura de `downloads/` e permissão `iam.serviceAccounts.signBlob`
-sobre sua própria conta por meio da role customizada `apkDownloadSigner`.
-Nenhuma política de leitura pública é adicionada.
+A conta de serviço da API precisa de `storage.objects.get` nos objetos sob
+`downloads/` e de `iam.serviceAccounts.signBlob` sobre a própria conta para
+gerar as URLs assinadas. Os objetos permanecem privados.
 
 ## Ativação e validação
 
-1. Integrar primeiro o PR da API em `develop` e aguardar o deploy de staging.
-2. Integrar os PRs dos apps em `develop`; a publicação ocorre no próximo build.
-3. Conferir os quatro arquivos da publicação e os endpoints de staging.
-4. Comparar o SHA-256 do APK baixado e instalar os dois aplicativos.
-5. Publicar uma nova execução e validar atualização sobre a instalação anterior.
-6. Promover os mesmos commits para `main` seguindo o Gitflow e o deploy da API.
-7. Executar manualmente `Release APK` em cada app com build_number maior que 2 e
-   maior que qualquer versão posteriormente distribuída.
-
-Não lançar os workflows em branches de trabalho: os jobs e a identidade WIF
-exigem `develop/staging` ou `main/production`. Nenhuma página é implantada nesta etapa.
-
-Reexecutar o mesmo build não permite substituir um APK publicado por outro
-conteúdo. Use uma execução nova em staging ou um novo build_number em produção.
-Para retirar uma versão com problema, um operador pode restaurar o manifesto
-de uma release anterior usando a geração atual de `latest.json` como precondição.
-Isso muda o download oferecido; aparelhos já atualizados exigem uma correção com
-versionCode maior. Não há limpeza automática de versões nesta implantação.
+Após o deploy, consultar `/latest` para cada app e confirmar que os metadados
+correspondem ao manifesto publicado. Seguir o redirecionamento da rota de
+download e comparar o SHA-256 do APK baixado com o valor do manifesto.
 
 ## Verificações locais
 

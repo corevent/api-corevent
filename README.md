@@ -147,4 +147,4 @@ password hashes, QR tokens and database credentials.
 
 ## APK downloads
 
-Private APK publication, endpoints and GCP/GitHub setup: [APK distribution guide](docs/apk-downloads.md).
+See the [APK download guide](docs/apk-downloads.md) for the public endpoints and storage access requirements.
