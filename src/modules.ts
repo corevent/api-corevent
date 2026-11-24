@@ -1,4 +1,5 @@
 import { DatabaseModule } from '~/database/database.module'
+import { AnalyticsModule } from '~/modules/analytics/analytics.module'
 import { DownloadsModule } from '~/modules/downloads/downloads.module'
 import { AgePoliciesModule } from '~/modules/age-policies/age-policies.module'
 import { AgePolicyAcceptancesModule } from '~/modules/age-policy-acceptances/age-policy-acceptances.module'
@@ -24,6 +25,7 @@ import { TicketsModule } from '~/modules/tickets/tickets.module'
 import { UsersModule } from '~/modules/users/users.module'
 
 export const modules = [
+  AnalyticsModule,
   DownloadsModule,
   AuthModule,
   DatabaseModule,
