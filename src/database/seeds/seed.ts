@@ -4,6 +4,7 @@ import { seedCities } from '~/database/seeds/seed-cities'
 import { DataSource } from 'typeorm'
 import { ConfigService } from '@nestjs/config'
 import { seedUser } from '~/database/seeds/seed-user'
+import { seedAgePolicy } from '~/database/seeds/seed-age-policy'
 
 async function run(): Promise<void> {
   const app = await NestFactory.createApplicationContext(AppModule, {
@@ -14,6 +15,7 @@ async function run(): Promise<void> {
     const dataSource = app.get(DataSource)
     const configService = app.get(ConfigService)
 
+    await seedAgePolicy(dataSource)
     await seedCities(dataSource)
     if (configService.get<string>('NODE_ENV') === 'development') {
       await seedUser(dataSource)

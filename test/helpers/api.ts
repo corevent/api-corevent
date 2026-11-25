@@ -102,14 +102,20 @@ export async function createEvent(app: App, token: string, overrides: Record<str
   return request(app.getHttpServer()).post('/api/events').set(bearer(token)).send(eventPayload(overrides))
 }
 
-export async function createOrganizerEvent(app: App): Promise<EventContext> {
-  const organizer = await registerAndLogin(app)
+export async function createOrganizerEvent(
+  app: App,
+  options: {
+    userOverrides?: Partial<CreateUserDto>
+    eventOverrides?: Record<string, unknown>
+  } = {},
+): Promise<EventContext> {
+  const organizer = await registerAndLogin(app, options.userOverrides)
   const payment = await addOrganizerPayment(app, organizer)
   if (payment.status !== 201) {
     throw new Error(`Payment info failed (${payment.status}): ${JSON.stringify(payment.body)}`)
   }
 
-  const payload = eventPayload()
+  const payload = eventPayload(options.eventOverrides)
   const created = await createEvent(app, organizer.accessToken, payload)
   if (created.status !== 201) {
     throw new Error(`Create event failed (${created.status}): ${JSON.stringify(created.body)}`)

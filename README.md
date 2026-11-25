@@ -6,6 +6,8 @@
 
 Corevent API is the backend service for the Corevent event management platform. Built with NestJS and TypeORM, it exposes a REST API (documented with Swagger and Scalar) for creating, managing, and joining events.
 
+Course test automation suite (Jest + Supertest + Cypress): see [`pi-tests/`](pi-tests/).
+
 ## Project setup
 
 ### Prerequisites
@@ -29,11 +31,15 @@ Corevent API is the backend service for the Corevent event management platform. 
    ```
 
    Edit `.env` and set:
-   - **Database:** `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` so they match your PostgreSQL instance and database.
+   - **Database:** `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` so they match your PostgreSQL instance and database. Or use `DB_URL`.
    - **Auth:** `JWT_SECRET` and `JWT_REFRESH_SECRET` (required for sign-in and protected routes).
    - **Images:** `GCS_BUCKET` (private Cloud Storage bucket). For local development, also set `GOOGLE_APPLICATION_CREDENTIALS` to the absolute path of the service account JSON key. Do not commit that file.
 
    Optional: `NODE_ENV`, `PORT` (defaults to `3000` if unset). On Cloud Run, leave `GOOGLE_APPLICATION_CREDENTIALS` unset and attach the service account to the service.
+
+   **PostgreSQL SSL:** when `DB_URL` is set or `DB_SSL=true`, the API validates the server certificate by default (`rejectUnauthorized: true`). Provide the CA with `DB_SSL_CA`. Providers without a validatable CA (for example some Heroku Postgres setups) need an explicit opt-out: `DB_SSL_REJECT_UNAUTHORIZED=false`.
+
+   **CORS:** set `FRONTEND_URL` to the browser application's URL, for example `https://corevent.site/`. The API normalizes it to its origin (`https://corevent.site`), so a trailing slash is accepted. Extra origins go in `CORS_ORIGINS` as a comma-separated list. Requests from those origins are allowed with credentials. Without either variable, cross-origin browser access is disabled. Restart the API after changing them.
 
 3. **Apply migrations** (creates and updates tables; run against the same database as in `.env`)
 
@@ -53,7 +59,9 @@ Corevent API is the backend service for the Corevent event management platform. 
    pnpm start:dev
    ```
 
-   HTTP API base path: `/api`. Interactive docs: `/swagger` and `/docs`.
+   HTTP API base path: `/api`. Interactive docs: `/swagger` and `/docs` when `NODE_ENV` is not `production`.
+   Only `/docs` receives a CSP exception for the Scalar jsDelivr bundle and its inline initializer;
+   API routes keep Helmet's default CSP. Documentation routes are disabled in production.
 
 ### Image uploads
 
@@ -136,3 +144,7 @@ and the staging API URL. Prepare again before each complete suite; an already
 purchased free type cannot be purchased again by the same user. Errors are
 reported as JSON on stderr with a nonzero exit code. The log omits passwords,
 password hashes, QR tokens and database credentials.
+
+## APK downloads
+
+See the [APK download guide](docs/apk-downloads.md) for the public endpoints and storage access requirements.

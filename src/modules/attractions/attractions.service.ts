@@ -14,21 +14,26 @@ import {
   QueryAttractionsDto,
   UpdateAttractionDto,
 } from '~/modules/attractions/dto/attractions.dto'
+import { EventStaffService } from '~/modules/event-staff/event-staff.service'
 
 @Injectable()
 export class AttractionsService {
   constructor(
     @InjectRepository(Attractions)
     private attractionsRepository: Repository<Attractions>,
+    private readonly eventStaffService: EventStaffService,
   ) {}
 
-  async create(eventId: string, body: CreateAttractionDto): Promise<AttractionResponseDto> {
+  async create(userId: string, eventId: string, body: CreateAttractionDto): Promise<AttractionResponseDto> {
+    await this.eventStaffService.validateOrganizerOrStaff(userId, eventId)
     const attraction = this.attractionsRepository.create({ ...body, eventId })
     const data = await this.attractionsRepository.save(attraction)
     return { data: plainToInstance(AttractionDataDto, data) }
   }
 
-  async update(attractionId: string, body: UpdateAttractionDto): Promise<AttractionResponseDto> {
+  async update(userId: string, attractionId: string, body: UpdateAttractionDto): Promise<AttractionResponseDto> {
+    const { data: attraction } = await this.getById(attractionId)
+    await this.eventStaffService.validateOrganizerOrStaff(userId, attraction.eventId)
     await this.attractionsRepository.update(attractionId, body)
     return this.getById(attractionId)
   }
@@ -59,7 +64,9 @@ export class AttractionsService {
     }
   }
 
-  async delete(attractionId: string): Promise<void> {
+  async delete(userId: string, attractionId: string): Promise<void> {
+    const { data: attraction } = await this.getById(attractionId)
+    await this.eventStaffService.validateOrganizerOrStaff(userId, attraction.eventId)
     await this.attractionsRepository.delete(attractionId)
   }
 

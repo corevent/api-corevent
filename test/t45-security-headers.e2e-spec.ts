@@ -5,7 +5,7 @@ describe('T45 - Headers de segurança (Helmet)', () => {
   const ctx = setupE2EApp()
 
   it('sends standard browser security headers', async () => {
-    const res = await request(ctx.app.getHttpServer()).get('/api/ping')
+    const res = await request(ctx.app.getHttpServer()).get('/api/health')
 
     expect(res.status).toBe(200)
     expect(res.headers['x-content-type-options']).toBe('nosniff')

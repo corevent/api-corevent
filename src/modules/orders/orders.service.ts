@@ -14,7 +14,10 @@ import { DataSource, EntityManager, Repository } from 'typeorm'
 import { createPaginationMeta } from '~/common/pagination/pagination-meta.factory'
 import { QueryPaginationDto } from '~/common/pagination/pagination.dto'
 import { getOffset } from '~/common/utils/get-offset.util'
+import { isAtLeastAge } from '~/common/utils/is-at-least-age.util'
 import { decryptQrToken, encryptQrToken } from '~/common/utils/qr-code-crypto.util'
+import { EventStatus } from '~/modules/events-module/events.entity'
+import { EventsService } from '~/modules/events-module/events.service'
 import {
   CheckoutDataDto,
   CreateOrderDto,
@@ -28,6 +31,7 @@ import { OrderItems } from '~/modules/orders/order-items.entity'
 import { Orders, OrderStatus } from '~/modules/orders/orders.entity'
 import { CheckoutResponse, CreateCheckout, Item } from '~/modules/pagbank/interface/pagbank.interface'
 import { PagBankService } from '~/modules/pagbank/pagbank.service'
+import { TicketTypes } from '~/modules/ticket-types/ticket-types.entity'
 import { TicketTypesService } from '~/modules/ticket-types/ticket-types.service'
 import { Tickets, TicketStatus } from '~/modules/tickets/tickets.entity'
 import { TicketsService } from '~/modules/tickets/tickets.service'
@@ -37,6 +41,8 @@ type OrderLineItem = {
   ticketTypeId: string
   quantity: number
 }
+
+const PURCHASABLE_EVENT_STATUSES = new Set<EventStatus>([EventStatus.OPENED, EventStatus.GOING])
 
 @Injectable()
 export class OrdersService {
@@ -50,24 +56,44 @@ export class OrdersService {
     private pagbankService: PagBankService,
     private usersService: UsersService,
     private ticketsService: TicketsService,
+    private eventsService: EventsService,
     private dataSource: DataSource,
   ) {}
 
   async createOrder(userId: string, eventId: string, body: CreateOrderDto): Promise<OrderResponseDto> {
+    this.assertNoDuplicateTicketTypes(body.items)
+    await this.validatePurchaseEligibility(userId, eventId, body.items)
     await this.validateTicketAvailability(body.items)
     await this.validateFreeTicketRules(userId, body.items)
 
     const orderId = randomUUID()
-    const { items, totalAmount } = await this.buildOrderItems(body)
+    const { items, totalAmount, areAllItemsFree } = await this.buildOrderItems(body)
 
-    if (totalAmount === 0) {
+    if (areAllItemsFree) {
       return this.createFreeOrder(userId, eventId, body, orderId)
     }
 
-    const { checkout, checkoutLinks } = await this.createCheckout(userId, items, orderId)
-    await this.savePendingPaidOrder(orderId, userId, eventId, totalAmount, checkout.id, body.items)
+    await this.savePendingPaidOrder(orderId, userId, eventId, totalAmount, null, body.items)
 
-    return { data: { orderId, checkoutLinks, qrCodes: [], ticketIds: [] } }
+    try {
+      // Reserve all ticket types in one transaction so a mid-order stock failure rolls back every decrease.
+      await this.dataSource.transaction(async (manager) => {
+        await this.ticketTypesService.decreaseAvailableQuantity(body.items, manager)
+      })
+    } catch (error) {
+      await this.ordersRepository.update(orderId, { status: OrderStatus.CANCELLED })
+      throw error
+    }
+
+    try {
+      const { checkout, checkoutLinks } = await this.createCheckout(userId, items, orderId)
+      await this.ordersRepository.update(orderId, { gatewayTransactionId: checkout.id })
+      return { data: { orderId, checkoutLinks, qrCodes: [], ticketIds: [] } }
+    } catch (error) {
+      await this.ticketTypesService.increaseAvailableQuantity(body.items)
+      await this.ordersRepository.update(orderId, { status: OrderStatus.CANCELLED })
+      throw error
+    }
   }
 
   async markAsPaidFromWebhook(checkoutId: string | null, referenceId: string | null): Promise<void> {
@@ -78,7 +104,12 @@ export class OrdersService {
       return
     }
 
-    if (order.status === OrderStatus.PAID || order.status === OrderStatus.CANCELLED) {
+    if (
+      order.status === OrderStatus.PAID ||
+      order.status === OrderStatus.CANCELLED ||
+      order.status === OrderStatus.FAILED ||
+      order.status === OrderStatus.PENDING_REFUND
+    ) {
       this.logger.log(`Webhook skipped: order ${order.id} already has status ${order.status}`)
       return
     }
@@ -204,6 +235,25 @@ export class OrdersService {
     const ticketTypeQuantities = body.items.map(({ ticketTypeId, quantity }) => ({ ticketTypeId, quantity }))
 
     const { qrCodes, ticketIds } = await this.dataSource.transaction(async (manager) => {
+      for (const item of body.items) {
+        const ticketType = await manager.findOne(TicketTypes, {
+          where: { id: item.ticketTypeId },
+          lock: { mode: 'pessimistic_write' },
+        })
+        if (!ticketType) {
+          throw new BadRequestException('Ticket type not found')
+        }
+
+        const hasExistingTicket = await this.ticketsService.hasUserTicketForTicketType(
+          userId,
+          item.ticketTypeId,
+          manager,
+        )
+        if (hasExistingTicket) {
+          throw new BadRequestException(`You already have a ticket for "${ticketType.name}"`)
+        }
+      }
+
       await manager.save(Orders, {
         id: orderId,
         userId,
@@ -218,6 +268,38 @@ export class OrdersService {
     })
 
     return { data: { orderId, checkoutLinks: [], qrCodes, ticketIds } }
+  }
+
+  private async validatePurchaseEligibility(
+    userId: string,
+    eventId: string,
+    items: CreateOrderDto['items'],
+  ): Promise<void> {
+    const { data: event } = await this.eventsService.getById(eventId)
+
+    if (!PURCHASABLE_EVENT_STATUSES.has(event.status)) {
+      throw new BadRequestException('Event is not available for purchase')
+    }
+
+    if (event.isAdultOnly) {
+      const { data: user } = await this.usersService.getById(userId)
+      if (!isAtLeastAge(user.birthDate, 18)) {
+        throw new BadRequestException('User must be at least 18 years old to purchase tickets for this event')
+      }
+    }
+
+    const now = new Date()
+    for (const item of items) {
+      const { data: ticketType } = await this.ticketTypesService.getById(item.ticketTypeId)
+
+      if (ticketType.eventId !== eventId) {
+        throw new BadRequestException(`Ticket type "${ticketType.name}" does not belong to this event`)
+      }
+
+      if (now < new Date(ticketType.startDate) || now > new Date(ticketType.endDate)) {
+        throw new BadRequestException(`Ticket type "${ticketType.name}" is outside its sale window`)
+      }
+    }
   }
 
   private async validateFreeTicketRules(userId: string, items: CreateOrderDto['items']): Promise<void> {
@@ -264,22 +346,35 @@ export class OrdersService {
     }
   }
 
-  private async buildOrderItems(body: CreateOrderDto): Promise<{ items: Item[]; totalAmount: number }> {
+  private async buildOrderItems(
+    body: CreateOrderDto,
+  ): Promise<{ items: Item[]; totalAmount: number; areAllItemsFree: boolean }> {
     const items: Item[] = []
     let totalAmount = 0
+    let areAllItemsFree = true
 
     for (const { ticketTypeId, quantity } of body.items) {
       const { data: ticketType } = await this.ticketTypesService.getById(ticketTypeId)
+      const unitPrice = Number(ticketType.price)
+
+      if (unitPrice < 0) {
+        throw new BadRequestException(`Ticket type "${ticketType.name}" has an invalid price`)
+      }
+
+      if (unitPrice > 0) {
+        areAllItemsFree = false
+      }
+
       items.push({
         reference_id: ticketTypeId,
         name: ticketType.name,
         quantity,
-        unit_amount: ticketType.price * 100,
+        unit_amount: unitPrice * 100,
       })
-      totalAmount += Number(ticketType.price) * quantity
+      totalAmount += unitPrice * quantity
     }
 
-    return { items, totalAmount }
+    return { items, totalAmount, areAllItemsFree }
   }
 
   private async createCheckout(
@@ -317,7 +412,7 @@ export class OrdersService {
     userId: string,
     eventId: string,
     totalAmount: number,
-    gatewayTransactionId: string,
+    gatewayTransactionId: string | null,
     items: OrderLineItem[],
   ): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
@@ -356,12 +451,18 @@ export class OrdersService {
         throw new InternalServerErrorException('Paid order has no items')
       }
 
-      const quantities = items.map(({ ticketTypeId, quantity }) => ({ ticketTypeId, quantity }))
-      await this.ticketTypesService.decreaseAvailableQuantity(quantities, manager)
+      // Stock was reserved when the pending order was created.
       await this.createTickets(order.id, order.userId, order.eventId, items, manager)
       await manager.update(Orders, order.id, { status: OrderStatus.PAID })
       return true
     })
+  }
+
+  private assertNoDuplicateTicketTypes(items: CreateOrderDto['items']): void {
+    const ticketTypeIds = items.map((item) => item.ticketTypeId)
+    if (new Set(ticketTypeIds).size !== ticketTypeIds.length) {
+      throw new BadRequestException('Duplicate ticket types in the same order are not allowed')
+    }
   }
 
   private async createTickets(

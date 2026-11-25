@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
+import { ForbiddenException, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
 import { Repository, SelectQueryBuilder } from 'typeorm'
@@ -24,6 +24,7 @@ export class EventStaffService {
   constructor(
     @InjectRepository(EventStaff)
     private eventStaffRepository: Repository<EventStaff>,
+    @Inject(forwardRef(() => EventsService))
     private eventsService: EventsService,
   ) {}
 

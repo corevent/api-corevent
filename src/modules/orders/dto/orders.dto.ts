@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 import { Expose, Type } from 'class-transformer'
-import { IsArray, IsInt, IsUUID, ValidateNested } from 'class-validator'
+import { ArrayMinSize, IsArray, IsInt, IsUUID, Min, ValidateNested } from 'class-validator'
 import { PaginationMetaDto } from '~/common/pagination/pagination.dto'
 import { OrderStatus } from '~/modules/orders/orders.entity'
 import { TicketStatus } from '~/modules/tickets/tickets.entity'
@@ -15,14 +15,16 @@ class ItemsDto {
   @IsUUID()
   ticketTypeId!: string
 
-  @ApiProperty({ description: 'Quantity', type: Number, example: 1 })
+  @ApiProperty({ description: 'Quantity', type: Number, example: 1, minimum: 1 })
   @IsInt()
+  @Min(1)
   quantity!: number
 }
 
 export class CreateOrderDto {
-  @ApiProperty({ description: 'Items', type: [ItemsDto] })
+  @ApiProperty({ description: 'Items', type: [ItemsDto], minItems: 1 })
   @IsArray()
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => ItemsDto)
   items!: ItemsDto[]

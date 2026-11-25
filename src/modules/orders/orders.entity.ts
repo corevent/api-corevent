@@ -8,6 +8,8 @@ export enum OrderStatus {
   PENDING = 'pending',
   PAID = 'paid',
   CANCELLED = 'cancelled',
+  FAILED = 'failed',
+  PENDING_REFUND = 'pending_refund',
 }
 
 @Entity()

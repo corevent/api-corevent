@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import { InjectRepository } from '@nestjs/typeorm'
 import * as bcrypt from 'bcryptjs'
 import { DataSource, MoreThan, Repository } from 'typeorm'
+import { isAdminVerificationAllowed } from '~/common/utils/is-admin-verification-allowed.util'
 import { PasswordRecoveryCodes } from '~/modules/password-recovery-codes/password-recovery-codes.entity'
 
 @Injectable()
@@ -36,7 +37,12 @@ export class PasswordRecoveryCodesService {
 
   async validateCode(userId: string, code: string): Promise<void> {
     const adminVerificationCode = this.configService.get<string>('ADMIN_VERIFICATION_CODE')
-    if (adminVerificationCode && code === adminVerificationCode) {
+    const nodeEnv = this.configService.get<string>('NODE_ENV')
+    if (
+      isAdminVerificationAllowed(nodeEnv) &&
+      adminVerificationCode &&
+      code === adminVerificationCode
+    ) {
       return
     }
 

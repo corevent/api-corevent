@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
 import { EntityManager, Repository, SelectQueryBuilder } from 'typeorm'
@@ -23,6 +23,7 @@ export class TicketTypesService {
   constructor(
     @InjectRepository(TicketTypes)
     private ticketTypesRepository: Repository<TicketTypes>,
+    @Inject(forwardRef(() => EventsService))
     private eventsService: EventsService,
   ) {}
 
@@ -35,8 +36,19 @@ export class TicketTypesService {
 
   async update(userId: string, ticketTypeId: string, body: UpdateTicketTypeDto): Promise<TicketTypeResponseDto> {
     const { data: ticketType } = await this.getById(ticketTypeId)
-    await this.checkCapacityAndEvent(userId, ticketType.eventId, body, ticketType.totalQuantity)
-    await this.ticketTypesRepository.update(ticketTypeId, body)
+    const mergedBody: UpdateTicketTypeDto = {
+      ...body,
+      startDate: body.startDate ?? ticketType.startDate,
+      endDate: body.endDate ?? ticketType.endDate,
+    }
+    await this.checkCapacityAndEvent(userId, ticketType.eventId, mergedBody, ticketType.totalQuantity)
+
+    if (body.totalQuantity !== undefined) {
+      await this.updateWithQuantityAdjustment(ticketTypeId, ticketType, body)
+    } else {
+      await this.ticketTypesRepository.update(ticketTypeId, body)
+    }
+
     return this.getById(ticketTypeId)
   }
 
@@ -86,12 +98,58 @@ export class TicketTypesService {
     }
   }
 
+  async increaseAvailableQuantity(items: DecreaseTicketTypeQuantityItem[], manager?: EntityManager): Promise<void> {
+    const quantityByTicketType = this.aggregateQuantityByTicketType(items)
+    const repository = manager ? manager.getRepository(TicketTypes) : this.ticketTypesRepository
+
+    for (const [ticketTypeId, quantity] of quantityByTicketType) {
+      await repository
+        .createQueryBuilder()
+        .update(TicketTypes)
+        .set({ availableQuantity: () => 'available_quantity + :quantity' })
+        .where('id = :ticketTypeId', { ticketTypeId })
+        .setParameters({ quantity, ticketTypeId })
+        .execute()
+    }
+  }
+
   async delete(userId: string, ticketTypeId: string): Promise<void> {
     const { data: ticketType } = await this.getById(ticketTypeId)
     await this.checkEventStatusAndOrganizer(userId, ticketType.eventId, 'delete')
     const { affected } = await this.ticketTypesRepository.delete(ticketTypeId)
     if (affected === 0) {
       throw new NotFoundException('Ticket type not found')
+    }
+  }
+
+  private async updateWithQuantityAdjustment(
+    ticketTypeId: string,
+    current: TicketTypeDataDto,
+    body: UpdateTicketTypeDto,
+  ): Promise<void> {
+    const newTotalQuantity = body.totalQuantity
+    if (newTotalQuantity === undefined) {
+      return
+    }
+
+    const delta = newTotalQuantity - current.totalQuantity
+    const { totalQuantity: _ignoredTotal, ...otherFields } = body
+
+    const result = await this.ticketTypesRepository
+      .createQueryBuilder()
+      .update(TicketTypes)
+      .set({
+        ...otherFields,
+        totalQuantity: newTotalQuantity,
+        availableQuantity: () => 'available_quantity + :delta',
+      })
+      .where('id = :ticketTypeId', { ticketTypeId })
+      .andWhere('total_quantity - available_quantity <= :newTotal', { newTotal: newTotalQuantity })
+      .setParameters({ delta, ticketTypeId, newTotal: newTotalQuantity })
+      .execute()
+
+    if (!result.affected) {
+      throw new BadRequestException('Cannot reduce total quantity below the number of tickets already sold')
     }
   }
 
@@ -137,7 +195,7 @@ export class TicketTypesService {
     const { name, startDate, endDate, availableOnly } = filters
 
     if (availableOnly === true) {
-      query.andWhere('tt.startDate <= NOW() AND tt.endDate >= NOW()')
+      query.andWhere('tt.startDate <= NOW() AND tt.endDate >= NOW() AND tt.available_quantity > 0')
     }
     if (name) {
       query.andWhere('unaccent(tt.name) ILIKE unaccent(:name)', { name: `%${name}%` })

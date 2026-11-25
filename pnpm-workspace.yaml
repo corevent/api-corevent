@@ -1,6 +1,7 @@
 allowBuilds:
   '@nestjs/core': true
   '@scarf/scarf': false
+  cypress: true
   unrs-resolver: true
 
 minimumReleaseAgeExclude:
