@@ -1,49 +1,33 @@
 import {
   BadRequestException,
-  ForbiddenException,
-  forwardRef,
   Inject,
   Injectable,
-  Logger,
   NotFoundException,
+  forwardRef,
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
-import { DataSource, Repository, SelectQueryBuilder } from 'typeorm'
-import { createPaginationMeta } from '~/common/pagination/pagination-meta.factory'
-import { getOffset } from '~/common/utils/get-offset.util'
+import { Repository } from 'typeorm'
 import { hasValue } from '~/common/utils/has-value.util'
 import { EventChangesService } from '~/modules/event-changes/event-changes.service'
-import { EventStaffService } from '~/modules/event-staff/event-staff.service'
 import {
   CreateEventDto,
   EventDataDto,
-  QueryEventsDto,
-  ListEventsDto,
-  PaginateEventsDto,
   EventResponseDto,
+  PaginateEventsDto,
+  QueryEventsDto,
   UpdateEventDto,
 } from '~/modules/events-module/dto/events.dto'
-import { EventRatings } from '~/modules/event-ratings/event-ratings.entity'
+import { EventsCancelService } from '~/modules/events-module/events-cancel.service'
 import { EventLocationType, Events, EventStatus } from '~/modules/events-module/events.entity'
-import { OrderItems } from '~/modules/orders/order-items.entity'
-import { Orders, OrderStatus } from '~/modules/orders/orders.entity'
+import { EventsQueryService } from '~/modules/events-module/events-query.service'
 import { OrganizerPaymentInfoService } from '~/modules/organizer-payment-info/organizer-payment-info.service'
 import { StorageService } from '~/modules/storage/storage.service'
-import { TicketTypesService } from '~/modules/ticket-types/ticket-types.service'
-import { Tickets, TicketStatus } from '~/modules/tickets/tickets.entity'
 
 const relevantAddressFields = ['cityId', 'zipCode', 'neighborhood', 'street', 'number', 'locationName']
-type EventListRawRow = {
-  averageRating?: string | number | null
-  eventStaffAccessLevel?: string | null
-  favoriteId?: string | null
-}
 
 @Injectable()
 export class EventsService {
-  private readonly logger = new Logger(EventsService.name)
-
   constructor(
     @InjectRepository(Events)
     private readonly eventsRepository: Repository<Events>,
@@ -51,11 +35,8 @@ export class EventsService {
     private readonly organizerPaymentInfoService: OrganizerPaymentInfoService,
     @Inject(forwardRef(() => StorageService))
     private readonly storageService: StorageService,
-    @Inject(forwardRef(() => EventStaffService))
-    private readonly eventStaffService: EventStaffService,
-    @Inject(forwardRef(() => TicketTypesService))
-    private readonly ticketTypesService: TicketTypesService,
-    private readonly dataSource: DataSource,
+    private readonly eventsQueryService: EventsQueryService,
+    private readonly eventsCancelService: EventsCancelService,
   ) {}
 
   async create(organizerId: string, body: CreateEventDto): Promise<EventResponseDto> {
@@ -92,62 +73,11 @@ export class EventsService {
     userId?: string,
     type?: 'organizer' | 'staff' | 'favorite',
   ): Promise<PaginateEventsDto> {
-    const { page, limit, status } = queryParams
-    const query = this.buildBaseQuery()
-      .limit(limit)
-      .offset(getOffset(page, limit))
-      .where('e.status = :status', { status })
-    this.applyFilters(query, queryParams)
-    this.applySearch(query, queryParams.search)
-    this.applyTypeOfList(query, userId, type)
-
-    const total = await query.getCount()
-    const { entities, raw } = await query.getRawAndEntities()
-    const rawRows = raw as EventListRawRow[]
-    const list = entities.map((entity, index) => ({
-      ...entity,
-      averageRating: this.parseAverageRating(rawRows[index]?.averageRating),
-      accessLevel: rawRows[index]?.eventStaffAccessLevel ?? undefined,
-      favoriteId: rawRows[index]?.favoriteId ?? undefined,
-    }))
-
-    return {
-      data: plainToInstance(ListEventsDto, list),
-      meta: createPaginationMeta(page, limit, total),
-    }
+    return this.eventsQueryService.getAll(queryParams, userId, type)
   }
 
   async getById(id: string, viewerId?: string): Promise<EventResponseDto> {
-    const { entities, raw } = await this.buildBaseQuery().where('e.id = :id', { id }).getRawAndEntities()
-    const event = entities[0]
-    if (!event) throw new NotFoundException('Event not found')
-
-    const rawRow = raw[0] as { averageRating?: string | number | null } | undefined
-    const data = plainToInstance(EventDataDto, {
-      ...event,
-      averageRating: this.parseAverageRating(rawRow?.averageRating),
-    })
-
-    if (data.status === EventStatus.DRAFT && viewerId !== undefined) {
-      await this.assertDraftViewerAccess(viewerId, data)
-    }
-
-    return { data }
-  }
-
-  private async assertDraftViewerAccess(viewerId: string, event: EventDataDto): Promise<void> {
-    if (event.organizer.id === viewerId) {
-      return
-    }
-
-    try {
-      await this.eventStaffService.validateOrganizerOrStaff(viewerId, event.id)
-    } catch (error) {
-      if (error instanceof ForbiddenException) {
-        throw new NotFoundException('Event not found')
-      }
-      throw error
-    }
+    return this.eventsQueryService.getById(id, viewerId)
   }
 
   async assertUserIsOrganizer(userId: string, eventId: string): Promise<void> {
@@ -165,59 +95,7 @@ export class EventsService {
   }
 
   async cancel(organizerId: string, id: string): Promise<void> {
-    const { data: event } = await this.getById(id)
-    this.validateOrganizer(organizerId, event)
-    if (event.status === EventStatus.OPENED || event.status === EventStatus.GOING) {
-      await this.dataSource.transaction(async (manager) => {
-        await manager.update(Events, id, { status: EventStatus.CANCELED })
-
-        const pendingOrders = await manager.find(Orders, {
-          where: { eventId: id, status: OrderStatus.PENDING },
-        })
-        for (const order of pendingOrders) {
-          const items = await manager.find(OrderItems, { where: { orderId: order.id } })
-          if (items.length > 0) {
-            await this.ticketTypesService.increaseAvailableQuantity(items, manager)
-          }
-          await manager.update(Orders, order.id, { status: OrderStatus.CANCELLED })
-        }
-
-        const paidOrders = await manager.find(Orders, {
-          where: { eventId: id, status: OrderStatus.PAID },
-        })
-        for (const order of paidOrders) {
-          await manager.update(Orders, order.id, { status: OrderStatus.PENDING_REFUND })
-          this.logger.warn(
-            [
-              'Event cancelled: paid order marked pending_refund',
-              `orderId=${order.id}`,
-              `checkoutId=${order.gatewayTransactionId ?? 'none'}`,
-              'TODO: call PagBank refund API for this charge',
-            ].join(' '),
-          )
-        }
-
-        await manager
-          .createQueryBuilder()
-          .update(Tickets)
-          .set({ status: TicketStatus.CANCELLED })
-          .where('event_id = :eventId', { eventId: id })
-          .andWhere('status = :pendingStatus', { pendingStatus: TicketStatus.PENDING })
-          .execute()
-      })
-      await this.eventChangesService.create(organizerId, id, {
-        changedFields: ['status'],
-        oldValue: { status: event.status },
-        newValue: { status: EventStatus.CANCELED },
-      })
-    } else {
-      const statusMessage = {
-        [EventStatus.DRAFT]: 'Event cannot be cancelled because it is draft, delete instead',
-        [EventStatus.FINISHED]: 'Event cannot be cancelled because it is finished',
-        [EventStatus.CANCELED]: 'Event already cancelled',
-      }
-      throw new BadRequestException(statusMessage[event.status])
-    }
+    return this.eventsCancelService.cancel(organizerId, id)
   }
 
   private checkDates(startDate: Date, endDate: Date): void {
@@ -263,8 +141,6 @@ export class EventsService {
       oldValue,
       newValue,
     })
-
-    // TODO: deal with relevant changes (refund, send email, notification, etc.)
   }
 
   private async validateBeforeUpdate(organizerId: string, id: string, body: UpdateEventDto): Promise<void> {
@@ -295,37 +171,9 @@ export class EventsService {
     this.checkIfHasPhysicalAddress(body, event.locationType)
   }
 
-  private applySearch(query: SelectQueryBuilder<Events>, search?: string): void {
-    if (search) {
-      query.andWhere('unaccent(e.title) ILIKE unaccent(:search)', { search: `%${search}%` })
-    }
-  }
-
-  private applyFilters(
-    query: SelectQueryBuilder<Events>,
-    filters: Pick<QueryEventsDto, 'stateId' | 'cityId' | 'startDate' | 'category' | 'isAdultOnly'>,
-  ): void {
-    if (filters.stateId !== undefined) {
-      query.andWhere('s.id = :stateId', { stateId: filters.stateId })
-    }
-    if (filters.cityId !== undefined) {
-      query.andWhere('e.cityId = :cityId', { cityId: filters.cityId })
-    }
-    if (filters.startDate) {
-      query.andWhere('e.startDate >= :startDate', { startDate: filters.startDate })
-    }
-    if (filters.category) {
-      query.andWhere('e.category = :category', { category: filters.category })
-    }
-    if (filters.isAdultOnly !== undefined) {
-      query.andWhere('e.isAdultOnly = :isAdultOnly', { isAdultOnly: filters.isAdultOnly })
-    }
-  }
-
   private checkIfHasPhysicalAddress(body: CreateEventDto | UpdateEventDto, oldLocationType?: EventLocationType): void {
     const onlineStatus = EventLocationType.ONLINE
 
-    // validations for UPDATE
     if (body instanceof UpdateEventDto) {
       if (!body.locationType) return
 
@@ -334,7 +182,6 @@ export class EventsService {
       }
     }
 
-    // validations for CREATE
     if (body instanceof CreateEventDto && body.locationType === onlineStatus) return
 
     const emptyFields = relevantAddressFields.filter((field) => !hasValue(body[field]))
@@ -347,72 +194,5 @@ export class EventsService {
     if (event.organizer.id !== organizerId) {
       throw new BadRequestException('You are not the organizer of this event')
     }
-  }
-
-  private buildBaseQuery(): SelectQueryBuilder<Events> {
-    return this.eventsRepository
-      .createQueryBuilder('e')
-      .select([
-        'e.id',
-        'e.title',
-        'e.maxParticipants',
-        'c.id',
-        'c.name',
-        's.id',
-        's.name',
-        's.acronym',
-        'e.locationName',
-        'e.locationType',
-        'e.startDate',
-        'e.endDate',
-        'e.category',
-        'e.bannerKey',
-        'e.isAdultOnly',
-        'e.status',
-        'o.id',
-        'o.name',
-        'o.email',
-        'o.avatarKey',
-      ])
-      .innerJoin('e.organizer', 'o')
-      .leftJoin('e.city', 'c')
-      .leftJoin('c.state', 's')
-      .addSelect((subQuery) => {
-        return subQuery
-          .select('AVG(eventRating.rating)', 'averageRating')
-          .from(EventRatings, 'eventRating')
-          .where('eventRating.eventId = e.id')
-      }, 'averageRating')
-  }
-
-  private applyTypeOfList(
-    query: SelectQueryBuilder<Events>,
-    userId?: string,
-    type?: 'organizer' | 'staff' | 'favorite',
-  ): void {
-    if (userId && !type) {
-      throw new BadRequestException('Type is required when userId is provided')
-    }
-    if (!userId && type) {
-      throw new BadRequestException('UserId is required when type is provided')
-    }
-
-    if (type === 'organizer') {
-      query.andWhere('e.organizerId = :userId', { userId })
-    }
-    if (type === 'staff') {
-      query
-        .innerJoin('e.eventStaff', 'es')
-        .andWhere('es.userId = :userId', { userId })
-        .addSelect('es.access_level', 'eventStaffAccessLevel')
-    }
-    if (type === 'favorite') {
-      query.innerJoin('e.favorites', 'f').andWhere('f.userId = :userId', { userId }).addSelect('f.id', 'favoriteId')
-    }
-  }
-
-  private parseAverageRating(value: unknown): number | null {
-    if (value == null) return null
-    return Number(value)
   }
 }

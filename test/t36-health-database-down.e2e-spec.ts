@@ -26,6 +26,7 @@ describe('T36 - Health check com banco indisponível', () => {
     const res = await request(app.getHttpServer()).get('/api/health')
 
     expect(res.status).toBeGreaterThanOrEqual(500)
-    expect(res.text).not.toBe('OK')
+    expect(res.body.status).not.toMatch(/^(ok|up|healthy)$/i)
+    expect(res.body.dependencies?.database).not.toMatch(/^(ok|up|healthy)$/i)
   })
 })

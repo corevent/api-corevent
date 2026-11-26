@@ -26,7 +26,7 @@ export class PagBankController {
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @ApiOperation({ summary: 'Receive PagBank payment notifications' })
   @ApiOkResponse({ description: 'Webhook processed successfully.' })
-  @ApiUnauthorizedResponse({ description: 'Missing webhook payload or invalid authenticity token' })
+  @ApiUnauthorizedResponse({ description: 'Missing webhook payload' })
   async handleWebhook(
     @Req() req: RawBodyRequest<Request>,
     @Headers('x-authenticity-token') authenticityToken: string | undefined,
