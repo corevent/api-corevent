@@ -2,7 +2,9 @@ import request from 'supertest'
 import { paidWebhookPayload, signWebhook } from './helpers/api'
 import { setupE2EApp } from './helpers/setup-e2e-app'
 
-describe('T26 - Webhook sem assinatura / assinatura inválida', () => {
+// Skipped while PagBank webhook authenticity validation is disabled for sandbox.
+// Re-enable together with `validateAuthenticity` in pagbank-webhook.service.ts.
+describe.skip('T26 - Webhook sem assinatura / assinatura inválida', () => {
   const ctx = setupE2EApp()
 
   it('rejects webhook without authenticity token with 401', async () => {

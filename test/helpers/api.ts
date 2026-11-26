@@ -161,10 +161,19 @@ export async function createOrder(
   ticketTypeId: string,
   quantity = 1,
 ): Promise<Response> {
+  return createOrderWithItems(app, token, eventId, [{ ticketTypeId, quantity }])
+}
+
+export async function createOrderWithItems(
+  app: App,
+  token: string,
+  eventId: string,
+  items: Array<{ ticketTypeId: string; quantity: number }>,
+): Promise<Response> {
   return request(app.getHttpServer())
     .post(`/api/events/${eventId}/orders`)
     .set(bearer(token))
-    .send({ items: [{ ticketTypeId, quantity }] })
+    .send({ items })
 }
 
 export async function getTicketType(app: App, token: string, ticketTypeId: string): Promise<Response> {

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common'
+import { Controller, Get, HttpCode, HttpStatus, Param, Post, Query, Req, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import {
   ApiBadRequestResponse,
@@ -26,6 +26,7 @@ export class UserInvitationsController {
   constructor(private readonly eventStaffInvitationsService: EventStaffInvitationsService) {}
 
   @Post(':invitationId/accept')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Accept an invitation' })
   @ApiParam({ name: 'invitationId', type: String, description: 'The ID of the invitation' })
   @ApiOkResponse({
@@ -44,6 +45,7 @@ export class UserInvitationsController {
   }
 
   @Post(':invitationId/reject')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reject an invitation' })
   @ApiParam({ name: 'invitationId', type: String, description: 'The ID of the invitation' })
   @ApiOkResponse({
